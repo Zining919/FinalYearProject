@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+        <title>Patient Database</title>
+        <script>
+            function confirmDelete(patientId) {
+                const confirmed = confirm("Are you sure you want to delete this patient?");
+                if (confirmed) {
+                    window.location.href = `/delete/${patientId}`;
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Patient Database</h1>
+        <a href="/add">Add New Patient</a>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>DOB</th>
+                <th>Gender</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Address</th>
+                <th>Actions</th>
+            </tr>
+            {% for patient in patients %}
+            <tr>
+                <td>{{ patient.id }}</td>
+                <td>{{ patient.name }}</td>
+                <td>{{ patient.dob }}</td>
+                <td>{{ patient.gender }}</td>
+                <td>{{ patient.phone }}</td>
+                <td>{{ patient.email }}</td>
+                <td>{{ patient.address }}</td>
+                <td>
+                    <table class="action-table">
+                        <tr>
+                            <td>
+                                <a href="/update/{{ patient.id }}" class="update-link">Update</a>
+                            </td>
+                            <td>
+                                <a href="#" class="delete-link" onclick="confirmDelete('{{ patient.id }}')">Delete</a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>
