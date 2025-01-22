@@ -25,6 +25,8 @@
                 <th>Phone</th>
                 <th>Email</th>
                 <th>Address</th>
+                <th>Appointment</th>
+                <th>History</th>
                 <th>Actions</th>
             </tr>
             {% for patient in patients %}
@@ -36,6 +38,8 @@
                 <td>{{ patient.phone }}</td>
                 <td>{{ patient.email }}</td>
                 <td>{{ patient.address }}</td>
+                <td><a href="/appointment/{{ patient.id }}" class="appointment">View</a></td>
+                <td><a href="/history/{{ patient.id }}" class="appointment">View</a></td>
                 <td>
                     <table class="action-table">
                         <tr>

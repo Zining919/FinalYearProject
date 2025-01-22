@@ -5,6 +5,7 @@ app = Flask(__name__)
 
 # Path to the JSON file where the patient data will be stored
 PATIENTS_FILE = "patients.json"
+APPOINTMENT_FILE = "appointment.json"
 ID_TRACKER_FILE = "id_tracker.txt"
 
 # Function to load patients from the JSON file
@@ -38,8 +39,7 @@ def get_next_patient_id():
 @app.route("/")
 def index():
     patients = load_patients()
-    message = request.args.get("message")
-    return render_template("patient_index.html", patients=patients, message=message)
+    return render_template("patient_index.html", patients=patients)
 
 @app.route("/add", methods=["GET", "POST"])
 def add_patient():
@@ -57,8 +57,7 @@ def add_patient():
         
         save_patients(patients)
         id = get_next_patient_id()
-
-        return redirect(url_for("index", message="Patient added successfully!"))
+        return redirect(url_for("index"))
 
     id = get_current_id()
     return render_template("patient_add.html", id=id)
@@ -107,6 +106,22 @@ def update_patient(patient_id, name, dob, gender, phone, email, address):
             break
         
     save_patients(patients)
+
+@app.route('/appointment/<int:patient_id>')
+def get_appointment(patient_id):
+    patient = get_patient_by_id(patient_id)
+    return render_template('patient_appointment.html', patient=patient)
+
+@app.route('/app_history/<int:patient_id>')
+def get_history(patient_id):
+    patient = get_patient_by_id(patient_id)
+    return render_template('patient_history.html', patient=patient)
+
+
+@app.route('/add_appointment/<int:patient_id>', methods=["GET","POST"])
+def new_appointment(patient_id):
+    patient = get_patient_by_id(patient_id)
+    return render_template('patient_history.html', patient=patient)
 
 if __name__ == "__main__":
     app.run(debug=True)

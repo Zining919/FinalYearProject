@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+    <title>Add Patient</title>
+    <script>
+        function showConfirmation(event) {
+            alert("New Appointment added successfully!"); 
+            window.location.href = "/appointment";
+        }
+    </script>
+</head>
+<body>
+    <h1>Add New Apoointment</h1>
+    <form action="/add_appointment/{{patient.id}}" method="POST" onsubmit="showConfirmation(event)">
+        <input type="hidden" id="patient_id" name="patient_id" value="{{patient.id}}">
+        <br>
+        <label for="app_id">Appointment ID: {{id}}</label>
+
+        <label for="department">Department:</label>
+        <select id="department" name="department" required>
+            <option value="Neurology">Neurology</option>   
+            <option value=""></option>   
+            <option value=""></option>                
+        </select>
+        <br>
+
+        <label for="doctor">Doctor Name: </label>
+        <select id="doctor" name="doctor" required>
+            {% for doctor in doctors %}
+            <option value="{{doctor.name}}">{{doctor.name}}</option>
+            {% endfor %}              
+        </select>
+            
+        <label for="date_time">Date Time</label>
+        <input type="datetime" id="date_time" name="date_time" required>
+        <br>
+
+        <button type="submit">Add Appoinment</button>
+    </form>
+    <a href="/">Back to Appoinment List</a>
+</body>
+</html>

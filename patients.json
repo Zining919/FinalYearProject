@@ -1,11 +1,11 @@
 [
     {
         "id": 10000,
-        "name": "aa",
-        "dob": "1999-01-01",
+        "name": "Lim Ha Ha",
+        "dob": "2000-01-01",
         "gender": "Male",
-        "phone": "018-2344121",
-        "email": "wongzn-wp21@student.tarc.edu.my",
-        "address": "123, Jalan abc, 55300, Setapak, KL "
+        "phone": "012-345 6789",
+        "email": "lim123@gmail.com",
+        "address": "B-12-12,PV12,53300, Setapak, KL"
     }
 ]
