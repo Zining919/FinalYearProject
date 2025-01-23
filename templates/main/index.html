@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+        <title>Nurse</title>
+    </head>
+    <body>
+        <h1>Hospital ABC</h1>
+        <h2>{{msg}}</h2>
+        <form action="/" method="POST">
+            <label for="user">Username:</label>
+            <input type="text" id="user" name="user" required>
+            <br>
+            <label for="psw">Password:</label>
+            <input type="text" id="psw" name="psw" required>
+            <br>
+            <button type="submit">Login</button>
+        </form> 
+
+        <!-- <button><a href="/doctor">Doctor</a></button>
+        <button><a href="/nurse">Nurse</a></button>
+        <button><a href="/management">Management</a></button>
+        <button><a href="/tech">System Technician</a></button> -->
+    </body>
+</html>

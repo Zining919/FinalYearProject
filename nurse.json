@@ -1,0 +1,20 @@
+[
+    {
+        "id": "n1000",
+        "name": "Siti",
+        "dob": "1999-01-12",
+        "gender": "Female",
+        "phone": "012-111 2221",
+        "email": "siti0112@gmail.com",
+        "department": "Neurology"
+    },
+    {
+        "id": "n1001",
+        "name": "Sarah",
+        "dob": "2003-03-01",
+        "gender": "Female",
+        "phone": "012-345 0001",
+        "email": "sarah123@gmail.com",
+        "department": "Neurology"
+    }
+]

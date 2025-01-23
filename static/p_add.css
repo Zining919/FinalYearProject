@@ -84,6 +84,23 @@ form input[type="radio"] + label {
     margin-right: 15px;
 }
 
+.profile-container {
+    display: table;
+}
+.profile-row {
+    display: table-row;
+}
+.profile-label, .profile-value {
+    display: table-cell;
+    padding: 5px;
+    vertical-align: top;
+}
+.profile-label {
+    font-weight: bold;
+    text-align: left;
+    width: 150px; /* Adjust as needed */
+}
+
 /* Mobile responsiveness */
 @media (max-width: 600px) {
     form {

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+        <title>Nurse</title>
+    </head>
+    <body>
+        <h1>Nurse Page</h1>
+        <h2>Hi, {{nurse.name}}</h2>
+        <button><a href="/nurse_profile/{{nurse.id}}">Profile</a></button>
+        <button><a href="/patient">Patient Database</a></button>
+        <button><a href="/">Log Out</a></button>
+    </body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+        <title>Update Profile</title>
+    </head>
+    <body>
+        <h1>Update Profile</h1>
+        <form action="/edit_profile/{{nurse.id}}" method="POST">
+            <div class="profile-container">
+                <div class="profile-row">
+                    <div class="profile-label">ID</div>
+                    <div class="profile-value"><b>: </b>{{ nurse.id }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Name</div>
+                    <div class="profile-value"><b>: </b>{{ nurse.name }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Date Of Birth</div>
+                    <div class="profile-value"><b>: </b>{{ nurse.dob }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Gender</div>
+                    <div class="profile-value"><b>: </b>{{ nurse.gender }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Department</div>
+                    <div class="profile-value"><b>: </b>{{ nurse.department }}</div>
+                </div>
+            </div>
+            <label for="phone">Phone:</label>
+            <input type="text" id="phone" name="phone" value="{{ nurse.phone }}" required><br><br>
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="example@gmail.com" value="{{ nurse.email }}" required>
+            <br>
+
+            <input type="submit" value="Update Profile">
+        </form>
+
+        <a href="/nurse_profile/{{nurse.id}}">Back</a>
+    </body>
+</html>

@@ -5,6 +5,8 @@ app = Flask(__name__)
 
 # Path to the JSON file where the patient data will be stored
 PATIENTS_FILE = "patients.json"
+NURSE_FILE = "nurse.json"
+LOGIN_FILE = "login.json"
 APPOINTMENT_FILE = "appointment.json"
 ID_TRACKER_FILE = "id_tracker.txt"
 
@@ -36,10 +38,135 @@ def get_next_patient_id():
         file.write(str(next_id))
     return next_id
 
-@app.route("/")
+def load_nurse():
+    try:
+        with open(NURSE_FILE, "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []  # Return an empty list if the file does not exist
+
+def load_db(filePath):
+    try:
+        with open(filePath, "r") as file:
+            return json.load(file)  # Return a list of dictionaries
+    except FileNotFoundError:
+        return []  # Return an empty list if the file does not exist
+
+
+
+
+@app.route("/", methods=["GET", "POST"])
+def index_main():
+    if request.method == "POST":
+        ppl = load_db(LOGIN_FILE)  # Load the list of users
+        id = request.form["user"]
+        psw = request.form["psw"]
+
+        # Search for the user in the list
+        for person in ppl:
+            if id == person["id"] and psw == person["psw"]:
+                navs = person["pos"] + "_index"
+                return redirect(url_for(navs, id=id)) 
+        
+        # If no match is found
+        print("Invalid login")
+        return render_template("main/index.html")         
+    
+    return render_template("main/index.html")
+
+
+
+@app.route("/manage/<string:id>")
+def manage_index(id):
+    # Load nurse data from the database or file
+    ppls = load_db(LOGIN_FILE)
+    
+    # Search for the nurse with the given ID
+    for ppl in ppls:
+        if id == ppl["id"]:
+            pos = ppl["pos"]
+            nav = pos + "/" + pos + "_index.html"
+            return render_template(nav, ppl=ppl)
+
+
+@app.route("/nurse/<string:id>")
+def nurse_index(id):
+    # Load nurse data from the database or file
+    nurses = load_db(NURSE_FILE)
+    
+    # Search for the nurse with the given ID
+    for nurse in nurses:
+        if id == nurse["id"]:
+            return render_template("nurse/nurse_index.html", nurse=nurse)
+
+
+
+
+
+
+@app.route("/nurse_profile/<string:id>")
+def nurse_profile(id):
+    # Load nurse data from the database or file
+    nurses = load_db(NURSE_FILE)
+    
+    # Search for the nurse with the given ID
+    for nurse in nurses:
+        if id == nurse["id"]:
+            # Render the nurse profile page
+            return render_template("nurse/nurse_profile.html", nurse=nurse)
+    
+    # Handle case when the nurse is not found
+    return "Nurse not found", 404
+
+
+def get_details_by_id(id,filePath):
+    details = load_db(filePath)
+    return next((p for p in details if p["id"] == id), None)
+
+def save_profile(persons,filePath):
+    with open(filePath, "w") as file:
+        json.dump(persons, file, indent=4)
+
+def update_nurse(id, name, dob, gender, phone, email, department):
+    nurses = load_db(NURSE_FILE)
+    for nurse in nurses:
+        if nurse["id"] == id:
+            nurse["name"] = name
+            nurse["dob"] = dob
+            nurse["gender"] = gender
+            nurse["phone"] = phone
+            nurse["email"] = email
+            nurse["department"] = department
+            break
+
+    save_profile(nurses,NURSE_FILE)
+
+@app.route("/edit_profile/<string:id>", methods=['GET', 'POST'])
+def nurse_edit_profile(id):
+    nurse = get_details_by_id(id,NURSE_FILE)
+    print(nurse)
+
+    if request.method == 'POST':
+        phone = request.form['phone']
+        email = request.form["email"]
+
+        update_nurse(id, nurse["name"],nurse["dob"],nurse["gender"], phone, email, nurse["department"])
+        return redirect(url_for('nurse_profile',id=id))
+
+    return render_template('nurse/nurse_update.html', nurse=nurse)
+
+
+
+
+
+
+
+
+
+@app.route("/patient")
 def index():
     patients = load_patients()
-    return render_template("patient_index.html", patients=patients)
+    return render_template("patient/patient_index.html", patients=patients)
 
 @app.route("/add", methods=["GET", "POST"])
 def add_patient():
@@ -60,7 +187,7 @@ def add_patient():
         return redirect(url_for("index"))
 
     id = get_current_id()
-    return render_template("patient_add.html", id=id)
+    return render_template("patient/patient_add.html", id=id)
 
 @app.route("/delete/<int:patient_id>")
 def delete_patient(patient_id):
@@ -87,7 +214,7 @@ def update_patient_info(patient_id):
         update_patient(patient_id, name, dob, gender, phone, email, address)
         return redirect(url_for('index'))
 
-    return render_template('patient_update.html', patient=patient)
+    return render_template('patient/patient_update.html', patient=patient)
 
 def get_patient_by_id(patient_id):
     patients = load_patients()
@@ -110,18 +237,18 @@ def update_patient(patient_id, name, dob, gender, phone, email, address):
 @app.route('/appointment/<int:patient_id>')
 def get_appointment(patient_id):
     patient = get_patient_by_id(patient_id)
-    return render_template('patient_appointment.html', patient=patient)
+    return render_template('patient/patient_appointment.html', patient=patient)
 
 @app.route('/app_history/<int:patient_id>')
 def get_history(patient_id):
     patient = get_patient_by_id(patient_id)
-    return render_template('patient_history.html', patient=patient)
+    return render_template('patient/patient_history.html', patient=patient)
 
 
 @app.route('/add_appointment/<int:patient_id>', methods=["GET","POST"])
 def new_appointment(patient_id):
     patient = get_patient_by_id(patient_id)
-    return render_template('patient_history.html', patient=patient)
+    return render_template('patient/patient_history.html', patient=patient)
 
 if __name__ == "__main__":
     app.run(debug=True)
