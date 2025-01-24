@@ -1,0 +1,98 @@
+[
+    {
+        "id": "d1000",
+        "name": "Tan",
+        "nic": "901012030381",
+        "dob": "1990-10-12",
+        "gender": "Male",
+        "phone": "015-111 2221",
+        "email": "tan111@gmail.com",
+        "department": "Neurology",
+        "startDate": "2025-02-01",
+        "endDate": "2025-01-31"
+    },
+    {
+        "id": "d1001",
+        "name": "Lim",
+        "nic": "000301047525",
+        "dob": "2000-03-01",
+        "gender": "Male",
+        "phone": "012-345 0001",
+        "email": "lim123@gmail.com",
+        "department": "Neurology",
+        "startDate": "2025-02-01",
+        "endDate": "2025-01-31"
+    },
+    {
+        "id": "d1002",
+        "name": "aa",
+        "nic": "800101070273",
+        "dob": "1980-01-01",
+        "gender": "Male",
+        "phone": "012-345 6789",
+        "email": "aa@gmail.com",
+        "department": "Neurology",
+        "startDate": "2025-02-01",
+        "endDate": "2025-01-31"
+    },
+    {
+        "id": "d1003",
+        "name": "bb",
+        "nic": "700202106727",
+        "dob": "1970-02-02",
+        "gender": "Male",
+        "phone": "012-111 2222",
+        "email": "bb123@gmail.com",
+        "department": "Radiology",
+        "startDate": "2025-02-01",
+        "endDate": "2025-01-31"
+    },
+    {
+        "id": "d1004",
+        "name": "cc",
+        "nic": "001231140736",
+        "dob": "2000-12-31",
+        "gender": "Female",
+        "phone": "015-111 2221",
+        "email": "cc99@gmail.com",
+        "department": "Cardiology",
+        "startDate": "2025-02-01",
+        "endDate": "2025-01-31"
+    },
+    {
+        "id": "d1005",
+        "name": "dd",
+        "nic": "990202017317",
+        "dob": "1999-02-02",
+        "gender": "Male",
+        "phone": "019-999 2222",
+        "email": "dd123@gmail.com",
+        "department": "Emergency",
+        "startDate": "2025-05-01",
+        "endDate": "2025-04-31"
+    },
+    {
+        "id": "d1006",
+        "name": "zz",
+        "nic": "700101090627",
+        "dob": "1970-01-01",
+        "gender": "Male",
+        "phone": "012-345 6789",
+        "email": "zz@gmail.com",
+        "department": "Neurology",
+        "startDate": "1990-01-01",
+        "endDate": "2040-01-01"
+    },
+    {
+        "id": "d1007",
+        "nic": "030919070280",
+        "name": "Wong Zi Ning",
+        "dob": "2003-09-19",
+        "gender": "Male",
+        "phone": "019-999 2222",
+        "email": "wong@gmail.com",
+        "department": "Neurology",
+        "startDate": "2027-01-01",
+        "endDate": "2050-12-31"
+    }
+]

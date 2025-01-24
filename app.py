@@ -1,11 +1,14 @@
 import json
 from flask import Flask, render_template, request, redirect, url_for
 
+
 app = Flask(__name__)
 
 # Path to the JSON file where the patient data will be stored
 PATIENTS_FILE = "patients.json"
+DOCTORS_FILE = "doctors.json"
 NURSE_FILE = "nurse.json"
+MANAGE_FILE = "manage.json"
 LOGIN_FILE = "login.json"
 APPOINTMENT_FILE = "appointment.json"
 ID_TRACKER_FILE = "id_tracker.txt"
@@ -23,28 +26,6 @@ def save_patients(patients):
     with open(PATIENTS_FILE, "w") as file:
         json.dump(patients, file, indent=4)
 
-def get_current_id():
-    try:
-        with open(ID_TRACKER_FILE, "r") as file:
-            current_id = int(file.read().strip())
-    except FileNotFoundError:
-        current_id = 10000  # Start from 10000 if the file does not exist
-    return current_id
-
-def get_next_patient_id():
-    current_id = get_current_id()
-    next_id = current_id + 1
-    with open(ID_TRACKER_FILE, "w") as file:
-        file.write(str(next_id))
-    return next_id
-
-def load_nurse():
-    try:
-        with open(NURSE_FILE, "r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return []  # Return an empty list if the file does not exist
-
 def load_db(filePath):
     try:
         with open(filePath, "r") as file:
@@ -52,6 +33,11 @@ def load_db(filePath):
     except FileNotFoundError:
         return []  # Return an empty list if the file does not exist
 
+
+
+
+
+    
 
 
 
@@ -74,19 +60,194 @@ def index_main():
     
     return render_template("main/index.html")
 
-
-
 @app.route("/manage/<string:id>")
 def manage_index(id):
-    # Load nurse data from the database or file
-    ppls = load_db(LOGIN_FILE)
+    ppls = load_db(MANAGE_FILE)
     
-    # Search for the nurse with the given ID
+    d_count = load_db(DOCTORS_FILE)
+    n_count = load_db(NURSE_FILE)
+    p_count = load_db(PATIENTS_FILE)
+    count = {
+            "d_count": len(d_count),
+            "n_count": len(n_count),
+            "p_count": len(p_count)
+            }
+    
     for ppl in ppls:
         if id == ppl["id"]:
-            pos = ppl["pos"]
-            nav = pos + "/" + pos + "_index.html"
-            return render_template(nav, ppl=ppl)
+            return render_template("manage/manage_index.html", ppl=ppl, count=count)
+
+@app.route("/<string:db_type>_db/<string:staff_id>")
+def manage_db(db_type, staff_id):
+    # Define a mapping between db_type and file/constants
+    db_files = {
+        "doctors": DOCTORS_FILE,
+        "nurses": NURSE_FILE,
+        "patients": PATIENTS_FILE,
+    }
+
+    # Check if the db_type is valid
+    if db_type not in db_files:
+        return "Invalid database type.", 404
+
+    # Load the appropriate database
+    data = load_db(db_files[db_type])
+    # Render the corresponding template
+    return render_template(f"manage/{db_type}_db.html", data=data, staff_id=staff_id)
+
+##########################################################################################################
+def get_current_ids():
+    """Load the current IDs from the JSON file or initialize if not found."""
+    try:
+        with open(ID_TRACKER_FILE, "r") as file:
+            ids = json.load(file)
+    except FileNotFoundError:
+        # Initialize IDs if the file does not exist
+        ids = {
+            "patient_id": 10000,
+            "doctor_id": 1000,
+            "nurse_id": 1000
+        }
+    return ids
+
+def save_current_ids(ids):
+    """Save the current IDs to the JSON file."""
+    with open(ID_TRACKER_FILE, "w") as file:
+        json.dump(ids, file)
+
+def get_next_id(id_type):
+    """Get the next ID for the given type (e.g., patient, doctor, nurse)."""
+    ids = get_current_ids()
+    
+    if id_type not in ids:
+        raise ValueError(f"Invalid ID type: {id_type}")
+    
+    # Increment the ID
+    next_id = ids[id_type] + 1
+    ids[id_type] = next_id
+    
+    # Save the updated IDs back to the JSON file
+    save_current_ids(ids)
+    if id_type == "doctor_id":
+        return f"d{next_id}"
+    elif id_type == "nurse_id":
+        return f"n{next_id}"
+    else:
+        return next_id 
+
+def save_ppl(filePath,data):
+    with open(filePath, "w") as file:
+        json.dump(data, file, indent=4)
+
+@app.route("/<string:staff_type>_add/<string:staff_id>", methods=["GET", "POST"])
+def add_record(staff_type, staff_id):
+    # Mapping for file loaders, savers, and ID keys based on staff type
+    staff_files = {
+        "patients": {"file": PATIENTS_FILE, "id_key": "patient_id"},
+        "doctors": {"file": DOCTORS_FILE, "id_key": "doctor_id"},
+        "nurses": {"file": NURSE_FILE, "id_key": "nurse_id"},
+    }
+
+    # Validate staff type
+    if staff_type not in staff_files:
+        return "Invalid staff type.", 404
+
+    # Get the file and ID key for the specified staff type
+    file_path = staff_files[staff_type]["file"]
+    print(file_path)
+    id_key = staff_files[staff_type]["id_key"]
+    print(id_key)
+
+    # Get the current ID for display purposes
+    current_id = get_current_ids().get(id_key, 10000)
+    if id_key == "doctor_id":
+        id = f"d{current_id}"
+    elif id_key == "nurse_id":
+        id = f"n{current_id}"
+    else:
+        id = current_id 
+
+    if request.method == "POST":
+        # Load existing records
+        records = load_db(file_path)
+
+        # Generate the next ID for the given staff type
+        record_id = id
+
+        # Collect form data
+        name = request.form["name"]
+        nic = request.form["nic"]
+        dob = request.form["dob"]
+        gender = request.form["gender"]
+        phone = request.form["phone"]
+        email = request.form["email"]
+        department = request.form["department"]
+        startDate = request.form["startDate"]
+        endDate = request.form["endDate"]
+
+        # Append the new record
+        records.append({
+            "id": record_id,
+            "name": name,
+            "nic": nic,
+            "dob": dob,
+            "gender": gender,
+            "phone": phone,
+            "email": email,
+            "department": department,
+            'startDate': startDate,
+            'endDate': endDate
+        })
+
+        print(records)
+
+        # Save the updated records list
+        try:
+            save_ppl(file_path, records)
+        except Exception as e:
+             print(f"File saving error: {e}")
+        
+        get_next_id(id_key)
+        print("Saved")
+
+        # Redirect to index after saving
+        return redirect(url_for("manage_db",db_type=staff_type, staff_id=staff_id))
+    else:
+        return render_template(f"manage/{staff_type}_add.html", id=id, staff_id=staff_id)
+
+
+###########################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @app.route("/nurse/<string:id>")
@@ -160,19 +321,22 @@ def nurse_edit_profile(id):
 
 
 
-
-
-
-@app.route("/patient")
-def index():
+@app.route("/patient/<string:staff_id>")
+def index(staff_id):
     patients = load_patients()
-    return render_template("patient/patient_index.html", patients=patients)
+    staff_id= staff_id
+    return render_template("patient/patient_index.html", patients=patients, staff_id=staff_id)
 
-@app.route("/add", methods=["GET", "POST"])
-def add_patient():
+@app.route("/add/<string:staff_id>", methods=["GET", "POST"])
+def add_patient(staff_id):
     if request.method == "POST":
+        # Load existing patients
         patients = load_patients()
-        id = get_current_id()
+
+        # Generate the next patient ID
+        id = get_next_id("patient_id")
+
+        # Get form data
         name = request.form["name"]
         dob = request.form["dob"]
         gender = request.form["gender"]
@@ -180,14 +344,27 @@ def add_patient():
         email = request.form["email"]
         address = request.form["address"]
 
-        patients.append({"id": id, "name": name, "dob": dob, "gender": gender, "phone": phone, "email": email, "address": address})
-        
-        save_patients(patients)
-        id = get_next_patient_id()
-        return redirect(url_for("index"))
+        # Append the new patient record
+        patients.append({
+            "id": id,
+            "name": name,
+            "dob": dob,
+            "gender": gender,
+            "phone": phone,
+            "email": email,
+            "address": address
+        })
 
-    id = get_current_id()
-    return render_template("patient/patient_add.html", id=id)
+        # Save updated patients list
+        save_patients(patients)
+
+        # Redirect to index after saving
+        return redirect(url_for("index", staff_id=staff_id))
+
+    # Get the current patient ID for display purposes
+    id = get_current_ids().get("patient_id", 10000)
+    return render_template("patient/patient_add.html", id=id, staff_id=staff_id)
+
 
 @app.route("/delete/<int:patient_id>")
 def delete_patient(patient_id):
@@ -251,4 +428,4 @@ def new_appointment(patient_id):
     return render_template('patient/patient_history.html', patient=patient)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5000)

@@ -14,7 +14,7 @@
 </head>
 <body>
     <h1>Add New Patient</h1>
-    <form action="/add" method="POST" onsubmit="showConfirmation(event)">
+    <form action="/add/{{staff_id}}" method="POST" onsubmit="showConfirmation(event)">
         <label for="patient_id">Patient ID: {{id}}</label>
         <br>
         <label for="name">Name:</label>
@@ -46,6 +46,6 @@
 
         <button type="submit">Add Patient</button>
     </form>
-    <a href="/">Back to Patient List</a>
+    <a href="/patient_db/{{staff_id}}">Back to Patient List</a>
 </body>
 </html>

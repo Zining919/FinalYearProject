@@ -15,7 +15,7 @@
     </head>
     <body>
         <h1>Patient Database</h1>
-        <a href="/add">Add New Patient</a>
+        <a href="/add/{{staff_id}}">Add New Patient</a>
         <table>
             <tr>
                 <th>#</th>
@@ -55,6 +55,6 @@
             </tr>
             {% endfor %}
         </table>
-        <a href="/">Back</a>
+        <a href="/manage/{{staff_id}}">Back</a>
     </body>
 </html>

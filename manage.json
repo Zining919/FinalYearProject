@@ -1,0 +1,18 @@
+[
+    {
+        "id": "m100",
+        "name": "Ali",
+        "dob": "1990-10-12",
+        "gender": "Male",
+        "phone": "015-111 2221",
+        "email": "ali@gmail.com"
+    },
+    {
+        "id": "m101",
+        "name": "Abu",
+        "dob": "2000-03-01",
+        "gender": "Male",
+        "phone": "012-345 0001",
+        "email": "abu@gmail.com"
+    }
+]

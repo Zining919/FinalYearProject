@@ -15,41 +15,41 @@
     </head>
     <body>
         <h1>Doctor Database</h1>
-        <a href="/add_doctor">Add Doctor Patient</a>
+        <a href="/doctors_add/{{staff_id}}">Add Doctor</a>
         <table>
             <tr>
                 <th>#</th>
                 <th>Name</th>
+                <th>NIC</th>
                 <th>DOB</th>
                 <th>Gender</th>
                 <th>Phone</th>
                 <th>Email</th>
                 <th>Department</th>
-                <th>Specialty</th>
                 <th>Contract Start Date</th>
                 <th>Contract End Date</th>
                 <th>Actions</th>
             </tr>
-            {% for doctor in doctors %}
+            {% for doctor in data %}
             <tr>
                 <td>{{ doctor.id }}</td>
                 <td>{{ doctor.name }}</td>
+                <td>{{ doctor.nic }}</td>
                 <td>{{ doctor.dob }}</td>
                 <td>{{ doctor.gender }}</td>
                 <td>{{ doctor.phone }}</td>
                 <td>{{ doctor.email }}</td>
                 <td>{{ doctor.department }}</td>
-                <td>{{ doctor.specialty }}</td>
-                <td><a href="/appointment/{{ patient.id }}" class="appointment">View</a></td>
-                <td><a href="/history/{{ patient.id }}" class="appointment">View</a></td>
+                <th>{{ doctor.startDate }}</th>
+                <th>{{ doctor.endDate }}</th>
                 <td>
                     <table class="action-table">
                         <tr>
                             <td>
-                                <a href="/update/{{ patient.id }}" class="update-link">Update</a>
+                                <a href="/update/{{ doctor.id }}" class="update-link">Update</a>
                             </td>
                             <td>
-                                <a href="#" class="delete-link" onclick="confirmDelete('{{ patient.id }}')">Delete</a>
+                                <a href="#" class="delete-link" onclick="confirmDelete('{{ doctor.id }}')">Delete</a>
                             </td>
                         </tr>
                     </table>
@@ -57,5 +57,6 @@
             </tr>
             {% endfor %}
         </table>
+        <a href="/manage/{{staff_id}}">Back</a>
     </body>
 </html>

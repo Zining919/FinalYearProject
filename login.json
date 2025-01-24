@@ -12,5 +12,10 @@
     "id": "m100",
     "psw": "m100",
     "pos": "manage"
+},
+{
+    "id": "m101",
+    "psw": "m101",
+    "pos": "manage"
 }
 ]

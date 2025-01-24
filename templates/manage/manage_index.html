@@ -8,6 +8,29 @@
     <body>
         <h1>Management Page</h1>
         <h2>Hi, {{ppl.name}}</h2>
+        <table>
+            <tr>
+                <th>Doctor</th>
+                <th>Nurse</th>
+                <th>Patient</th>
+            </tr>
+            <tr>
+                <th>
+                    {{count.d_count}}<br><br>
+                    <button><a href="/doctors_db/{{ppl.id}}">View Doctor List</a></button> <br>
+                    <button><a href="/doctors_add/{{ppl.id}}">Add New Doctor</a></button>
+                </th>
+                <th>
+                    {{count.n_count}}<br><br>
+                    <button><a href="/nurses_db/{{ppl.id}}">View Nurse List</a></button> <br>
+                    <button><a href="/nurses_add/{{ppl.id}}">Add New Nurse</a></button>
+                </th>
+                <th>
+                    {{count.p_count}}<br><br>
+                    <button><a href="/patients_db/{{ppl.id}}">View Patient List</a></button>
+                </th>
+            </tr>
+        </table>
         <button><a href="/">Log Out</a></button>
     </body>
 </html>

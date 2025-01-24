@@ -7,5 +7,32 @@
         "phone": "012-345 6789",
         "email": "lim123@gmail.com",
         "address": "B-12-12,PV12,53300, Setapak, KL"
+    },
+    {
+        "id": 10001,
+        "name": "Tan See See",
+        "dob": "1998-10-01",
+        "gender": "Male",
+        "phone": "015-111 2221",
+        "email": "bla111@hotmail.com",
+        "address": "1,Jalan Zoo, 12000, Setapak, KL"
+    },
+    {
+        "id": 10002,
+        "name": "Tan Bla ",
+        "dob": "1998-10-01",
+        "gender": "Male",
+        "phone": "015-111 2221",
+        "email": "bla111@hotmail.com",
+        "address": "1,Jalan Zoo, 12000, Setapak, KL"
+    },
+    {
+        "id": 10003,
+        "name": "aa",
+        "dob": "2000-02-22",
+        "gender": "Male",
+        "phone": "019-999 2222",
+        "email": "aa@gmail.com",
+        "address": "1,Jalan Zoo, 12000, Setapak, KL"
     }
 ]
