@@ -1,21 +1,27 @@
-[{
-    "id": "n1000",
-    "psw": "n1000",
-    "pos": "nurse"
-},
-{
-    "id": "d1000",
-    "psw": "d1000",
-    "pos": "doctor"
-},
-{
-    "id": "m100",
-    "psw": "m100",
-    "pos": "manage"
-},
-{
-    "id": "m101",
-    "psw": "m101",
-    "pos": "manage"
-}
+[
+    {
+        "id": "n1000",
+        "psw": "n1000",
+        "pos": "nurses"
+    },
+    {
+        "id": "d1000",
+        "psw": "d1000",
+        "pos": "doctors"
+    },
+    {
+        "id": "m100",
+        "psw": "m100",
+        "pos": "manage"
+    },
+    {
+        "id": "m101",
+        "psw": "m101",
+        "pos": "manage"
+    },
+    {
+        "id": "d1008",
+        "psw": "900720050838",
+        "pos": "doctors"
+    }
 ]

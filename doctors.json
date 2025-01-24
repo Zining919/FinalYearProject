@@ -94,5 +94,17 @@
         "department": "Neurology",
         "startDate": "2027-01-01",
         "endDate": "2050-12-31"
+    },
+    {
+        "id": "d1008",
+        "name": "Siti Halim",
+        "nic": "900720050838",
+        "dob": "1990-07-20",
+        "gender": "Female",
+        "phone": "015-111 2221",
+        "email": "siti@hotmail.com",
+        "department": "Emergency",
+        "startDate": "2021-01-01",
+        "endDate": "2045-12-31"
     }
 ]
