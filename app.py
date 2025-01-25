@@ -32,6 +32,7 @@ def load_db(filePath):
             return json.load(file)  # Return a list of dictionaries
     except FileNotFoundError:
         return []  # Return an empty list if the file does not exist
+    
 
 @app.route("/", methods=["GET", "POST"])
 def index_main():
@@ -44,67 +45,64 @@ def index_main():
         for person in ppl:
             if id == person["id"] and psw == person["psw"]:
                 navs = person["pos"] + "_index"
+
+                # Check and update status for doctors and nurses
+                d_count = load_db(DOCTORS_FILE)
+                n_count = load_db(NURSE_FILE)
+                current_date = datetime.now().date()
+
+                # Update status for doctors
+                for doctor in d_count:
+                    end_date_str = doctor.get("endDate", "")
+                    if end_date_str:
+                        try:
+                            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+                            doctor["status"] = "expired" if end_date < current_date else "active"
+                        except ValueError:
+                            print(f"Invalid date format for doctor {doctor['id']}: {end_date_str}")
+                    else:
+                        print(f"Doctor {doctor['id']} has no endDate")
+
+                # Save the updated doctors' data
+                save_ppl(DOCTORS_FILE, d_count)
+
+                # Update status for nurses
+                for nurse in n_count:
+                    end_date_str = nurse.get("endDate", "")
+                    if end_date_str:
+                        try:
+                            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+                            nurse["status"] = "expired" if end_date < current_date else "active"
+                        except ValueError:
+                            print(f"Invalid date format for nurse {nurse['id']}: {end_date_str}")
+                    else:
+                        print(f"Nurse {nurse['id']} has no endDate")
+
+                # Save the updated nurses' data
+                save_ppl(NURSE_FILE, n_count)
+
                 print(navs)
-                return redirect(url_for(navs, id=id)) 
-        
+                return redirect(url_for(navs, id=id))
+
         # If no match is found
         print("Invalid login")
-        return render_template("main/index.html")         
-    
+        return render_template("main/index.html")
+
     return render_template("main/index.html")
+
 
 @app.route("/manage/<string:id>")
 def manage_index(id):
     ppls = load_db(MANAGE_FILE)
-    
+
     d_count = load_db(DOCTORS_FILE)
     n_count = load_db(NURSE_FILE)
     p_count = load_db(PATIENTS_FILE)
-
-    current_date = datetime.now().date()
-    print(d_count)
-
-    # Update status for doctors based on endDate
-    for doctor in d_count:
-        end_date_str = doctor.get("endDate", "")
-        print(end_date_str)
-        if end_date_str:
-            try:
-                end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-                if end_date < current_date:
-                    doctor["status"] = "expired"  # Update status
-                else:
-                    doctor["status"] = "active"  # Ensure active status if date is valid
-            except ValueError:
-                print(f"Invalid date format for doctor {doctor['id']}: {end_date_str}")
-        else:
-            print(f"Doctor {doctor['id']} has no endDate")
-    print("OK ok")
-    save_ppl(DOCTORS_FILE, d_count)
-
-    # Update status for nurses based on endDate
-    for nurse in n_count:
-        end_date_str = nurse.get("endDate", "")
-        print(end_date_str)
-        if end_date_str:
-            try:
-                end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-                if end_date < current_date:
-                    nurse["status"] = "expired"  # Update status
-                else:
-                    nurse["status"] = "active"  # Ensure active status if date is valid
-            except ValueError:
-                print(f"Invalid date format for nurse {nurse['id']}: {end_date_str}")
-        else:
-            print(f"Nurse {nurse['id']} has no endDate")
-    print("OK ok")
-    save_ppl(NURSE_FILE, n_count)
 
     # Count total and active doctors and nurses
     active = sum(1 for doctor in d_count if doctor.get("status") == "active") + sum(1 for nurse in n_count if nurse.get("status") == "active")
     expired = sum(1 for doctor in d_count if doctor.get("status") == "expired") + sum(1 for nurse in n_count if nurse.get("status") == "expired")
 
-    
     count = {
         "d_count": len(d_count),  # Total doctors
         "n_count": len(n_count),  # Total nurses
@@ -112,7 +110,7 @@ def manage_index(id):
         "active": active,
         "expired": expired
     }
-    
+
     for ppl in ppls:
         if id == ppl["id"]:
             return render_template("manage/manage_index.html", ppl=ppl, count=count)

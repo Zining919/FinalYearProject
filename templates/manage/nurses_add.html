@@ -6,23 +6,50 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
     <title>Add Nurse</title>
     <script>
+        function isValidDate(dateString) {
+            const date = new Date(dateString);
+            return date instanceof Date && !isNaN(date) && date.toISOString().startsWith(dateString);
+        }
+
         function validateDates(event) {
             // Prevent the form from submitting if validation fails
             event.preventDefault();
 
-            const startDate = document.getElementById("startDate").value;
-            const endDate = document.getElementById("endDate").value;
             const currentDate = new Date();
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+            
+            // Validate Date of Birth (dob) - Must not be in the future
+            const dob = document.getElementById("dob").value;
+            if (!isValidDate(dob)) {
+                alert("Invalid Date of Birth. Please select a valid date.");
+                return false;
+            }
+            const birthDate = new Date(dob);
+            if (birthDate > currentDate) {
+                alert("Date of Birth cannot be in the future.");
+                return false;
+            }
 
-            // Check if the startDate is at least the current date
+            // Validate Contract Start Date
+            const startDate = document.getElementById("startDate").value;
+            if (!isValidDate(startDate)) {
+                alert("Invalid Contract Start Date. Please select a valid date.");
+                return false;
+            }
+            const start = new Date(startDate);
             if (start < currentDate.setHours(0, 0, 0, 0)) {
                 alert("Contract Start Date must be today or a future date.");
                 return false;
             }
 
-            // Check if the endDate is at least 2 years after the startDate
+            // Validate Contract End Date
+            const endDate = document.getElementById("endDate").value;
+            if (!isValidDate(endDate)) {
+                alert("Invalid Contract End Date. Please select a valid date.");
+                return false;
+            }
+            const end = new Date(endDate);
+
+            // Contract End Date must be at least 2 years after the Start Date
             const twoYearsLater = new Date(start);
             twoYearsLater.setFullYear(twoYearsLater.getFullYear() + 2);
 
