@@ -6,14 +6,40 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
     <title>Add Doctor</title>
     <script>
-        function showConfirmation(event) {
-            alert("New Doctor added successfully!"); 
+        function validateDates(event) {
+            // Prevent the form from submitting if validation fails
+            event.preventDefault();
+
+            const startDate = document.getElementById("startDate").value;
+            const endDate = document.getElementById("endDate").value;
+            const currentDate = new Date();
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            // Check if the startDate is at least the current date
+            if (start < currentDate.setHours(0, 0, 0, 0)) {
+                alert("Contract Start Date must be today or a future date.");
+                return false;
+            }
+
+            // Check if the endDate is at least 2 years after the startDate
+            const twoYearsLater = new Date(start);
+            twoYearsLater.setFullYear(twoYearsLater.getFullYear() + 2);
+
+            if (end < twoYearsLater) {
+                alert("Contract End Date must be at least 2 years after the Start Date.");
+                return false;
+            }
+
+            // If all validations pass, submit the form
+            alert("New Doctor added successfully!");
+            event.target.submit();
         }
     </script>
 </head>
 <body>
     <h1>Add New Doctor</h1>
-    <form action="/doctors_add/{{staff_id}}" method="POST">
+    <form action="/doctors_add/{{staff_id}}" method="POST" onsubmit="validateDates(event)">
         <label for="id">Doctor ID: {{id}}</label>
         <br>
         <label for="name">Name:</label>

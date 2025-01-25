@@ -40,3 +40,12 @@ a {
 .update-link:hover, .delete-link:hover, .appointment:hover {
     text-decoration: underline;
 }
+
+.status-active {
+    color: green;
+    font-weight: bold;
+}
+.status-expired {
+    color: red;
+    font-weight: bold;
+}

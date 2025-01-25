@@ -1,6 +1,6 @@
 import json
 from flask import Flask, render_template, request, redirect, url_for
-
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -60,11 +60,58 @@ def manage_index(id):
     d_count = load_db(DOCTORS_FILE)
     n_count = load_db(NURSE_FILE)
     p_count = load_db(PATIENTS_FILE)
+
+    current_date = datetime.now().date()
+    print(d_count)
+
+    # Update status for doctors based on endDate
+    for doctor in d_count:
+        end_date_str = doctor.get("endDate", "")
+        print(end_date_str)
+        if end_date_str:
+            try:
+                end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+                if end_date < current_date:
+                    doctor["status"] = "expired"  # Update status
+                else:
+                    doctor["status"] = "active"  # Ensure active status if date is valid
+            except ValueError:
+                print(f"Invalid date format for doctor {doctor['id']}: {end_date_str}")
+        else:
+            print(f"Doctor {doctor['id']} has no endDate")
+    print("OK ok")
+    save_ppl(DOCTORS_FILE, d_count)
+
+    # Update status for nurses based on endDate
+    for nurse in n_count:
+        end_date_str = nurse.get("endDate", "")
+        print(end_date_str)
+        if end_date_str:
+            try:
+                end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+                if end_date < current_date:
+                    nurse["status"] = "expired"  # Update status
+                else:
+                    nurse["status"] = "active"  # Ensure active status if date is valid
+            except ValueError:
+                print(f"Invalid date format for nurse {nurse['id']}: {end_date_str}")
+        else:
+            print(f"Nurse {nurse['id']} has no endDate")
+    print("OK ok")
+    save_ppl(NURSE_FILE, n_count)
+
+    # Count total and active doctors and nurses
+    active = sum(1 for doctor in d_count if doctor.get("status") == "active") + sum(1 for nurse in n_count if nurse.get("status") == "active")
+    expired = sum(1 for doctor in d_count if doctor.get("status") == "expired") + sum(1 for nurse in n_count if nurse.get("status") == "expired")
+
+    
     count = {
-            "d_count": len(d_count),
-            "n_count": len(n_count),
-            "p_count": len(p_count)
-            }
+        "d_count": len(d_count),  # Total doctors
+        "n_count": len(n_count),  # Total nurses
+        "p_count": len(p_count),  # Total patients
+        "active": active,
+        "expired": expired
+    }
     
     for ppl in ppls:
         if id == ppl["id"]:
@@ -177,6 +224,7 @@ def add_record(staff_type, staff_id):
         department = request.form["department"]
         startDate = request.form["startDate"]
         endDate = request.form["endDate"]
+        status = "active"
 
         # Append the new record
         records.append({
@@ -189,7 +237,8 @@ def add_record(staff_type, staff_id):
             "email": email,
             "department": department,
             'startDate': startDate,
-            'endDate': endDate
+            'endDate': endDate,
+            "status": status
         })
         # Save the updated records list
         try:
@@ -220,11 +269,9 @@ def add_record(staff_type, staff_id):
 ###########################################################################################################
 @app.route("/doctor/<string:id>")
 def doctors_index(id):
-    print("OK")
     # Load nurse data from the database or file
     doctors = load_db(DOCTORS_FILE)
 
-    print("OK 2")
     # Search for the nurse with the given ID
     for doctor in doctors:
         if id == doctor["id"]:
@@ -243,7 +290,6 @@ def nurses_index(id):
             return render_template("nurses/nurses_index.html", nurse=nurse)
 
 ##############################################################################################################
-
 
 @app.route("/nurse_profile/<string:id>")
 def nurse_profile(id):
@@ -282,6 +328,59 @@ def update_nurse(id, name, dob, gender, phone, email, department):
 
     save_profile(nurses,NURSE_FILE)
 
+
+def update_details(id, name,nic, dob, gender, department, phone, email, startDate, endDate, status,filePath):
+    ppls = load_db(filePath)
+    for ppl in ppls:
+        if ppl["id"] == id:
+            ppl["name"] = name
+            ppl["nic"] = nic
+            ppl["dob"] = dob
+            ppl["gender"] = gender
+            ppl["department"] = department
+            ppl["phone"] = phone
+            ppl["email"] = email
+            ppl["startDate"] = startDate
+            ppl["endDate"] = endDate
+            ppl["status"] = status
+            break
+
+    save_profile(ppls,filePath)
+
+
+@app.route("/update_contract/<string:staff_type>/<string:staff_id>/<string:id>", methods=['GET', 'POST'])
+def update_contract(staff_type,staff_id,id):
+    # Define a mapping between db_type and file/constants
+    db_files = {
+        "doctors": DOCTORS_FILE,
+        "nurses": NURSE_FILE,
+        "patients": PATIENTS_FILE,
+    }
+    print("OK 2")
+    # Check if the db_type is valid
+    if staff_type not in db_files:
+        return "Invalid database type.", 404
+    
+    file_path = db_files[staff_type]
+    ppl = get_details_by_id(id,file_path)
+
+    print(ppl)
+    if request.method == 'POST':
+        startDate = request.form['startDate']
+        endDate = request.form["endDate"]
+        status = "active"
+
+        print("OK 3")
+
+        update_details(id, ppl["name"],ppl["nic"],ppl["dob"],ppl["gender"], 
+                       ppl["department"], ppl["phone"], ppl["email"],
+                       startDate, endDate,status,file_path)
+        print("OK 4")
+        return redirect(url_for("manage_db",db_type=staff_type, staff_id=staff_id))
+    return render_template('manage/update_contract.html',ppl=ppl,staff_type=staff_type,staff_id=staff_id)
+
+
+
 @app.route("/edit_profile/<string:id>", methods=['GET', 'POST'])
 def nurse_edit_profile(id):
     nurse = get_details_by_id(id,NURSE_FILE)
@@ -296,7 +395,7 @@ def nurse_edit_profile(id):
 
     return render_template('nurses/nurses_update.html', nurse=nurse)
 
-
+#####################################################################################################################
 
 
 

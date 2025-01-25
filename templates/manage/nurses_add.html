@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+    <title>Add Nurse</title>
+    <script>
+        function validateDates(event) {
+            // Prevent the form from submitting if validation fails
+            event.preventDefault();
+
+            const startDate = document.getElementById("startDate").value;
+            const endDate = document.getElementById("endDate").value;
+            const currentDate = new Date();
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            // Check if the startDate is at least the current date
+            if (start < currentDate.setHours(0, 0, 0, 0)) {
+                alert("Contract Start Date must be today or a future date.");
+                return false;
+            }
+
+            // Check if the endDate is at least 2 years after the startDate
+            const twoYearsLater = new Date(start);
+            twoYearsLater.setFullYear(twoYearsLater.getFullYear() + 2);
+
+            if (end < twoYearsLater) {
+                alert("Contract End Date must be at least 2 years after the Start Date.");
+                return false;
+            }
+
+            // If all validations pass, submit the form
+            alert("New Nurse added successfully!");
+            event.target.submit();
+        }
+    </script>
+</head>
+<body>
+    <h1>Add New Nurse</h1>
+    <form action="/nurses_add/{{staff_id}}" method="POST" onsubmit="validateDates(event)">
+        <label for="id">Nurse ID: {{id}}</label>
+        <br>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <br>
+
+        <label for="nic">NIC:</label>
+        <input type="number" id="nic" name="nic" placeholder="000101021234" min="0" maxlength="12" required>
+        <br>
+
+        <label for="dob">Date of Birth:</label>
+        <input type="date" id="dob" name="dob" value="{{ dob|default('') }}" required>
+        <br>
+
+        <label for="gender">Gender:</label>
+        <input type="radio" id="gender1" name="gender" value="Male" checked>
+        <label for="gender1">Male</label>
+        <input type="radio" id="gender2" name="gender" value="Female">
+        <label for="gender2">Female</label>
+        <br>
+
+        <label for="phone">Phone Number:</label>
+        <input type="tel" id="phone" name="phone" pattern="0\s?1[0-9]-\d{3}\s?\d{4}" placeholder="010-330 2037" required>
+        <br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" placeholder="example@gmail.com" required>
+        <br>
+
+        <label for="department">Department:</label>
+        <input type="radio" id="department1" name="department" value="Neurology" checked>
+        <label for="department1">Neurology</label>
+        <input type="radio" id="department2" name="department" value="Cardiology">
+        <label for="department2">Cardiology</label>
+        <input type="radio" id="department3" name="department" value="Emergency">
+        <label for="department3">Emergency</label>
+        <br>
+
+        <label for="startDate">Contract Start Date: </label>
+        <input type="date" id="startDate" name="startDate" value="{{ startDate|default('') }}" required>
+        <br>
+
+        <label for="endDate">Contract End Date: </label>
+        <input type="date" id="endDate" name="endDate" value="{{ endDate|default('') }}" required>
+        <br>
+
+        <button type="submit">Add Nurse</button>
+    </form>
+    <a href="/nurses_db/{{staff_id}}">Back to Nurses List</a>
+</body>
+</html>

@@ -15,32 +15,45 @@
     </head>
     <body>
         <h1>Nurse Database</h1>
-        <a href="/add/{{staff_id}}">Add New Nurse</a>
+        <a href="/nurses_add/{{staff_id}}">Add New Nurse</a>
         <table>
             <tr>
                 <th>ID</th>
                 <th>Name</th>
+                <th>NIC</th>
                 <th>DOB</th>
                 <th>Gender</th>
                 <th>Phone</th>
                 <th>Email</th>
                 <th>Department</th>
+                <th>Contract Start Date</th>
+                <th>Contract End Date</th>
+                <th>Status</th>
                 <th>Actions</th>
             </tr>
             {% for nurse in data %}
             <tr>
                 <td>{{ nurse.id }}</td>
                 <td>{{ nurse.name }}</td>
+                <td>{{ nurse.nic }} </td>
                 <td>{{ nurse.dob }}</td>
                 <td>{{ nurse.gender }}</td>
                 <td>{{ nurse.phone }}</td>
                 <td>{{ nurse.email }}</td>
                 <td>{{ nurse.department }}</td>
+                <td>{{ nurse.startDate }}</td>
+                <td>{{ nurse.endDate }}</td>
+                <td>
+                    <span 
+                        class="{% if nurse.status == 'active' %}status-active{% else %}status-expired{% endif %}">
+                        {{ nurse.status }}
+                    </span>
+                </td>
                 <td>
                     <table class="action-table">
                         <tr>
                             <td>
-                                <a href="/update/{{ nurse.id }}" class="update-link">Update</a>
+                                <a href="/update_contract/nurses/{{staff_id}}/{{ nurse.id }}" class="update-link">Update Contract</a>
                             </td>
                             <td>
                                 <a href="#" class="delete-link" onclick="confirmDelete('{{ nurse.id }}')">Delete</a>

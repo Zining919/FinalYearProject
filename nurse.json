@@ -2,19 +2,53 @@
     {
         "id": "n1000",
         "name": "Siti",
+        "nic": "990112070842",
         "dob": "1999-01-12",
         "gender": "Female",
         "phone": "015-111 2221",
         "email": "siti011@gmail.com",
-        "department": "Neurology"
+        "department": "Neurology",
+        "startDate": "2030-02-01",
+        "endDate": "2050-01-01",
+        "status": "active"
     },
     {
         "id": "n1001",
         "name": "Sarah",
+        "nic": "030301087282",
         "dob": "2003-03-01",
         "gender": "Female",
         "phone": "012-345 0001",
         "email": "sarah123@gmail.com",
-        "department": "Neurology"
+        "department": "Neurology",
+        "startDate": "2025-02-01",
+        "endDate": "2050-01-31",
+        "status": "active"
+    },
+    {
+        "id": "n1002",
+        "name": "Tan Bla ",
+        "nic": "001212141234",
+        "dob": "2000-12-12",
+        "gender": "Female",
+        "phone": "012-345 6789",
+        "email": "bla111@hotmail.com",
+        "department": "Neurology",
+        "startDate": "2025-01-01",
+        "endDate": "2030-01-31",
+        "status": "active"
+    },
+    {
+        "id": "n1003",
+        "name": "Sarah",
+        "nic": "800707070234",
+        "dob": "1980-07-07",
+        "gender": "Female",
+        "phone": "012-111 2222",
+        "email": "sarah1212@gmail.com",
+        "department": "Neurology",
+        "startDate": "2025-02-01",
+        "endDate": "2030-01-31",
+        "status": "active"
     }
 ]

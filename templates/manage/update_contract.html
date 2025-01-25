@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+        <title>Update Contract</title>
+        <script>
+            function validateDates(event) {
+                // Prevent the form from submitting if validation fails
+                event.preventDefault();
+    
+                const startDate = document.getElementById("startDate").value;
+                const endDate = document.getElementById("endDate").value;
+                const currentDate = new Date();
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+    
+                // Check if the startDate is at least the current date
+                if (start < currentDate.setHours(0, 0, 0, 0)) {
+                    alert("Contract Start Date must be today or a future date.");
+                    return false;
+                }
+    
+                // Check if the endDate is at least 2 years after the startDate
+                const twoYearsLater = new Date(start);
+                twoYearsLater.setFullYear(twoYearsLater.getFullYear() + 2);
+    
+                if (end < twoYearsLater) {
+                    alert("Contract End Date must be at least 2 years after the Start Date.");
+                    return false;
+                }
+    
+                // If all validations pass, submit the form
+                alert("Contract is updated successfully!");
+                event.target.submit();
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Update Contract</h1>
+        <form action="/update_contract/{{staff_type}}/{{staff_id}}/{{ppl.id}}" method="POST" onsubmit="validateDates(event)">
+            <div class="profile-container">
+                <div class="profile-row">
+                    <div class="profile-label">ID</div>
+                    <div class="profile-value"><b>: </b>{{ ppl.id }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Name</div>
+                    <div class="profile-value"><b>: </b>{{ ppl.name }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">NIC</div>
+                    <div class="profile-value"><b>: </b>{{ ppl.nic }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Date Of Birth</div>
+                    <div class="profile-value"><b>: </b>{{ ppl.dob }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Gender</div>
+                    <div class="profile-value"><b>: </b>{{ ppl.gender }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Department</div>
+                    <div class="profile-value"><b>: </b>{{ ppl.department }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Phone Number</div>
+                    <div class="profile-value"><b>: </b>{{ ppl.phone }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Email</div>
+                    <div class="profile-value"><b>: </b>{{ ppl.email }}</div>
+                </div>
+            </div>
+            
+            <label for="startDate">Contract Start Date: </label>
+            <input type="date" id="startDate" name="startDate" value="{{ startDate|default('') }}" required>
+            <br>
+
+            <label for="endDate">Contract End Date: </label>
+            <input type="date" id="endDate" name="endDate" value="{{ endDate|default('') }}" required>
+            <br>
+
+            <input type="submit" value="Update Contract">
+        </form>
+
+        <a href="/{{staff_type}}_db/{{staff_id}}">Back to List</a>
+    </body>
+</html>

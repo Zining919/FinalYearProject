@@ -5,10 +5,10 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
         <title>Doctor Database</title>
         <script>
-            function confirmDelete(patientId) {
+            function confirmDelete(id) {
                 const confirmed = confirm("Are you sure you want to delete this doctor?");
                 if (confirmed) {
-                    window.location.href = `/delete/${patientId}`;
+                    window.location.href = `/delete/${id}`;
                 }
             }
         </script>
@@ -18,7 +18,7 @@
         <a href="/doctors_add/{{staff_id}}">Add Doctor</a>
         <table>
             <tr>
-                <th>#</th>
+                <th>ID</th>
                 <th>Name</th>
                 <th>NIC</th>
                 <th>DOB</th>
@@ -28,6 +28,7 @@
                 <th>Department</th>
                 <th>Contract Start Date</th>
                 <th>Contract End Date</th>
+                <th>Status</th>
                 <th>Actions</th>
             </tr>
             {% for doctor in data %}
@@ -40,13 +41,19 @@
                 <td>{{ doctor.phone }}</td>
                 <td>{{ doctor.email }}</td>
                 <td>{{ doctor.department }}</td>
-                <th>{{ doctor.startDate }}</th>
-                <th>{{ doctor.endDate }}</th>
+                <td>{{ doctor.startDate }}</td>
+                <td>{{ doctor.endDate }}</td>
+                <td>
+                    <span 
+                        class="{% if doctor.status == 'active' %}status-active{% else %}status-expired{% endif %}">
+                        {{ doctor.status }}
+                    </span>
+                </td>
                 <td>
                     <table class="action-table">
                         <tr>
                             <td>
-                                <a href="/update/{{ doctor.id }}" class="update-link">Update</a>
+                                <a href="/update_contract/doctors/{{staff_id}}/{{ doctor.id }}" class="update-link">Update Contract</a>
                             </td>
                             <td>
                                 <a href="#" class="delete-link" onclick="confirmDelete('{{ doctor.id }}')">Delete</a>
