@@ -13,19 +13,12 @@ LOGIN_FILE = "login.json"
 APPOINTMENT_FILE = "appointment.json"
 ID_TRACKER_FILE = "id_tracker.txt"
 
-# Function to load patients from the JSON file
-def load_patients():
-    try:
-        with open(PATIENTS_FILE, "r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return []  # Return an empty list if the file does not exist
+# Function to a new person(nurse/doctor/patient) to the JSON file
+def save_ppl(filePath,data):
+    with open(filePath, "w") as file:
+        json.dump(data, file, indent=4)
 
-# Function to save patients to the JSON file
-def save_patients(patients):
-    with open(PATIENTS_FILE, "w") as file:
-        json.dump(patients, file, indent=4)
-
+# Function to load database from the JSON file
 def load_db(filePath):
     try:
         with open(filePath, "r") as file:
@@ -90,7 +83,7 @@ def index_main():
 
     return render_template("main/index.html")
 
-
+# Access Management index page
 @app.route("/manage/<string:id>")
 def manage_index(id):
     ppls = load_db(MANAGE_FILE)
@@ -115,6 +108,8 @@ def manage_index(id):
         if id == ppl["id"]:
             return render_template("manage/manage_index.html", ppl=ppl, count=count)
 
+
+# Get databse 
 @app.route("/<string:db_type>_db/<string:staff_id>")
 def manage_db(db_type, staff_id):
     # Define a mapping between db_type and file/constants
@@ -132,6 +127,8 @@ def manage_db(db_type, staff_id):
     data = load_db(db_files[db_type])
     # Render the corresponding template
     return render_template(f"manage/{db_type}_db.html", data=data, staff_id=staff_id)
+
+
 
 ##########################################################################################################
 def get_current_ids():
@@ -173,15 +170,12 @@ def get_next_id(id_type):
     else:
         return next_id 
 
-def save_ppl(filePath,data):
-    with open(filePath, "w") as file:
-        json.dump(data, file, indent=4)
 
+# Add new doctor/nurse (create new user with username and password for login the system)
 @app.route("/<string:staff_type>_add/<string:staff_id>", methods=["GET", "POST"])
 def add_record(staff_type, staff_id):
     # Mapping for file loaders, savers, and ID keys based on staff type
     staff_files = {
-        "patients": {"file": PATIENTS_FILE, "id_key": "patient_id"},
         "doctors": {"file": DOCTORS_FILE, "id_key": "doctor_id"},
         "nurses": {"file": NURSE_FILE, "id_key": "nurse_id"},
     }
@@ -256,7 +250,6 @@ def add_record(staff_type, staff_id):
         print(add_new)
 
         save_ppl(LOGIN_FILE, add_new)
-        print("OK")
 
         # Redirect to index after saving
         return redirect(url_for("manage_db",db_type=staff_type, staff_id=staff_id))
@@ -281,11 +274,19 @@ def doctors_index(id):
 def nurses_index(id):
     # Load nurse data from the database or file
     nurses = load_db(NURSE_FILE)
+    patients = load_db(PATIENTS_FILE)
+    patient_db = [] 
     
     # Search for the nurse with the given ID
     for nurse in nurses:
         if id == nurse["id"]:
-            return render_template("nurses/nurses_index.html", nurse=nurse)
+            for patient in patients:
+                # Check if the nurse's department is in the patient's list of departments
+                if nurse["department"] in patient.get("departments", []):
+                    patient_db.append(patient)
+            
+            print(patient_db)
+            return render_template("nurses/nurses_index.html", nurse=nurse, patient_db=patient_db)
 
 ##############################################################################################################
 
@@ -298,7 +299,7 @@ def nurse_profile(id):
     for nurse in nurses:
         if id == nurse["id"]:
             # Render the nurse profile page
-            return render_template("nurse/nurse_profile.html", nurse=nurse)
+            return render_template("nurses/nurses_profile.html", nurse=nurse)
     
     # Handle case when the nurse is not found
     return "Nurse not found", 404
@@ -395,59 +396,139 @@ def nurse_edit_profile(id):
 
 #####################################################################################################################
 
+# edit password for all users
+@app.route("/edit_psw/<string:id>", methods=['GET', 'POST'])
+def edit_psw(id):
+    print(id)
+    details = load_db(LOGIN_FILE)
+    print("OK")
+    if request.method == 'POST':
+        print("OK2")
+        for ppl in details:
+            if ppl["id"] == id:
+                print("id", id)
+                current = ppl["psw"]
+                print("psw", current)      
+                  
+    return render_template('main/edit_psw.html', id=id)
 
 
-
+########################################################################################################
 @app.route("/patient/<string:staff_id>")
 def index(staff_id):
-    patients = load_patients()
+    patients = load_db(PATIENTS_FILE)
     staff_id= staff_id
     return render_template("patients/patients_index.html", patients=patients, staff_id=staff_id)
 
-@app.route("/add/<string:staff_id>", methods=["GET", "POST"])
-def add_patient(staff_id):
+
+# Add new patient in database
+@app.route("/add/<string:department>/<string:staff_id>", methods=["GET", "POST"])
+def add_patient(department, staff_id):
     if request.method == "POST":
         # Load existing patients
-        patients = load_patients()
+        patients = load_db(PATIENTS_FILE)
 
         # Generate the next patient ID
-        id = get_next_id("patient_id")
-
+        id = get_current_ids().get("patient_id", 10000)
+        
         # Get form data
         name = request.form["name"]
+        nic = request.form["nic"]
         dob = request.form["dob"]
         gender = request.form["gender"]
         phone = request.form["phone"]
         email = request.form["email"]
         address = request.form["address"]
+        
+        # Modify department to be a list (even if it's just one department)
+        department_list = [department] if department else []
 
-        # Append the new patient record
+        # Append the new patient record with departments as a list
         patients.append({
             "id": id,
             "name": name,
+            "nic": nic,
             "dob": dob,
             "gender": gender,
             "phone": phone,
             "email": email,
-            "address": address
+            "address": address,
+            "departments": department_list  # Store department as a list
         })
 
         # Save updated patients list
-        save_patients(patients)
+        save_ppl(PATIENTS_FILE, patients)
+        
+        get_next_id("patient_id")
 
         # Redirect to index after saving
-        return redirect(url_for("index", staff_id=staff_id))
+        return redirect(url_for("nurses_index", id=staff_id))
 
     # Get the current patient ID for display purposes
     id = get_current_ids().get("patient_id", 10000)
-    return render_template("patients/patients_add.html", id=id, staff_id=staff_id)
+    return render_template("patients/patients_add.html", id=id, staff_id=staff_id, department=department)
 
 
+
+@app.route("/add_existing/<string:department>/<string:staff_id>", methods=["GET", "POST"])
+def add_existing_or_search(department, staff_id):
+    patients = load_db(PATIENTS_FILE)
+    query = request.args.get("query", "")  # Get the search query
+
+    # If the method is POST, update the patient with the department
+    if request.method == "POST":
+        patient_id = request.form["patient_id"]  # Get the selected patient ID
+        existing_department = request.form["existing_department"]  # Get the department to add
+
+        # Find the patient and add the department
+        for patient in patients:
+            if str(patient["id"]) == patient_id:  # Ensure comparison with string
+                # Ensure "departments" is a list (initialize it if necessary)
+                if not isinstance(patient.get("departments"), list):
+                    patient["departments"] = []  # Initialize departments as an empty list if it's not a list
+                
+                # Add the department if it's not already in the list
+                if existing_department not in patient["departments"]:
+                    patient["departments"].append(existing_department)
+                break
+
+        save_ppl(PATIENTS_FILE, patients)
+        return redirect(url_for("nurses_index", id=staff_id))
+
+    if request.method == "GET":
+        query = request.args.get("query", "").lower()  # Ensure query is a string and lowercase
+    
+    if query:  # If there is a query
+        search_results = [
+            patient for patient in patients
+            if query in str(patient.get("id", "")).lower() or  # Convert id to string
+               query in patient.get("nic", "").lower()   # nic is already text, just lowercase
+        ]
+    else:
+        search_results = []
+    
+    return render_template(
+        "patients/patients_add_department.html", 
+        staff_id=staff_id, 
+        department=department, 
+        patients=search_results, 
+        query=query
+    )
+
+
+
+
+
+
+
+
+    
+    
 @app.route("/delete/<int:patient_id>")
 def delete_patient(patient_id):
-    patients = load_patients()
+    patients = load_db(PATIENTS_FILE)
     patients = [patient for patient in patients if patient["id"] != patient_id]
-    save_patients(patients)
+    save_ppl(PATIENTS_FILE, patients)
     return redirect(url_for("index"))
 
 @app.route('/update/<int:patient_id>', methods=['GET', 'POST'])
@@ -471,12 +552,12 @@ def update_patient_info(patient_id):
     return render_template('patients/patients_update.html', patient=patient)
 
 def get_patient_by_id(patient_id):
-    patients = load_patients()
+    patients = load_db(PATIENTS_FILE)
     return next((p for p in patients if p["id"] == patient_id), None)
 
 def update_patient(patient_id, name, dob, gender, phone, email, address):
-    patients = load_patients()
-    for patient in patients:
+    patients = load_db(PATIENTS_FILE)
+    for patient in patients: 
         if patient["id"] == patient_id:
             patient["name"] = name
             patient["dob"] = dob
@@ -486,7 +567,7 @@ def update_patient(patient_id, name, dob, gender, phone, email, address):
             patient["address"] = address
             break
         
-    save_patients(patients)
+    save_ppl(PATIENTS_FILE, patients)
 
 @app.route('/appointment/<int:patient_id>')
 def get_appointment(patient_id):

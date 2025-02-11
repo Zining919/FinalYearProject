@@ -2,37 +2,145 @@
     {
         "id": 10000,
         "name": "Lim Ha Ha",
+        "nic": "000211011234",
         "dob": "2000-01-01",
         "gender": "Male",
         "phone": "012-345 6789",
         "email": "lim123@gmail.com",
-        "address": "B-12-12,PV12,53300, Setapak, KL"
+        "address": "B-12-12,PV12,53300, Setapak, KL",
+        "departments": [
+            "Neurology"
+        ]
     },
     {
         "id": 10001,
         "name": "Tan See See",
+        "nic": "121212121212",
         "dob": "1998-10-01",
         "gender": "Male",
         "phone": "015-111 2221",
         "email": "bla111@hotmail.com",
-        "address": "1,Jalan Zoo, 12000, Setapak, KL"
+        "address": "1,Jalan Zoo, 12000, Setapak, KL",
+        "departments": [
+            "Cardiology",
+            "Neurology"
+        ]
     },
     {
         "id": 10002,
         "name": "Tan Bla ",
+        "nic": "131313131313",
         "dob": "1998-10-01",
         "gender": "Male",
         "phone": "015-111 2221",
         "email": "bla111@hotmail.com",
-        "address": "1,Jalan Zoo, 12000, Setapak, KL"
+        "address": "1,Jalan Zoo, 12000, Setapak, KL",
+        "departments": [
+            "Cardiology"
+        ]
     },
     {
         "id": 10003,
         "name": "aa",
+        "nic": "14141414141414",
         "dob": "2000-02-22",
         "gender": "Male",
         "phone": "019-999 2222",
         "email": "aa@gmail.com",
-        "address": "1,Jalan Zoo, 12000, Setapak, KL"
+        "address": "1,Jalan Zoo, 12000, Setapak, KL",
+        "department": [
+            "Cardiology"
+        ]
+    },
+    {
+        "id": 10005,
+        "name": "Ali",
+        "nic": "111111011234",
+        "dob": "2000-03-31",
+        "gender": "Male",
+        "phone": "010-3302037",
+        "email": "zwong8553@gmail.com",
+        "address": "647C",
+        "departments": [
+            "Neurology"
+        ]
+    },
+    {
+        "id": 10006,
+        "name": "Abu",
+        "nic": "002124293932",
+        "dob": "1999-12-01",
+        "gender": "Male",
+        "phone": "019-0483927",
+        "email": "abu@hotmail.com",
+        "address": "123",
+        "departments": [
+            "Neurology"
+        ]
+    },
+    {
+        "id": 10007,
+        "name": "Alice",
+        "nic": "124335323234",
+        "dob": "1980-02-11",
+        "gender": "Male",
+        "phone": "014-4893246",
+        "email": "alice12@gmail.com",
+        "address": "3235",
+        "departments": [
+            "Neurology"
+        ]
+    },
+    {
+        "id": 10008,
+        "name": "zz",
+        "nic": "535532792563",
+        "dob": "1970-11-01",
+        "gender": "Female",
+        "phone": "018-6280317",
+        "email": "zz11@gmail.com",
+        "address": "12, Jalan zoo, 10453, Setapak,KL",
+        "departments": [
+            "Neurology"
+        ]
+    },
+    {
+        "id": 10009,
+        "name": "qq",
+        "nic": "111111111111",
+        "dob": "1980-12-01",
+        "gender": "Male",
+        "phone": "018-6280317",
+        "email": "zz11@gmail.com",
+        "address": "12, Jalan zoo, 10453, Setapak,KL",
+        "departments": [
+            "Neurology"
+        ]
+    },
+    {
+        "id": 10010,
+        "name": "ss",
+        "nic": "3255234754",
+        "dob": "1980-12-12",
+        "gender": "Female",
+        "phone": "018-6285633",
+        "email": "ss99@gmail.com",
+        "address": "124",
+        "departments": [
+            "Neurology"
+        ]
+    },
+    {
+        "id": 10011,
+        "name": "fff",
+        "nic": "352473437373",
+        "dob": "1978-02-20",
+        "gender": "Male",
+        "phone": "012-9049738",
+        "email": "ff12356@gmail.com",
+        "address": "462362",
+        "departments": [
+            "Neurology"
+        ]
     }
 ]

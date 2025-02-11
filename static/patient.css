@@ -49,3 +49,65 @@ a {
     color: red;
     font-weight: bold;
 }
+
+.search-container {
+    margin: 20px 0;
+}
+.search-input {
+    padding: 8px;
+    width: 200px;
+    margin-right: 10px;
+}
+.search-button {
+    padding: 8px 12px;
+    background-color: #4e95cf;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+/* Basic styles for the subnav */
+.subnav {
+    position: relative;
+    display: inline-block;
+  }
+  
+  /* Style for the button */
+  .subnavbtn {
+    background-color: #334ff0; /* Green button */
+    color: white;
+    padding: 10px 15px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+  }
+  
+  /* Subnav content (initially hidden) */
+  .subnav-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 200px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    padding: 10px;
+  }
+  
+  /* Show the subnav content when the subnav button is hovered */
+  .subnav:hover .subnav-content {
+    display: block;
+  }
+  
+  /* Style for the links inside the subnav content */
+  .subnav-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+  }
+  
+  /* Change color of links on hover */
+  .subnav-content a:hover {
+    background-color: #ddd;
+  }
+  

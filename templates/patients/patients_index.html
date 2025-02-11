@@ -4,14 +4,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
         <title>Patient Database</title>
-        <script>
-            function confirmDelete(patientId) {
-                const confirmed = confirm("Are you sure you want to delete this patient?");
-                if (confirmed) {
-                    window.location.href = `/delete/${patientId}`;
-                }
-            }
-        </script>
     </head>
     <body>
         <h1>Patient Database</h1>
@@ -41,16 +33,7 @@
                 <td><a href="/appointment/{{ patient.id }}" class="appointment">View</a></td>
                 <td><a href="/history/{{ patient.id }}" class="appointment">View</a></td>
                 <td>
-                    <table class="action-table">
-                        <tr>
-                            <td>
-                                <a href="/update/{{ patient.id }}" class="update-link">Update</a>
-                            </td>
-                            <td>
-                                <a href="#" class="delete-link" onclick="confirmDelete('{{ patient.id }}')">Delete</a>
-                            </td>
-                        </tr>
-                    </table>
+                    <a href="/update/{{ patient.id }}" class="update-link">Update</a>
                 </td>
             </tr>
             {% endfor %}

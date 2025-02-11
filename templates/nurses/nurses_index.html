@@ -9,7 +9,74 @@
         <h1>Nurse Page</h1>
         <h2>Hi, {{nurse.name}}</h2>
         <button><a href="/nurse_profile/{{nurse.id}}">Profile</a></button>
-        <button><a href="/patient/{{nurse.id}}">Patient Database</a></button>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search by ID, Name, or NIC">
+            <button class="search-button" onclick="searchPatient()">Search</button>
+        </div>
+
+        <div class="subnav">
+            <button class="subnavbtn">Add New Patient</button>
+            <div class="subnav-content">
+              <a href="/add/{{nurse.department}}/{{nurse.id}}">First Time Patient</a> <br><br>
+              <a href="/add_existing/{{nurse.department}}/{{nurse.id}}">Existing Patient</a>
+            </div>
+        </div>
+
+        <table id="patientTable">
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>DOB</th>
+                <th>Gender</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Address</th>
+                <th>Appointment</th>
+                <th>Actions</th>
+            </tr>
+            {% for patient in patient_db %}
+            <tr>
+                <td>{{ patient.id }}</td>
+                <td>{{ patient.name }}</td>
+                <td>{{ patient.dob }}</td>
+                <td>{{ patient.gender }}</td>
+                <td>{{ patient.phone }}</td>
+                <td>{{ patient.email }}</td>
+                <td>{{ patient.address }}</td>
+                <td><a href="/appointment/{{ patient.id }}" class="appointment">View</a></td>
+                <td>
+                    <a href="/update/{{ patient.id }}" class="update-link">Update</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
         <button><a href="/">Log Out</a></button>
+
+        <script>
+            function searchPatient() {
+                const input = document.getElementById('searchInput').value.toLowerCase();
+                const table = document.getElementById('patientTable');
+                const rows = table.getElementsByTagName('tr');
+
+                for (let i = 1; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByTagName('td');
+                    let match = false;
+
+                    for (let j = 0; j < cells.length; j++) {
+                        if (cells[j]) {
+                            const text = cells[j].textContent.toLowerCase();
+                            if (text.includes(input)) {
+                                match = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    rows[i].style.display = match ? '' : 'none';
+                }
+            }
+        </script>
     </body>
 </html>

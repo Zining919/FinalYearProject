@@ -31,10 +31,11 @@ label {
 }
 
 input[type="text"],
+input[type="number"],
 input[type="date"],
 input[type="tel"],
 input[type="email"] {
-    width: 100%;
+    width: 90%;
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
@@ -111,3 +112,4 @@ form input[type="radio"] + label {
         width: 100%;
     }
 }
+
