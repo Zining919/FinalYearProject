@@ -7,7 +7,7 @@
         "gender": "Male",
         "phone": "012-345 6789",
         "email": "lim123@gmail.com",
-        "address": "B-12-12,PV12,53300, Setapak, KL",
+        "address": "12-12 ,PV12,53300, Setapak, KL",
         "departments": [
             "Neurology"
         ]
@@ -19,7 +19,7 @@
         "dob": "1998-10-01",
         "gender": "Male",
         "phone": "015-111 2221",
-        "email": "bla111@hotmail.com",
+        "email": "tan111@hotmail.com",
         "address": "1,Jalan Zoo, 12000, Setapak, KL",
         "departments": [
             "Cardiology",
@@ -60,7 +60,7 @@
         "gender": "Male",
         "phone": "010-3302037",
         "email": "zwong8553@gmail.com",
-        "address": "647C",
+        "address": "647C, Taman Titi Height, 87391, Bayan Lepas, Penang",
         "departments": [
             "Neurology"
         ]

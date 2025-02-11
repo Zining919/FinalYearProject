@@ -7,33 +7,41 @@
     </head>
     <body>
         <h1>Update Patient Details</h1>
-        <form action="/update/{{patient.id}}" method="POST">
-            <label for="id">ID: {{patient.id}} </label><br><br>
-
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" value="{{ patient.name }}" required><br><br>
-
-            <label for="dob">Date of Birth:</label>
-            <input type="date" id="dob" name="dob" value="{{ patient.dob }}" required><br><br>
-
-            <label for="gender">Gender:</label>
-            <select id="gender" name="gender" required>
-                <option value="Male" {% if patient.gender == 'Male' %}selected{% endif %}>Male</option>
-                <option value="Female" {% if patient.gender == 'Female' %}selected{% endif %}>Female</option>                
-            </select><br><br>
-
+        <form action="/update/{{patient.id}}/{{staff_id}}" method="POST">
+            <div class="profile-container">
+                <div class="profile-row">
+                    <div class="profile-label">ID</div>
+                    <div class="profile-value"><b>: </b>{{ patient.id }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Name</div>
+                    <div class="profile-value"><b>: </b>{{ patient.name }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">NIC</div>
+                    <div class="profile-value"><b>: </b>{{ patient.nic }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Date Of Birth</div>
+                    <div class="profile-value"><b>: </b>{{ patient.dob }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Gender</div>
+                    <div class="profile-value"><b>: </b>{{ patient.gender }}</div>
+                </div>
+            </div>
             <label for="phone">Phone:</label>
             <input type="text" id="phone" name="phone" value="{{ patient.phone }}" required><br><br>
-
+            
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" placeholder="example@gmail.com" value="{{ patient.email }}" required>
             <br>
-    
+
             <label for="address">Address:</label>
             <input type="text" id="address" name="address" value="{{ patient.address }}" required>
             <br>
-            
-            <input type="submit" value="Update Patient">
+
+            <input type="submit" value="Update Profile">
         </form>
 
         <a href="/">Back to Patient List</a>

@@ -46,7 +46,7 @@
                 <td>{{ patient.address }}</td>
                 <td><a href="/appointment/{{ patient.id }}" class="appointment">View</a></td>
                 <td>
-                    <a href="/update/{{ patient.id }}" class="update-link">Update</a>
+                    <a href="/update/{{ patient.id }}/{{nurse.id}}" class="update-link">Update</a>
                 </td>
             </tr>
             {% endfor %}

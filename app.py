@@ -515,59 +515,48 @@ def add_existing_or_search(department, staff_id):
         query=query
     )
 
-
-
-
-
-
-
-
+@app.route('/update/<int:patient_id>/<string:staff_id>', methods=['GET', 'POST'])
+def update_patient_info(patient_id, staff_id):
+    patient = get_details_by_id(patient_id, PATIENTS_FILE)
     
-    
-@app.route("/delete/<int:patient_id>")
-def delete_patient(patient_id):
-    patients = load_db(PATIENTS_FILE)
-    patients = [patient for patient in patients if patient["id"] != patient_id]
-    save_ppl(PATIENTS_FILE, patients)
-    return redirect(url_for("index"))
-
-@app.route('/update/<int:patient_id>', methods=['GET', 'POST'])
-def update_patient_info(patient_id):
-    patient = get_patient_by_id(patient_id)
-
     if not patient:
         return "Patient not found", 404
 
     if request.method == 'POST':
-        name = request.form['name']
-        dob = request.form['dob']
-        gender = request.form['gender']
         phone = request.form['phone']
         email = request.form["email"]
         address = request.form["address"]
 
-        update_patient(patient_id, name, dob, gender, phone, email, address)
-        return redirect(url_for('index'))
+        update_patient(patient_id, phone, email,address, PATIENTS_FILE)
+        return redirect(url_for("nurses_index", id=staff_id))
 
-    return render_template('patients/patients_update.html', patient=patient)
+    return render_template('patients/patients_update.html', patient=patient, staff_id=staff_id)
 
-def get_patient_by_id(patient_id):
-    patients = load_db(PATIENTS_FILE)
-    return next((p for p in patients if p["id"] == patient_id), None)
-
-def update_patient(patient_id, name, dob, gender, phone, email, address):
-    patients = load_db(PATIENTS_FILE)
+def update_patient(patient_id, phone, email, address, file_name):
+    patients = load_db(file_name)
     for patient in patients: 
         if patient["id"] == patient_id:
-            patient["name"] = name
-            patient["dob"] = dob
-            patient["gender"] = gender
+            
+            # Update only phone, email, and address
             patient["phone"] = phone
             patient["email"] = email
             patient["address"] = address
             break
         
-    save_ppl(PATIENTS_FILE, patients)
+    save_ppl(file_name, patients)
+
+
+
+
+
+
+
+
+def get_patient_by_id(patient_id):
+    patients = load_db(PATIENTS_FILE)
+    return next((p for p in patients if p["id"] == patient_id), None)
+
+
 
 @app.route('/appointment/<int:patient_id>')
 def get_appointment(patient_id):
