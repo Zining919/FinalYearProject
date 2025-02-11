@@ -7,37 +7,26 @@
     </head>
     <body>
         <h1>Patient Database</h1>
-        <a href="/add/{{staff_id}}">Add New Patient</a>
         <table>
             <tr>
                 <th>#</th>
                 <th>Name</th>
+                <th>NIC</th>
                 <th>DOB</th>
                 <th>Gender</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Address</th>
-                <th>Appointment</th>
                 <th>History</th>
-                <th>Actions</th>
             </tr>
             {% for patient in patients %}
             <tr>
                 <td>{{ patient.id }}</td>
                 <td>{{ patient.name }}</td>
+                <td>{{ patient.nic }}</td>
                 <td>{{ patient.dob }}</td>
                 <td>{{ patient.gender }}</td>
-                <td>{{ patient.phone }}</td>
-                <td>{{ patient.email }}</td>
-                <td>{{ patient.address }}</td>
-                <td><a href="/appointment/{{ patient.id }}" class="appointment">View</a></td>
-                <td><a href="/history/{{ patient.id }}" class="appointment">View</a></td>
-                <td>
-                    <a href="/update/{{ patient.id }}" class="update-link">Update</a>
-                </td>
+                <td><a href="/app_history/{{ patient.id }}/{{staff_id}}" class="appointment">View</a></td>
             </tr>
             {% endfor %}
         </table>
-        <a href="/manage/{{staff_id}}">Back</a>
+        <a href="/doctor/{{staff_id}}">Back</a>
     </body>
 </html>

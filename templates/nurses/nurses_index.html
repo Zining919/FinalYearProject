@@ -27,6 +27,7 @@
             <tr>
                 <th>#</th>
                 <th>Name</th>
+                <th>NIC</th>
                 <th>DOB</th>
                 <th>Gender</th>
                 <th>Phone</th>
@@ -39,12 +40,13 @@
             <tr>
                 <td>{{ patient.id }}</td>
                 <td>{{ patient.name }}</td>
+                <td>{{ patient.nic }}</td>
                 <td>{{ patient.dob }}</td>
                 <td>{{ patient.gender }}</td>
                 <td>{{ patient.phone }}</td>
                 <td>{{ patient.email }}</td>
                 <td>{{ patient.address }}</td>
-                <td><a href="/appointment/{{ patient.id }}" class="appointment">View</a></td>
+                <td><a href="/appointment/{{ patient.id }}/{{nurse.id}}" class="appointment">View</a></td>
                 <td>
                     <a href="/update/{{ patient.id }}/{{nurse.id}}" class="update-link">Update</a>
                 </td>

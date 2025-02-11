@@ -15,16 +15,8 @@
 <body>
     <h1>Add New Apoointment</h1>
     <form action="/add_appointment/{{patient.id}}" method="POST" onsubmit="showConfirmation(event)">
-        <input type="hidden" id="patient_id" name="patient_id" value="{{patient.id}}">
-        <br>
-        <label for="app_id">Appointment ID: {{id}}</label>
-
         <label for="department">Department:</label>
-        <select id="department" name="department" required>
-            <option value="Neurology">Neurology</option>   
-            <option value=""></option>   
-            <option value=""></option>                
-        </select>
+        <input type="text" id="department" name="department" value= "{{staff.department}}" readonly>
         <br>
 
         <label for="doctor">Doctor Name: </label>

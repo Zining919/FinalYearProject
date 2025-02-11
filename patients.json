@@ -47,9 +47,12 @@
         "gender": "Male",
         "phone": "019-999 2222",
         "email": "aa@gmail.com",
-        "address": "1,Jalan Zoo, 12000, Setapak, KL",
+        "address": "12,Jalan Zoo, 12000, Setapak, KL",
         "department": [
             "Cardiology"
+        ],
+        "departments": [
+            "Neurology"
         ]
     },
     {

@@ -304,6 +304,20 @@ def nurse_profile(id):
     # Handle case when the nurse is not found
     return "Nurse not found", 404
 
+@app.route("/doctor_profile/<string:id>")
+def doctor_profile(id):
+    # Load doctor data from the database or file
+    doctors = load_db(DOCTORS_FILE)
+    
+    # Search for the doctor with the given ID
+    for doctor in doctors:
+        if id == doctor["id"]:
+            # Render the doctor profile page
+            return render_template("doctors/doctors_profile.html", doctor=doctor)
+    
+    # Handle case when the nurse is not found
+    return "Doctor not found", 404
+
 
 def get_details_by_id(id,filePath):
     details = load_db(filePath)
@@ -381,21 +395,31 @@ def update_contract(staff_type,staff_id,id):
 
 
 @app.route("/edit_profile/<string:id>", methods=['GET', 'POST'])
-def nurse_edit_profile(id):
-    nurse = get_details_by_id(id,NURSE_FILE)
-    print(nurse)
+def edit_profile(id):
+    # Check if id starts with 'n' or 'd'
+    if id.startswith('n'):
+        staff_type = 'nurse'
+        staff = get_details_by_id(id, NURSE_FILE)
+    elif id.startswith('d'):
+        staff_type = 'doctor'
+        staff = get_details_by_id(id, DOCTORS_FILE)
+    else:
+        # Handle the case if the id doesn't start with 'n' or 'd'
+        return "Invalid ID", 400
+
+    print(staff)
 
     if request.method == 'POST':
         phone = request.form['phone']
         email = request.form["email"]
+      
+        update_nurse(id, staff["name"], staff["dob"], staff["gender"], phone, email, staff["department"])
+        return redirect(url_for(f'{staff_type}_profile', id=id))
 
-        update_nurse(id, nurse["name"],nurse["dob"],nurse["gender"], phone, email, nurse["department"])
-        return redirect(url_for('nurse_profile',id=id))
+    return render_template('main/update_profile.html', staff=staff, staff_type=staff_type)
 
-    return render_template('nurses/nurses_update.html', nurse=nurse)
 
 #####################################################################################################################
-
 # edit password for all users
 @app.route("/edit_psw/<string:id>", methods=['GET', 'POST'])
 def edit_psw(id):
@@ -428,9 +452,6 @@ def add_patient(department, staff_id):
         # Load existing patients
         patients = load_db(PATIENTS_FILE)
 
-        # Generate the next patient ID
-        id = get_current_ids().get("patient_id", 10000)
-        
         # Get form data
         name = request.form["name"]
         nic = request.form["nic"]
@@ -439,6 +460,16 @@ def add_patient(department, staff_id):
         phone = request.form["phone"]
         email = request.form["email"]
         address = request.form["address"]
+        
+        # Generate the next patient ID
+        id = get_current_ids().get("patient_id", 10000)
+        
+        # Check if the NIC already exists in the patient database
+        if any(patient["nic"] == nic for patient in patients):
+            # If NIC is already registered, return an error message
+            return render_template("patients/patients_add.html", 
+                                   error="Patient with this NIC already exists.", 
+                                   id=id, staff_id=staff_id, department=department)
         
         # Modify department to be a list (even if it's just one department)
         department_list = [department] if department else []
@@ -459,6 +490,7 @@ def add_patient(department, staff_id):
         # Save updated patients list
         save_ppl(PATIENTS_FILE, patients)
         
+        # Increment the patient ID counter
         get_next_id("patient_id")
 
         # Redirect to index after saving
@@ -473,21 +505,19 @@ def add_patient(department, staff_id):
 @app.route("/add_existing/<string:department>/<string:staff_id>", methods=["GET", "POST"])
 def add_existing_or_search(department, staff_id):
     patients = load_db(PATIENTS_FILE)
-    query = request.args.get("query", "")  # Get the search query
+    query = request.args.get("query", "") 
 
     # If the method is POST, update the patient with the department
     if request.method == "POST":
-        patient_id = request.form["patient_id"]  # Get the selected patient ID
-        existing_department = request.form["existing_department"]  # Get the department to add
+        patient_id = request.form["patient_id"] 
+        existing_department = request.form["existing_department"] 
 
         # Find the patient and add the department
         for patient in patients:
-            if str(patient["id"]) == patient_id:  # Ensure comparison with string
+            if str(patient["id"]) == patient_id:
                 # Ensure "departments" is a list (initialize it if necessary)
                 if not isinstance(patient.get("departments"), list):
-                    patient["departments"] = []  # Initialize departments as an empty list if it's not a list
-                
-                # Add the department if it's not already in the list
+                    patient["departments"] = [] 
                 if existing_department not in patient["departments"]:
                     patient["departments"].append(existing_department)
                 break
@@ -515,6 +545,8 @@ def add_existing_or_search(department, staff_id):
         query=query
     )
 
+
+# Update patient details (phone,email,address)
 @app.route('/update/<int:patient_id>/<string:staff_id>', methods=['GET', 'POST'])
 def update_patient_info(patient_id, staff_id):
     patient = get_details_by_id(patient_id, PATIENTS_FILE)
@@ -547,32 +579,53 @@ def update_patient(patient_id, phone, email, address, file_name):
 
 
 
+@app.route('/appointment/<int:patient_id>/<string:staff_id>')
+def get_appointment(patient_id, staff_id):
+    patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
+
+@app.route('/app_history/<int:patient_id>/<string:staff_id>')
+def get_history(patient_id, staff_id):
+    patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    nurse = get_details_by_id(staff_id, NURSE_FILE)
+    
+    doctors = load_db(DOCTORS_FILE)
+    return render_template('patients/patients_history.html', patient=patient, nurse=nurse, doctors=doctors)
+
+
+@app.route('/add_appointment/<int:patient_id>/<string:staff_id>', methods=["GET","POST"])
+def new_appointment(patient_id,staff_id):
+    patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    # Check if id starts with 'n' or 'd'
+    if staff_id.startswith('n'):
+        staff = get_details_by_id(staff_id, NURSE_FILE)
+        doctors = load_db(DOCTORS_FILE)
+        return render_template('patients/patients_add_appointment.html', patient=patient,  staff=staff, doctors=doctors)
+   
+    elif staff_id.startswith('d'):
+        staff_type = 'doctor'
+        staff = get_details_by_id(staff_id, DOCTORS_FILE)
+        
+    else:
+        # Handle the case if the id doesn't start with 'n' or 'd'
+        return "Invalid ID", 400
+    
+    
+    return render_template('patients/patients_add_appointment.html', patient=patient,  staff=staff, doctors=doctors)
 
 
 
 
 
-def get_patient_by_id(patient_id):
-    patients = load_db(PATIENTS_FILE)
-    return next((p for p in patients if p["id"] == patient_id), None)
 
 
 
-@app.route('/appointment/<int:patient_id>')
-def get_appointment(patient_id):
-    patient = get_patient_by_id(patient_id)
-    return render_template('patients/patients_appointment.html', patient=patient)
-
-@app.route('/app_history/<int:patient_id>')
-def get_history(patient_id):
-    patient = get_patient_by_id(patient_id)
-    return render_template('patients/patients_history.html', patient=patient)
 
 
-@app.route('/add_appointment/<int:patient_id>', methods=["GET","POST"])
-def new_appointment(patient_id):
-    patient = get_patient_by_id(patient_id)
-    return render_template('patients/patients_history.html', patient=patient)
+
+
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

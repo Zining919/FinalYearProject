@@ -11,17 +11,12 @@
     <h1>Patient Appointment</h1>
     <p><b>ID: </b> {{patient.id}}</p>
     <p><b>Name: </b>{{patient.name}}</p>
+    <p><b>NIC: </b> {{patient.nic}}</p>
     <p><b>DOB: </b> {{patient.dob}}</p>
     <p><b>Gender: </b>{{patient.gender}}</p>
     <br>
 
-    <form>
-        <select id="option" name="option" required>
-            <option value="All">All</option>
-            <option value="Neurology">Neurology</option>                
-        </select><br><br>
-    </form>
-    <a href="/add_appointment/{{patient.id}}">Add New Appointment&emsp;&emsp;</a>
+    <a href="/add_appointment/{{patient.id}}/{{staff_id}}">Add New Appointment&emsp;&emsp;</a>
     <a href="/app_history/{{patient.id}}">Appointment History</a>
         <table>
             <tr>

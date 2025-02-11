@@ -36,35 +36,43 @@
 </head>
 <body>
     <h1>Add New Patient</h1>
-        <form action="/add/{{department}}/{{staff_id}}" method="POST" onsubmit="validateDates(event)">
-            <label for="patient_id">Patient ID: {{id}}</label><br>
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required><br>
 
-            <label for="nic">NIC:</label>
-            <input type="number" id="nic" name="nic" placeholder="000101021234" min="0" maxlength="12" required><br>
+    {% if error %}
+    <div class="error-message" style="color: red; font-weight: bold;">
+        {{ error }}
+    </div>
+    {% endif %}
 
-            <label for="dob">Date of Birth:</label>
-            <input type="date" id="dob" name="dob" value="{{ dob|default('') }}" required><br>
 
-            <label for="gender">Gender:</label>
-            <input type="radio" id="gender1" name="gender" value="Male" checked> Male
-            <input type="radio" id="gender2" name="gender" value="Female"> Female<br>
+    <form action="/add/{{department}}/{{staff_id}}" method="POST" onsubmit="validateDates(event)">
+        <label for="patient_id">Patient ID: {{id}}</label><br>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br>
 
-            <label for="phone">Phone Number:</label>
-            <input type="tel" id="phone" name="phone" pattern="0\s?1[0-9]-\d{3}\s?\d{4}" placeholder="010-330 2037" required><br>
+        <label for="nic">NIC:</label>
+        <input type="number" id="nic" name="nic" placeholder="000101021234" min="0" maxlength="12" required><br>
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" placeholder="example@gmail.com" required><br>
+        <label for="dob">Date of Birth:</label>
+        <input type="date" id="dob" name="dob" value="{{ dob|default('') }}" required><br>
 
-            <label for="address">Address:</label>
-            <input type="text" id="address" name="address" required><br>
+        <label for="gender">Gender:</label>
+        <input type="radio" id="gender1" name="gender" value="Male" checked> Male
+        <input type="radio" id="gender2" name="gender" value="Female"> Female<br>
 
-            <label for="department">Department:</label>
-            <input type="text" id="department" name="department" value="{{department}}" readonly><br>
+        <label for="phone">Phone Number:</label>
+        <input type="tel" id="phone" name="phone" pattern="0\s?1[0-9]-\d{3}\s?\d{4}" placeholder="010-330 2037" required><br>
 
-            <button type="submit">Add New Patient</button>
-        </form>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" placeholder="example@gmail.com" required><br>
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required><br>
+
+        <label for="department">Department:</label>
+        <input type="text" id="department" name="department" value="{{department}}" readonly><br>
+
+        <button type="submit">Add New Patient</button>
+    </form>
     
     <a href="/nurse/{{staff_id}}">Back</a>
 </body>

@@ -5,44 +5,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
-    <title>Patient Appointment</title>
+    <title>Medical History</title>
 </head>
 <body>
-    <h1>Patient Appointment</h1>
+    <h1>Medical History</h1>
     <p><b>ID: </b> {{patient.id}}</p>
     <p><b>Name: </b>{{patient.name}}</p>
     <p><b>DOB: </b> {{patient.dob}}</p>
     <p><b>Gender: </b>{{patient.gender}}</p>
     <br>
 
-    <form>
-        <select id="option" name="option" required>
-            <option value="All">All</option>
-            <option value="Neurology">Neurology</option>                
-        </select><br><br>
-    </form>
-        <table>
-            <tr>
-                <th>#</th>
-                <th>Appoinment ID</th>
-                <th>Department</th>
-                <th>Doctor Name</th>
-                <th>Date Time</th>
-                <th>Appointment Status</th>
-                <th>Result</th>
-            </tr>
-            {% for app_list in p_app_list %}
-            <tr>
-                <td>{{ app_list.num }}</td>
-                <td>{{ app_list.id }}</td>
-                <td>{{ app_list.dept }}</td>
-                <td>{{ app_list.docName }}</td>
-                <td>{{ app_list.dateTime }}</td>
-                <td>{{ app_list.status }}</td>
-                <td><a href="/history/{{app_list.id}}">View</a></td>
-            </tr>
-            {% endfor %}
-        </table>
-    <a href="/">Back to Patient List</a>
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Appoinment ID</th>
+            <th>Department</th>
+            <th>Doctor Name</th>
+            <th>Date Time</th>
+            <th>Appointment Status</th>
+            <th>Result</th>
+        </tr>
+
+        {% for app_list in p_app_list %}
+        <tr>
+            <td>{{ app_list.num }}</td>
+            <td>{{ app_list.id }}</td>
+            <td>{{ app_list.dept }}</td>
+            <td>{{ app_list.docName }}</td>
+            <td>{{ app_list.dateTime }}</td>
+            <td>{{ app_list.status }}</td>
+            <td><a href="/history/{{app_list.id}}">View</a></td>
+        </tr>
+        {% endfor %}
+
+    </table>
+    <a href="/">Back</a>
 </body>
 </html>

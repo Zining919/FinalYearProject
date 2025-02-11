@@ -8,7 +8,13 @@
     <body>
         <h1>Doctor Page</h1>
         <h2>Hi, {{doctor.name}}</h2>
-        <button><a href="/">Log Out</a></button>
+        <div>
+            <a href="#">Image </a> <br>
+            <a href="/patient/{{doctor.id}}">Patient List </a> <br>
+            <a href="#">Schedule </a>
+        </div>
+
         <button><a href="/doctor_profile/{{doctor.id}}">Profile</a></button>
+        <button><a href="/">Log Out</a></button>
     </body>
 </html>
