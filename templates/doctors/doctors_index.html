@@ -9,11 +9,13 @@
         <h1>Doctor Page</h1>
         <h2>Hi, {{doctor.name}}</h2>
         <div>
-            <a href="#">Image </a> <br>
-            <a href="/patient/{{doctor.id}}">Patient List </a> <br>
-            <a href="#">Schedule </a>
+            <button><a href="#">Image </a></button>
+            <button><a href="/patient/{{doctor.id}}">Patient List </a></button>
+            <button><a href="/doctor_schedule/{{doctor.id}}">Schedule </a></button>
+            <button><a href="">Appointment for scan</a></button>
         </div>
-
+        <br><br>
+        
         <button><a href="/doctor_profile/{{doctor.id}}">Profile</a></button>
         <button><a href="/">Log Out</a></button>
     </body>

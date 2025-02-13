@@ -1,3 +1,5 @@
+<!-- Validation: date(at least be current date), time(9am-5pm)-->
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,30 +10,43 @@
     <script>
         function showConfirmation(event) {
             alert("New Appointment added successfully!"); 
-            window.location.href = "/appointment";
         }
     </script>
 </head>
 <body>
     <h1>Add New Apoointment</h1>
-    <form action="/add_appointment/{{patient.id}}" method="POST" onsubmit="showConfirmation(event)">
-        <label for="department">Department:</label>
-        <input type="text" id="department" name="department" value= "{{staff.department}}" readonly>
+    <form action="/add_appointment/{{patient.id}}/{{staff.id}}" method="POST" onsubmit="showConfirmation(event)">
+        <label for="patient_id">Patient ID: {{patient.id}}</label>
+        <input type="hidden" id="patient_id" name="patient_id" value= "{{patient.id}}">
+
+        <label for="patient_name">Patient Name: {{patient.name}}</label>
+        <input type="hidden" id="patient_name" name="patient_name" value= "{{patient.name}}" >
+        
+        <label for="department">Department: {{staff.department}}</label>
+        <input type="hidden" id="department" name="department" value= "{{staff.department}}">
+
+        <label for="purpose">Purpose: Consultation/Follow Up</label>
+        <input type="hidden" id="purpose" name="purpose" value= "Consultation/Follow Up">
         <br>
 
-        <label for="doctor">Doctor Name: </label>
-        <select id="doctor" name="doctor" required>
+        <label for="doctor_name">Doctor Name: </label>
+        <select id="doctor_name" name="doctor_name" required>
             {% for doctor in doctors %}
             <option value="{{doctor.name}}">{{doctor.name}}</option>
             {% endfor %}              
         </select>
+        <br>
             
-        <label for="date_time">Date Time</label>
-        <input type="datetime" id="date_time" name="date_time" required>
+        <label for="date">Date: </label>
+        <input type="date" id="date" name="date" required>
+        <br>
+
+        <label for="time">Time: </label>
+        <input type="time" id="time" name="time" required>
         <br>
 
         <button type="submit">Add Appoinment</button>
     </form>
-    <a href="/">Back to Appoinment List</a>
+    <a href="/appointment/{{ patient.id }}/{{staff.id}}">Back to Appoinment List</a>
 </body>
 </html>

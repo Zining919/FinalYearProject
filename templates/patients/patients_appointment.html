@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,35 +8,65 @@
 </head>
 <body>
     <h1>Patient Appointment</h1>
-    <p><b>ID: </b> {{patient.id}}</p>
-    <p><b>Name: </b>{{patient.name}}</p>
-    <p><b>NIC: </b> {{patient.nic}}</p>
-    <p><b>DOB: </b> {{patient.dob}}</p>
-    <p><b>Gender: </b>{{patient.gender}}</p>
+    <p><b>ID: </b> {{ patient.id }}</p>
+    <p><b>Name: </b>{{ patient.name }}</p>
+    <p><b>NIC: </b> {{ patient.nic }}</p>
+    <p><b>DOB: </b> {{ patient.dob }}</p>
+    <p><b>Gender: </b>{{ patient.gender }}</p>
     <br>
 
-    <a href="/add_appointment/{{patient.id}}/{{staff_id}}">Add New Appointment&emsp;&emsp;</a>
-    <a href="/app_history/{{patient.id}}">Appointment History</a>
-        <table>
-            <tr>
-                <th>#</th>
-                <th>Appoinment ID</th>
-                <th>Department</th>
-                <th>Doctor Name</th>
-                <th>Date Time</th>
-                <th>Appointment Status</th>
-            </tr>
-            {% for app_list in p_app_list %}
-            <tr>
-                <td>{{ app_list.num }}</td>
-                <td>{{ app_list.id }}</td>
-                <td>{{ app_list.dept }}</td>
-                <td>{{ app_list.docName }}</td>
-                <td>{{ app_list.dateTime }}</td>
-                <td>{{ app_list.status }}</td>
-            </tr>
+    <a href="/add_appointment/{{ patient.id }}/{{ staff_id }}">Add New Appointment&emsp;&emsp;</a>
+    <a href="/app_history/{{ patient.id }}">Appointment History</a>
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Department</th>
+            <th>Doctor Name</th>
+            <th>Date Time</th>
+            <th>Appointment Status</th>
+            <th>Action</th>
+        </tr>
+        {% if patient.appointment %}
+            {% for app in patient.appointment %}
+                <tr id="appointment-{{ app.num }}">
+                    <td>{{ app.num }}</td>
+                    <td>{{ app.department }}</td>
+                    <td>{{ app.doctor_name }}</td>
+                    <td>{{ app.date }} {{ app.time }}</td>
+                    <td>{{ app.status }}</td>
+                    <td>
+                        <a href="/update_appointment/{{ patient.id }}/{{ staff_id }}/{{ app.num }}" class="update-link" id="update-link-{{ app.num }}">Update</a>
+                    </td>
+                </tr>
             {% endfor %}
-        </table>
-        <a href="/nurse/{{staff_id}}">Back</a>
+        {% else %}
+            <tr>
+                <td colspan="6">No appointments available</td>
+            </tr>
+        {% endif %}
+    </table>
+    <a href="/nurse/{{ staff_id }}">Back</a>
+
+    <script>
+        // JavaScript to validate if the appointment is more than 3 days ahead
+        document.addEventListener("DOMContentLoaded", function() {
+            const today = new Date();
+            const threeDaysAhead = new Date(today);
+            threeDaysAhead.setDate(today.getDate() + 3);  // Add 3 days to the current date
+
+            // Loop through each appointment and compare dates
+            {% for app in patient.appointment %}
+                const appointmentDate = new Date("{{ app.date }}");
+                const updateLink = document.getElementById("update-link-{{ app.num }}");
+
+                if (appointmentDate > threeDaysAhead) {
+                    // Disable the update link and show a message
+                    updateLink.style.color = "red";
+                    updateLink.style.pointerEvents = "none";
+                    updateLink.title = "You cannot update this appointment as it is more than 3 days ahead.";
+                }
+            {% endfor %}
+        });
+    </script>
 </body>
 </html>

@@ -10,6 +10,28 @@
         "address": "12-12 ,PV12,53300, Setapak, KL",
         "departments": [
             "Neurology"
+        ],
+        "appointment": [
+            {
+                "num": 1,
+                "patient_id": "10000",
+                "patient_name": "Lim Ha Ha",
+                "department": "Neurology",
+                "doctor_name": "Lee",
+                "date": "2025-02-15",
+                "time": "13:00",
+                "status": "active"
+            },
+            {
+                "num": 2,
+                "patient_id": "10000",
+                "patient_name": "Lim Ha Ha",
+                "department": "Neurology",
+                "doctor_name": "Tan",
+                "date": "2025-03-01",
+                "time": "12:00",
+                "status": "active"
+            }
         ]
     },
     {
@@ -24,6 +46,18 @@
         "departments": [
             "Cardiology",
             "Neurology"
+        ],
+        "appointment": [
+            {
+                "num": 1,
+                "patient_id": "10001",
+                "patient_name": "Tan See See",
+                "department": "Neurology",
+                "doctor_name": "Tan",
+                "date": "2025-02-01",
+                "time": "10:30",
+                "status": "active"
+            }
         ]
     },
     {
@@ -131,19 +165,26 @@
         "address": "124",
         "departments": [
             "Neurology"
-        ]
-    },
-    {
-        "id": 10011,
-        "name": "fff",
-        "nic": "352473437373",
-        "dob": "1978-02-20",
-        "gender": "Male",
-        "phone": "012-9049738",
-        "email": "ff12356@gmail.com",
-        "address": "462362",
-        "departments": [
-            "Neurology"
+        ],
+        "appointment": [
+            {
+                "patient_id": "10010",
+                "patient_name": "ss",
+                "department": "Neurology",
+                "doctor_name": "Tan",
+                "date": "2025-01-01",
+                "time": "13:00",
+                "status": "active"
+            },
+            {
+                "patient_id": "10010",
+                "patient_name": "ss",
+                "department": "Neurology",
+                "doctor_name": "zz",
+                "date": "2025-04-01",
+                "time": "09:00",
+                "status": "active"
+            }
         ]
     }
 ]

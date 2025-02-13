@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+        <title>Update Patient Appointment</title>
+    </head>
+    <body>
+        <h1>Update Patient Appointment</h1>
+        <form action="/update_appointment/{{patient_id}}/{{staff_id}}/{{app.num}}" method="POST">
+            <div class="profile-container">
+                <div class="profile-row">
+                    <div class="profile-label">Patient ID</div>
+                    <div class="profile-value"><b>: </b>{{ app.patient_id }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Patient Name</div>
+                    <div class="profile-value"><b>: </b>{{ app.patient_name }}</div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Department</div>
+                    <div class="profile-value"><b>: </b>{{ app.department }}</div>
+                </div>
+            </div>
+
+            <label for="doctor_name">Doctor Name: </label>
+            <select id="doctor_name" name="doctor_name" required>
+                <!-- Dynamically populate the doctor list -->
+                {% for doctor in doctors %}
+                    <option value="{{ doctor['name'] }}" {% if doctor['name'] == app['doctor_name'] %} selected {% endif %}>
+                        {{ doctor['name'] }}
+                    </option>
+                {% endfor %}
+            </select><br>
+                
+            <label for="date">Date: </label>
+            <input type="date" id="date" name="date" value="{{app.date}}" required>
+            <br>
+
+            <label for="time">Time: </label>
+            <input type="time" id="time" name="time" value="{{app.time}}" required>
+            <br>
+            
+
+            <input type="submit" value="Update Profile">
+        </form>
+
+        <a href="/nurse/{{staff_id}}">Back</a>
+    </body>
+</html>

@@ -247,9 +247,17 @@ def add_record(staff_type, staff_id):
             "psw": nic,
             "pos": staff_type
         })
-        print(add_new)
-
         save_ppl(LOGIN_FILE, add_new)
+        
+        add_appointment = load_db(APPOINTMENT_FILE)
+        add_appointment.append({
+            "doctor_id": record_id,
+            "count": 1
+        })
+        
+        save_ppl(APPOINTMENT_FILE, add_appointment)
+
+        
 
         # Redirect to index after saving
         return redirect(url_for("manage_db",db_type=staff_type, staff_id=staff_id))
@@ -577,6 +585,8 @@ def update_patient(patient_id, phone, email, address, file_name):
         
     save_ppl(file_name, patients)
 
+######################################################################################################################
+# Appointment
 
 
 @app.route('/appointment/<int:patient_id>/<string:staff_id>')
@@ -588,19 +598,62 @@ def get_appointment(patient_id, staff_id):
 def get_history(patient_id, staff_id):
     patient = get_details_by_id(patient_id, PATIENTS_FILE)
     nurse = get_details_by_id(staff_id, NURSE_FILE)
-    
-    doctors = load_db(DOCTORS_FILE)
-    return render_template('patients/patients_history.html', patient=patient, nurse=nurse, doctors=doctors)
+    return render_template('patients/patients_history.html', patient=patient, nurse=nurse)
 
 
-@app.route('/add_appointment/<int:patient_id>/<string:staff_id>', methods=["GET","POST"])
-def new_appointment(patient_id,staff_id):
+@app.route('/add_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
+def new_appointment(patient_id, staff_id):
     patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    
     # Check if id starts with 'n' or 'd'
     if staff_id.startswith('n'):
         staff = get_details_by_id(staff_id, NURSE_FILE)
+        
         doctors = load_db(DOCTORS_FILE)
-        return render_template('patients/patients_add_appointment.html', patient=patient,  staff=staff, doctors=doctors)
+        db = []
+        for doctor in doctors:
+            if doctor["department"] == staff["department"]:
+                db.append(doctor)
+        
+        if request.method == "POST":            
+            patients = load_db(PATIENTS_FILE)
+            
+            patient_id = request.form["patient_id"]
+            patient_name = request.form["patient_name"]
+            department = request.form["department"]
+            doctor_name = request.form["doctor_name"]
+            date = request.form["date"]
+            time = request.form["time"]
+            status = "active"
+             
+            for p in patients: 
+                if p["id"] == int(patient_id):  # Make sure patient_id is compared as int
+                    if "appointment" not in p:
+                        p["appointment"] = []  # Ensure there's an appointment key
+                    
+                    count = len(p["appointment"])
+                    print(count)
+                    
+                    p["appointment"].append({
+                        "num": count + 1,
+                        "patient_id": patient_id,
+                        "patient_name": patient_name,
+                        "department": department,
+                        "doctor_name": doctor_name,
+                        "date": date,
+                        "time": time,
+                        "status": status                    
+                    })
+                    break  # Stop loop once the patient is found
+            
+            # Save the updated records list
+            try:
+                save_ppl(PATIENTS_FILE, patients)  # This will save the modified patients list
+                return redirect(url_for("get_appointment", patient_id=patient_id, staff_id=staff_id))
+            except Exception as e:
+                print(f"File saving error: {e}")
+        
+        return render_template('patients/patients_add_appointment.html', patient=patient, staff=staff, doctors=db)
    
     elif staff_id.startswith('d'):
         staff_type = 'doctor'
@@ -614,10 +667,73 @@ def new_appointment(patient_id,staff_id):
     return render_template('patients/patients_add_appointment.html', patient=patient,  staff=staff, doctors=doctors)
 
 
+@app.route('/update_appointment/<int:patient_id>/<string:staff_id>/<int:appointment_index>', methods=["GET", "POST"])
+def update_appointment(patient_id, staff_id, appointment_index):
+    # Fetch patient details
+    patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    staff = get_details_by_id(staff_id, NURSE_FILE)
+    doctors_db = load_db(DOCTORS_FILE)
+    doctors = []
+    for doctor in doctors_db:
+        if doctor["department"] == staff["department"]:
+            doctors.append(doctor)
+                
+    # Check if patient has appointments
+    if patient and 'appointment' in patient:
+        try:
+            # Get the specific appointment by its index
+            app = patient['appointment'][appointment_index - 1]  # list is 0-indexed, so subtract 1
+        except IndexError:
+            # Handle case if index is out of range
+            return "Appointment not found", 404
 
+        if request.method == "POST":
+            # Get updated data from the form
+            doctor_name = request.form["doctor_name"]
+            date = request.form["date"]
+            time = request.form["time"]
+            
+            # Update the appointment details
+            app['doctor_name'] = doctor_name
+            app['date'] = date
+            app['time'] = time
+            
+            # Save the updated patient record
+            try:
+                # Save the updated list of patients
+                patients = load_db(PATIENTS_FILE)
+                for p in patients:
+                    if p['id'] == patient_id:
+                        p['appointment'] = patient['appointment']
+                        break
+                save_ppl(PATIENTS_FILE, patients)
+                return redirect(url_for('get_appointment', patient_id=patient_id, staff_id=staff_id))
+            except Exception as e:
+                return f"Error saving updates: {e}", 500
 
+        # Render the form to update the appointment
+        return render_template('patients/patients_update_appointment.html', patient_id=patient_id, staff_id=staff_id, app=app, doctors=doctors)
+    
+    return "Patient or appointment not found", 404
 
+@app.route('/doctor_schedule/<string:id>', methods=["GET", "POST"])
+def doctor_schedule(id):
+    doctor = get_details_by_id(id, DOCTORS_FILE)
+    patients = load_db(PATIENTS_FILE)
+    
+    db = []
+    
+    for patient in patients:
+        # Check if patient has appointments and loop through them if it is a list
+        if patient and 'appointment' in patient:
+            for app in patient['appointment']:  # Loop through each appointment
+                if app.get('doctor_name') == doctor['name']:  # Use .get() to avoid KeyError
+                    db.append(app)
+    
+    # Sort the appointments by date and time in ascending order
+    db.sort(key=lambda app: datetime.strptime(f"{app['date']} {app['time']}", '%Y-%m-%d %H:%M'))
 
+    return render_template('doctors/doctors_schedule.html', id=id, db=db, patients=patients, doctor=doctor)
 
 
 
