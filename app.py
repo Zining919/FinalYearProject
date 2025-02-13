@@ -270,12 +270,33 @@ def add_record(staff_type, staff_id):
 def doctors_index(id):
     # Load nurse data from the database or file
     doctors = load_db(DOCTORS_FILE)
+    patients = load_db(PATIENTS_FILE)
+    
+    db = []
 
-    # Search for the nurse with the given ID
+    # Search for the doctor with the given ID
     for doctor in doctors:
         if id == doctor["id"]:
             print(doctor["name"])
-            return render_template("doctors/doctors_index.html", doctor=doctor)
+            # Loop through the patients to find their appointments
+            for patient in patients:
+                if 'appointment' in patient:  # Ensure appointments exist for the patient
+                    for app in patient['appointment']:
+                        # Check if the appointment is for the doctor and on today's date
+                        if app.get('doctor_name') == doctor['name']:
+                            try:
+                                appointment_date = datetime.strptime(app['date'], '%Y-%m-%d').date()
+                                # Check if the appointment date is today
+                                if appointment_date == datetime.now().date():  
+                                    db.append(app)
+                            except ValueError:
+                                print(f"Skipping invalid date format: {app['date']}")
+            break  # Assuming one doctor is found, no need to loop further
+    
+    db.sort(key=lambda app: datetime.strptime(f"{app['date']} {app['time']}", '%Y-%m-%d %H:%M'))
+    print(db)  # Add print statements for debugging purposes
+    return render_template("doctors/doctors_index.html", doctor=doctor, db=db, patients=patients)
+
 
 
 @app.route("/nurse/<string:id>")
@@ -734,8 +755,6 @@ def doctor_schedule(id):
     db.sort(key=lambda app: datetime.strptime(f"{app['date']} {app['time']}", '%Y-%m-%d %H:%M'))
 
     return render_template('doctors/doctors_schedule.html', id=id, db=db, patients=patients, doctor=doctor)
-
-
 
 
 

@@ -18,7 +18,7 @@
                 "patient_name": "Lim Ha Ha",
                 "department": "Neurology",
                 "doctor_name": "Lee",
-                "date": "2025-02-15",
+                "date": "2025-03-01",
                 "time": "13:00",
                 "status": "active"
             },
@@ -28,7 +28,7 @@
                 "patient_name": "Lim Ha Ha",
                 "department": "Neurology",
                 "doctor_name": "Tan",
-                "date": "2025-03-01",
+                "date": "2025-02-14",
                 "time": "12:00",
                 "status": "active"
             }
@@ -54,8 +54,8 @@
                 "patient_name": "Tan See See",
                 "department": "Neurology",
                 "doctor_name": "Tan",
-                "date": "2025-02-01",
-                "time": "10:30",
+                "date": "2025-02-14",
+                "time": "12:30",
                 "status": "active"
             }
         ]
@@ -113,6 +113,18 @@
         "address": "123",
         "departments": [
             "Neurology"
+        ],
+        "appointment": [
+            {
+                "num": 1,
+                "patient_id": "10006",
+                "patient_name": "Abu",
+                "department": "Neurology",
+                "doctor_name": "Tan",
+                "date": "2025-02-14",
+                "time": "10:00",
+                "status": "active"
+            }
         ]
     },
     {

@@ -15,7 +15,50 @@
             <button><a href="">Appointment for scan</a></button>
         </div>
         <br><br>
-        
+
+        <h2>Today's Appointment</h2>
+        <section>      
+            {% if db %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Patient ID</th>
+                            <th>Patient Name</th>
+                            <th>Appointment Time</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in db %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ app['patient_id'] }}</td>
+                                <td>{{ app['patient_name'] }}</td>
+                                <td>{{ app['date'] }} at {{ app['time'] }}</td>
+                                <td>{{ app['status'] }}</td>
+                                <td>
+                                    <table class="action-table">
+                                        <tr>
+                                            <td>
+                                                <span style="color: green">Yes</span>
+                                            </td>
+                                            <td>
+                                                <span style="color: red">No</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No upcoming appointments for this doctor.</p>
+            {% endif %}
+        </section>
+
         <button><a href="/doctor_profile/{{doctor.id}}">Profile</a></button>
         <button><a href="/">Log Out</a></button>
     </body>
