@@ -22,8 +22,7 @@
             <th>Department</th>
             <th>Doctor Name</th>
             <th>Date Time</th>
-            <th>Appointment Status</th>
-            <th>Action</th>
+            <th>Medical Report (PDF)</th>
         </tr>
 
         {% for app_list in p_app_list %}
@@ -32,20 +31,8 @@
             <td>{{ app_list.id }}</td>
             <td>{{ app_list.dept }}</td>
             <td>{{ app_list.docName }}</td>
-            <td>{{ app_list.dateTime }}</td>
-            <td>{{ app_list.status }}</td>
-            <td>
-                <table class="action-table">
-                    <tr>
-                        <td>
-                            <span style="color: green">Yes</span>
-                        </td>
-                        <td>
-                            <span style="color: red">No</span>
-                        </td>
-                    </tr>
-                </table>
-            </td>
+            <td>{{ app_list.date}}{{ app_list.time}}</td>
+            <td><a href="/history/{{app_list.id}}">View</a></td>
         </tr>
         {% endfor %}
 

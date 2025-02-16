@@ -14,6 +14,7 @@
                 <th>NIC</th>
                 <th>DOB</th>
                 <th>Gender</th>
+                <th>Medical Image</th>
                 <th>History</th>
             </tr>
             {% for patient in patients %}
@@ -23,6 +24,7 @@
                 <td>{{ patient.nic }}</td>
                 <td>{{ patient.dob }}</td>
                 <td>{{ patient.gender }}</td>
+                <td><a href="/image_history/{{ patient.id }}/{{staff_id}}" class="appointment">View</a></td>
                 <td><a href="/app_history/{{ patient.id }}/{{staff_id}}" class="appointment">View</a></td>
             </tr>
             {% endfor %}

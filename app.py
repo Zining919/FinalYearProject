@@ -84,6 +84,7 @@ def index_main():
     return render_template("main/index.html")
 
 # Access Management index page
+## NOTE: add code to check end date for status(expired/active)
 @app.route("/manage/<string:id>")
 def manage_index(id):
     ppls = load_db(MANAGE_FILE)
