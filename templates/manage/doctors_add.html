@@ -65,10 +65,64 @@
             }
 
             // If all validations pass, submit the form
-            alert("New Doctor added successfully!");
-            event.target.submit();
+            //alert("New Doctor added successfully!");
+            //event.target.submit();
         }
     </script>
+
+    <script type = "module">
+
+        function formatDate(dateString) {
+            const [year, month, day] = dateString.split("-");
+            return `${day}/${month}/${year}`;  // Change to `${day}-${month}-${year}` for `dd-mm-yyyy`
+        }
+
+        
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSMySbLXYTWi3MldKL8oKldHqLDxEPA9E",
+            authDomain: "fyp-medical-image.firebaseapp.com",
+            databaseURL: "https://fyp-medical-image-default-rtdb.firebaseio.com",
+            projectId: "fyp-medical-image",
+            storageBucket: "fyp-medical-image.firebasestorage.app",
+            messagingSenderId: "332639037018",
+            appId: "1:332639037018:web:caff89b058cb05c7345a63"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+
+        // get ref to database services
+        const db = getDatabase(app);
+
+        document.getElementById("submit").addEventListener("click", function(e){
+            e.preventDefault();
+            set(ref(db, 'doctor/'+ document.getElementById("name").value),
+            {
+
+                name: document.getElementById("name").value, 
+                nic: document.getElementById("nic").value,
+                dob: formatDate(document.getElementById("dob").value),
+                gender: document.querySelector('input[name="gender"]:checked').value,
+                phone: document.getElementById("phone").value,
+                email: document.getElementById("email").value,
+                department: document.querySelector('input[name="department"]:checked').value,
+                startDate: formatDate(document.getElementById("startDate").value),
+                endDate: formatDate(document.getElementById("endDate").value)
+
+            })
+
+            alert("Added Succesful !");
+            event.target.submit();
+        })
+
+    </script>
+
 </head>
 <body>
     <h1>Add New Doctor</h1>
@@ -121,7 +175,7 @@
         <input type="date" id="endDate" name="endDate" value="{{ endDate|default('') }}" required>
         <br>
 
-        <button type="submit">Add Doctor</button>
+        <button type="submit" id = "submit" >Add Doctor</button>
     </form>
     <a href="/doctors_db/{{staff_id}}">Back to Doctors List</a>
 </body>

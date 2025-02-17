@@ -27,62 +27,6 @@ def load_db(filePath):
         return []  # Return an empty list if the file does not exist
 
 
-# @app.route("/", methods=["GET", "POST"])
-# def index_main():
-#     if request.method == "POST":
-#         ppl = load_db(LOGIN_FILE)  # Load the list of users
-#         id = request.form["user"]
-#         psw = request.form["psw"]
-
-#         # Search for the user in the list
-#         for person in ppl:
-#             if id == person["id"] and psw == person["psw"]:
-#                 navs = person["pos"] + "_index"
-
-#                 # Check and update status for doctors and nurses
-#                 d_count = load_db(DOCTORS_FILE)
-#                 n_count = load_db(NURSE_FILE)
-#                 current_date = datetime.now().date()
-
-#                 # Update status for doctors
-#                 for doctor in d_count:
-#                     end_date_str = doctor.get("endDate", "")
-#                     if end_date_str:
-#                         try:
-#                             end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-#                             doctor["status"] = "expired" if end_date < current_date else "active"
-#                         except ValueError:
-#                             print(f"Invalid date format for doctor {doctor['id']}: {end_date_str}")
-#                     else:
-#                         print(f"Doctor {doctor['id']} has no endDate")
-
-#                 # Save the updated doctors' data
-#                 save_ppl(DOCTORS_FILE, d_count)
-
-#                 # Update status for nurses
-#                 for nurse in n_count:
-#                     end_date_str = nurse.get("endDate", "")
-#                     if end_date_str:
-#                         try:
-#                             end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-#                             nurse["status"] = "expired" if end_date < current_date else "active"
-#                         except ValueError:
-#                             print(f"Invalid date format for nurse {nurse['id']}: {end_date_str}")
-#                     else:
-#                         print(f"Nurse {nurse['id']} has no endDate")
-
-#                 # Save the updated nurses' data
-#                 save_ppl(NURSE_FILE, n_count)
-
-#                 print(navs)
-#                 return redirect(url_for(navs, id=id))
-
-#         # If no match is found
-#         print("Invalid login")
-#         return render_template("main/index.html")
-
-#     return render_template("main/index.html")
-
 @app.route("/", methods=["GET", "POST"])
 def index_main():
     if request.method == "POST":
@@ -93,7 +37,7 @@ def index_main():
         # Search for the user in the list
         for person in ppl:
             if id == person["id"] and psw == person["psw"]:
-                navs = person["pos"] + "_index"  # Get the position-based page
+                navs = person["pos"] + "_index"
 
                 # Check and update status for doctors and nurses
                 d_count = load_db(DOCTORS_FILE)
@@ -130,7 +74,7 @@ def index_main():
                 # Save the updated nurses' data
                 save_ppl(NURSE_FILE, n_count)
 
-                # Redirect to the appropriate page based on user role
+                print(navs)
                 return redirect(url_for(navs, id=id))
 
         # If no match is found
