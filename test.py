@@ -1,6 +1,9 @@
 import json
+import os
 from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
+import supabase
+from supabase import create_client, Client
 
 app = Flask(__name__)
 
@@ -12,6 +15,15 @@ MANAGE_FILE = "manage.json"
 LOGIN_FILE = "login.json"
 APPOINTMENT_FILE = "appointment.json"
 ID_TRACKER_FILE = "id_tracker.txt"
+
+
+
+# Your Supabase project URL and API key
+SUPABASE_URL = "https://tmegfunkplvtdlmzgcvc.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtZWdmdW5rcGx2dGRsbXpnY3ZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4NTcwMTUsImV4cCI6MjA1NTQzMzAxNX0.n5bYPpFujiJQoGF5ACI-TwfguLTsFROg8bK2XeqCLFY"
+
+# Create a Supabase client
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Function to a new person(nurse/doctor/patient) to the JSON file
 def save_ppl(filePath,data):
@@ -172,41 +184,46 @@ def get_next_id(id_type):
         return next_id 
 
 
-# Add new doctor/nurse (create new user with username and password for login the system)
+# Add new doctor/nurse (create new user with username and password for login the system) #done
 @app.route("/<string:staff_type>_add/<string:staff_id>", methods=["GET", "POST"])
 def add_record(staff_type, staff_id):
-    # Mapping for file loaders, savers, and ID keys based on staff type
-    staff_files = {
-        "doctors": {"file": DOCTORS_FILE, "id_key": "doctor_id"},
-        "nurses": {"file": NURSE_FILE, "id_key": "nurse_id"},
+    # Mapping for table names and ID keys based on staff type
+    staff_tables = {
+        "doctors": {"table": "doctor", "id_key": "id", "prefix": "d"},  # Add prefix 'd' for doctors
+        "nurses": {"table": "nurse", "id_key": "id", "prefix": "n"},    # Add prefix 'n' for nurses
     }
 
     # Validate staff type
-    if staff_type not in staff_files:
+    if staff_type not in staff_tables:
         return "Invalid staff type.", 404
 
-    # Get the file and ID key for the specified staff type
-    file_path = staff_files[staff_type]["file"]
-    print(file_path)
-    id_key = staff_files[staff_type]["id_key"]
-    print(id_key)
+    # Get the table and ID key for the specified staff type
+    table_name = staff_tables[staff_type]["table"]
+    id_key = staff_tables[staff_type]["id_key"]
+    prefix = staff_tables[staff_type]["prefix"]  # Get the prefix based on staff type
 
-    # Get the current ID for display purposes
-    current_id = get_current_ids().get(id_key, 10000)
-    if id_key == "doctor_id":
-        id = f"d{current_id}"
-    elif id_key == "nurse_id":
-        id = f"n{current_id}"
-    else:
-        id = current_id 
+    # Attempt to get the latest ID from the Supabase table
+    try:
+        response = supabase.table(table_name).select(id_key).order(id_key, desc=True).limit(1).execute()
+
+        # Log the entire response to inspect its structure
+        print(f"Response: {response}")
+
+        if hasattr(response, 'error') and response.error:  # Check if the response contains an error
+            print(f"Error fetching the latest ID: {response.error}")
+            return f"Error fetching the latest ID: {response.error}", 500
+        
+        # Get the latest ID from the response data and generate the new ID
+        latest_id = response.data[0][id_key][1:] if response.data else 10000  # Default to 10000 if no data
+        next_id = int(latest_id) + 1  # Increment by 1 for the new ID
+        record_id = f"{prefix}{next_id}"
+
+        print(f"Generated new ID: {record_id}")
+    except Exception as e:
+        print(f"Error retrieving or generating ID: {e}")
+        return f"Error retrieving or generating ID: {e}", 500
 
     if request.method == "POST":
-        # Load existing records
-        records = load_db(file_path)
-
-        # Generate the next ID for the given staff type
-        record_id = id
-
         # Collect form data
         name = request.form["name"]
         nic = request.form["nic"]
@@ -217,53 +234,91 @@ def add_record(staff_type, staff_id):
         department = request.form["department"]
         startDate = request.form["startDate"]
         endDate = request.form["endDate"]
-        status = "active"
 
-        # Append the new record
-        records.append({
-            "id": record_id,
-            "name": name,
-            "nic": nic,
-            "dob": dob,
-            "gender": gender,
-            "phone": phone,
-            "email": email,
-            "department": department,
-            'startDate': startDate,
-            'endDate': endDate,
-            "status": status
-        })
-        # Save the updated records list
+        # Determine the status based on endDate
+        today = datetime.today().date()
+        status = "active" if datetime.strptime(endDate, "%Y-%m-%d").date() > today else "expired"
+
+        # Insert data into the Supabase table (doctor or nurse)
         try:
-            save_ppl(file_path, records)
+            insert_response = supabase.table(table_name).insert({
+                "id": record_id,
+                "name": name,
+                "nic": nic,
+                "dob": dob,
+                "gender": gender,
+                "phone": phone,
+                "email": email,
+                "department": department,
+                "startdate": startDate,
+                "enddate": endDate,
+                "status": status
+            }).execute()
+
+            if hasattr(insert_response, 'error') and insert_response.error:
+                print(f"Error inserting into Supabase: {insert_response.error}")
+            else:
+                print(f"{staff_type.capitalize()} {name} added successfully.")
+
         except Exception as e:
-             print(f"File saving error: {e}")
-        
-        get_next_id(id_key)
-        print("Saved")
+            print(f"Error inserting data: {e}")
 
-        add_new = load_db(LOGIN_FILE)
-        add_new.append({
-            "id": record_id,
-            "psw": nic,
-            "pos": staff_type
-        })
-        save_ppl(LOGIN_FILE, add_new)
-        
-        add_appointment = load_db(APPOINTMENT_FILE)
-        add_appointment.append({
-            "doctor_id": record_id,
-            "count": 1
-        })
-        
-        save_ppl(APPOINTMENT_FILE, add_appointment)
+        # Add login details in the Supabase login table
+        try:
+            login_response = supabase.table("login").insert({
+                "id": record_id,
+                "psw": nic,
+                "pos": staff_type
+            }).execute()
 
-        
+            if hasattr(login_response, 'error') and login_response.error:
+                print(f"Error inserting login data into Supabase: {login_response.error}")
+            else:
+                print(f"Login details for {staff_type.capitalize()} {name} added successfully.")
+
+        except Exception as e:
+            print(f"Error adding login data: {e}")
+
+        # Add appointment details for doctors (only applicable to doctors)
+        if staff_type == "doctors":
+            try:
+                appointment_response = supabase.table("appointment").insert({
+                    "doctor_id": record_id,
+                    "count": 1
+                }).execute()
+
+                if hasattr(appointment_response, 'error') and appointment_response.error:
+                    print(f"Error inserting appointment data into Supabase: {appointment_response.error}")
+                else:
+                    print(f"Appointment details for doctor {name} added successfully.")
+
+            except Exception as e:
+                print(f"Error adding appointment data: {e}")
 
         # Redirect to index after saving
-        return redirect(url_for("manage_db",db_type=staff_type, staff_id=staff_id))
+        return redirect(url_for("manage_db", db_type=staff_type, staff_id=staff_id))
+
     else:
-        return render_template(f"manage/{staff_type}_add.html", id=id, staff_id=staff_id)
+        return render_template(f"manage/{staff_type}_add.html", id=record_id, staff_id=staff_id)
+
+###########################################################################################################
+
+@app.route("/doctor/<string:staff_id>")
+def doctors_db(staff_id):
+    try:
+        # Fetch all doctor data from Supabase
+        response = supabase.table("doctor").select("*").execute()
+        
+        if response.data:
+            doctors = response.data
+        else:
+            doctors = []
+
+    except Exception as e:
+        print(f"Error fetching doctors: {e}")
+        doctors = []
+
+    return render_template("doctors/doctors_db.html", data=doctors, staff_id=staff_id)
 
 
 ###########################################################################################################
@@ -475,13 +530,29 @@ def index(staff_id):
     return render_template("patients/patients_index.html", patients=patients, staff_id=staff_id)
 
 
-# Add new patient in database
+# Add new patient in database # done
 @app.route("/add/<string:department>/<string:staff_id>", methods=["GET", "POST"])
 def add_patient(department, staff_id):
-    if request.method == "POST":
-        # Load existing patients
-        patients = load_db(PATIENTS_FILE)
+    # Fetch the latest patient ID from the patient table
+    try:
+        response = supabase.table("patient").select("id").order("id", desc=True).limit(1).execute()
+            
+        # Log the entire response to inspect its structure
+        print(f"Response: {response}")
 
+        if hasattr(response, 'error') and response.error:  # Check if the response contains an error
+            print(f"Error fetching the latest ID: {response.error}")
+            return f"Error fetching the latest ID: {response.error}", 500
+            
+        latest_id = response.data[0]["id"] if response.data else 10000  # Default to 10000 if no data
+        next_id = int(latest_id) + 1  # Increment by 1 for the new ID
+        record_id = f"{next_id}"
+    except Exception as e:
+        print(f"Error retrieving or generating ID: {e}")
+        return f"Error retrieving or generating ID: {e}", 500
+    
+    
+    if request.method == "POST":
         # Get form data
         name = request.form["name"]
         nic = request.form["nic"]
@@ -490,45 +561,55 @@ def add_patient(department, staff_id):
         phone = request.form["phone"]
         email = request.form["email"]
         address = request.form["address"]
-        
-        # Generate the next patient ID
-        id = get_current_ids().get("patient_id", 10000)
-        
-        # Check if the NIC already exists in the patient database
-        if any(patient["nic"] == nic for patient in patients):
-            # If NIC is already registered, return an error message
-            return render_template("patients/patients_add.html", 
-                                   error="Patient with this NIC already exists.", 
-                                   id=id, staff_id=staff_id, department=department)
-        
-        # Modify department to be a list (even if it's just one department)
-        department_list = [department] if department else []
 
-        # Append the new patient record with departments as a list
-        patients.append({
-            "id": id,
-            "name": name,
-            "nic": nic,
-            "dob": dob,
-            "gender": gender,
-            "phone": phone,
-            "email": email,
-            "address": address,
-            "departments": department_list  # Store department as a list
-        })
+        # Query the nurse table to get the department of the logged-in nurse
+        try:
+            nurse_response = supabase.table("nurse").select("department").eq("id", staff_id).execute()
+            if nurse_response.data:
+                nurse_department = nurse_response.data[0]["department"]
+            else:
+                print("Error: Nurse department not found.")
+                return redirect(url_for("nurses_index", id=staff_id))
+        except Exception as e:
+            print(f"Error fetching nurse department: {e}")
+            return redirect(url_for("nurses_index", id=staff_id))
 
-        # Save updated patients list
-        save_ppl(PATIENTS_FILE, patients)
         
-        # Increment the patient ID counter
-        get_next_id("patient_id")
 
-        # Redirect to index after saving
-        return redirect(url_for("nurses_index", id=staff_id))
+        # Check if the NIC already exists in the patient table
+        try:
+            nic_check_response = supabase.table("patient").select("nic").eq("nic", nic).execute()
+            if nic_check_response.data:
+                print("Error: NIC already exists.")
+                return redirect(url_for("nurses_index", id=staff_id))
+        except Exception as e:
+            print(f"Error checking NIC existence: {e}")
+            return redirect(url_for("nurses_index", id=staff_id))
 
-    # Get the current patient ID for display purposes
-    id = get_current_ids().get("patient_id", 10000)
-    return render_template("patients/patients_add.html", id=id, staff_id=staff_id, department=department)
+        # Create the patient record
+        try:
+            patient_data = {
+                "id": record_id,
+                "name": name,
+                "nic": nic,
+                "dob": dob,
+                "gender": gender,
+                "phone": phone,
+                "email": email,
+                "address": address,
+                "department": nurse_department,
+                "nurse_id": staff_id
+            }
+            insert_response = supabase.table("patient").insert(patient_data).execute()
+            if hasattr(insert_response, 'error') and insert_response.error:
+                print(f"Error inserting into Supabase: {insert_response.error}")
+                return redirect(url_for("nurses_index", id=staff_id))
+            return redirect(url_for("nurses_index", id=staff_id))
+        except Exception as e:
+            print(f"Error inserting into Supabase: {e}")
+            return redirect(url_for("nurses_index", id=staff_id))
+    
+    return render_template("patients/patients_add.html", id=record_id, staff_id=staff_id, department=department)
 
 
 

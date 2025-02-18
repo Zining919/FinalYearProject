@@ -20,10 +20,8 @@
         }
 
         function validateDates(event) {
-            event.preventDefault();
-
             const currentDate = new Date();
-
+        
             // Validate Date of Birth (dob)
             const dob = document.getElementById("dob").value;
             if (!isValidDate(dob)) {
@@ -35,7 +33,7 @@
                 alert("Date of Birth cannot be in the future.");
                 return false;
             }
-
+        
             // Validate Contract Start Date
             const startDate = document.getElementById("startDate").value;
             if (!isValidDate(startDate)) {
@@ -47,7 +45,7 @@
                 alert("Contract Start Date must be today or a future date.");
                 return false;
             }
-
+        
             // Validate Contract End Date
             const endDate = document.getElementById("endDate").value;
             if (!isValidDate(endDate)) {
@@ -55,7 +53,7 @@
                 return false;
             }
             const end = new Date(endDate);
-
+        
             // Ensure End Date is at least 2 years after Start Date
             const twoYearsLater = new Date(start);
             twoYearsLater.setFullYear(twoYearsLater.getFullYear() + 2);
@@ -63,14 +61,13 @@
                 alert("Contract End Date must be at least 2 years after the Start Date.");
                 return false;
             }
-
+        
             // If all validations pass, submit the form
-            //alert("New Doctor added successfully!");
-            //event.target.submit();
+            return true;  // This will allow the form to submit and proceed to Flask
         }
     </script>
 
-    <script type = "module">
+    <!--<script type = "module">
 
         function formatDate(dateString) {
             const [year, month, day] = dateString.split("-");
@@ -121,7 +118,7 @@
             event.target.submit();
         })
 
-    </script>
+    </script>-->
 
 </head>
 <body>
