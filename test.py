@@ -38,153 +38,188 @@ def load_db(filePath):
     except FileNotFoundError:
         return []  # Return an empty list if the file does not exist
 
-
+# Only allow Manager, Doctor and Nurse to LogIn DONE
 @app.route("/", methods=["GET", "POST"])
 def index_main():
     if request.method == "POST":
-        ppl = load_db(LOGIN_FILE)  # Load the list of users
-        id = request.form["user"]
-        psw = request.form["psw"]
+        user_id = request.form["user"].strip()
+        password = request.form["psw"].strip()
 
-        # Search for the user in the list
-        for person in ppl:
-            if id == person["id"] and psw == person["psw"]:
-                navs = person["pos"] + "_index"
+        # Ensure username and password are identical
+        if user_id != password:
+            print("Invalid login: Username and password must be the same.")
+            return render_template("main/index.html")
 
-                # Check and update status for doctors and nurses
-                d_count = load_db(DOCTORS_FILE)
-                n_count = load_db(NURSE_FILE)
-                current_date = datetime.now().date()
+        # Determine the user's role based on ID prefix
+        role_map = {
+            "d": "doctor",
+            "n": "nurse",
+            "m": "manager",
+        }
+        
+        role_prefix = user_id[0]  # Get the first character of the ID
 
-                # Update status for doctors
-                for doctor in d_count:
-                    end_date_str = doctor.get("endDate", "")
-                    if end_date_str:
-                        try:
-                            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-                            doctor["status"] = "expired" if end_date < current_date else "active"
-                        except ValueError:
-                            print(f"Invalid date format for doctor {doctor['id']}: {end_date_str}")
-                    else:
-                        print(f"Doctor {doctor['id']} has no endDate")
+        # Check if the ID prefix is valid (only doctors, nurses, or managers can log in)
+        if role_prefix not in role_map:
+            print("Invalid login: Patients are not allowed to log in.")
+            return render_template("main/index.html")
 
-                # Save the updated doctors' data
-                save_ppl(DOCTORS_FILE, d_count)
+        role_table = role_map[role_prefix]  # Get the Supabase table name
 
-                # Update status for nurses
-                for nurse in n_count:
-                    end_date_str = nurse.get("endDate", "")
-                    if end_date_str:
-                        try:
-                            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-                            nurse["status"] = "expired" if end_date < current_date else "active"
-                        except ValueError:
-                            print(f"Invalid date format for nurse {nurse['id']}: {end_date_str}")
-                    else:
-                        print(f"Nurse {nurse['id']} has no endDate")
+        try:
+            # Query Supabase to check if the user exists
+            response = supabase.table(role_table).select("*").eq("id", user_id).execute()
 
-                # Save the updated nurses' data
-                save_ppl(NURSE_FILE, n_count)
+            if response.data:  # If user exists in the database
+                navs = f"{role_table}_index"
+                print(f"Login successful. Redirecting to {navs}")
 
-                print(navs)
-                return redirect(url_for(navs, id=id))
+                return redirect(url_for(navs, id=user_id))
 
-        # If no match is found
-        print("Invalid login")
-        return render_template("main/index.html")
+            else:
+                print("Invalid login: User does not exist.")
+                return render_template("main/index.html")
+
+        except Exception as e:
+            print(f"Error during login: {e}")
+            return render_template("main/index.html")
 
     return render_template("main/index.html")
 
-# Access Management index page
-## NOTE: add code to check end date for status(expired/active)
+
+# Access Management index page DONE
+## NOTE: add code to check end date for status(expired/active/terminated)
 @app.route("/manage/<string:id>")
-def manage_index(id):
-    ppls = load_db(MANAGE_FILE)
+def manager_index(id):
+    # Fetch people data from Supabase
+    m_response = supabase.table("manager").select("*").execute()
 
-    d_count = load_db(DOCTORS_FILE)
-    n_count = load_db(NURSE_FILE)
-    p_count = load_db(PATIENTS_FILE)
+    # Fetch doctors and nurses data from Supabase
+    d_response = supabase.table("doctor").select("*").execute()
+    n_response = supabase.table("nurse").select("*").execute()
 
-    # Count total and active doctors and nurses
-    active = sum(1 for doctor in d_count if doctor.get("status") == "active") + sum(1 for nurse in n_count if nurse.get("status") == "active")
-    expired = sum(1 for doctor in d_count if doctor.get("status") == "expired") + sum(1 for nurse in n_count if nurse.get("status") == "expired")
+    # Initialize the count for doctors, nurses, and patients
+    active = expired = terminated = 0  # Default counts for each status
 
+    # Count active, expired, and terminated doctors
+    if d_response.data:
+        active += sum(1 for doctor in d_response.data if doctor.get("status") == "active")
+        expired += sum(1 for doctor in d_response.data if doctor.get("status") == "expired")
+        terminated += sum(1 for doctor in d_response.data if doctor.get("status") == "terminated")
+
+    # Count active, expired, and terminated nurses
+    if n_response.data:
+        active += sum(1 for nurse in n_response.data if nurse.get("status") == "active")
+        expired += sum(1 for nurse in n_response.data if nurse.get("status") == "expired")
+        terminated += sum(1 for nurse in n_response.data if nurse.get("status") == "terminated")
+
+    # Total counts for doctors, nurses, and patients
     count = {
-        "d_count": len(d_count),  # Total doctors
-        "n_count": len(n_count),  # Total nurses
-        "p_count": len(p_count),  # Total patients
+        "d_count": len(d_response.data) if d_response.data else 0,  # Total doctors
+        "n_count": len(n_response.data) if n_response.data else 0,  # Total nurses
+        "p_count": len(m_response.data) if m_response.data else 0,  # Total people (patients)
         "active": active,
-        "expired": expired
+        "expired": expired,
+        "terminated": terminated
     }
 
-    for ppl in ppls:
-        if id == ppl["id"]:
-            return render_template("manage/manage_index.html", ppl=ppl, count=count)
+    # Find the specific person matching the id
+    if m_response.data:
+        for ppl in m_response.data:
+            if id == ppl["id"]:
+                return render_template("manage/manager_index.html", ppl=ppl, count=count)
+
+    return "Person not found.", 404
 
 
-# Get databse 
+
+# Retrieve the data from Supabase DONE
 @app.route("/<string:db_type>_db/<string:staff_id>")
 def manage_db(db_type, staff_id):
-    # Define a mapping between db_type and file/constants
-    db_files = {
-        "doctors": DOCTORS_FILE,
-        "nurses": NURSE_FILE,
-        "patients": PATIENTS_FILE,
+    # Define a mapping between db_type and the corresponding Supabase table
+    table_map = {
+        "doctors": "doctor",
+        "nurses": "nurse",
+        "patients": "patient",
     }
 
     # Check if the db_type is valid
-    if db_type not in db_files:
+    if db_type not in table_map:
         return "Invalid database type.", 404
 
-    # Load the appropriate database
-    data = load_db(db_files[db_type])
-    # Render the corresponding template
-    return render_template(f"manage/{db_type}_db.html", data=data, staff_id=staff_id)
-
-
-
-##########################################################################################################
-def get_current_ids():
-    """Load the current IDs from the JSON file or initialize if not found."""
     try:
-        with open(ID_TRACKER_FILE, "r") as file:
-            ids = json.load(file)
-    except FileNotFoundError:
-        # Initialize IDs if the file does not exist
-        ids = {
-            "patient_id": 10000,
-            "doctor_id": 1000,
-            "nurse_id": 1000
-        }
-    return ids
+        # Fetch the corresponding data from Supabase
+        table_name = table_map[db_type]
+        response = supabase.table(table_name).select("*").execute()
 
-def save_current_ids(ids):
-    """Save the current IDs to the JSON file."""
-    with open(ID_TRACKER_FILE, "w") as file:
-        json.dump(ids, file)
+        # If the response data is available, assign it to the variable 'data'
+        data = response.data if response.data else []
 
-def get_next_id(id_type):
-    """Get the next ID for the given type (e.g., patient, doctor, nurse)."""
-    ids = get_current_ids()
+        # Initialize status counts only for doctors and nurses
+        status_counts = None
+        if db_type in ["doctors", "nurses"]:
+            status_counts = {"active": 0, "expired": 0, "terminated": 0}
+            for record in data:
+                status = record.get("status", "").lower()  # Default to empty string if 'status' key is missing
+                if status in status_counts:
+                    status_counts[status] += 1
+
+    except Exception as e:
+        print(f"Error fetching data from Supabase: {e}")
+        data = []
+        status_counts = None if db_type == "patients" else {"active": 0, "expired": 0, "terminated": 0}
+
+    # Render the corresponding template and pass the data and status counts (if applicable)
+    return render_template(
+        f"manage/{db_type}_db.html",
+        data=data,
+        staff_id=staff_id,
+        count=status_counts if status_counts else {}
+    )
+
+# can delete since no more use .json file
+##########################################################################################################
+# def get_current_ids():
+#     """Load the current IDs from the JSON file or initialize if not found."""
+#     try:
+#         with open(ID_TRACKER_FILE, "r") as file:
+#             ids = json.load(file)
+#     except FileNotFoundError:
+#         # Initialize IDs if the file does not exist
+#         ids = {
+#             "patient_id": 10000,
+#             "doctor_id": 1000,
+#             "nurse_id": 1000
+#         }
+#     return ids
+
+# def save_current_ids(ids):
+#     """Save the current IDs to the JSON file."""
+#     with open(ID_TRACKER_FILE, "w") as file:
+#         json.dump(ids, file)
+
+# def get_next_id(id_type):
+#     """Get the next ID for the given type (e.g., patient, doctor, nurse)."""
+#     ids = get_current_ids()
     
-    if id_type not in ids:
-        raise ValueError(f"Invalid ID type: {id_type}")
+#     if id_type not in ids:
+#         raise ValueError(f"Invalid ID type: {id_type}")
     
-    # Increment the ID
-    next_id = ids[id_type] + 1
-    ids[id_type] = next_id
+#     # Increment the ID
+#     next_id = ids[id_type] + 1
+#     ids[id_type] = next_id
     
-    # Save the updated IDs back to the JSON file
-    save_current_ids(ids)
-    if id_type == "doctor_id":
-        return f"d{next_id}"
-    elif id_type == "nurse_id":
-        return f"n{next_id}"
-    else:
-        return next_id 
+#     # Save the updated IDs back to the JSON file
+#     save_current_ids(ids)
+#     if id_type == "doctor_id":
+#         return f"d{next_id}"
+#     elif id_type == "nurse_id":
+#         return f"n{next_id}"
+#     else:
+#         return next_id 
 
 
-# Add new doctor/nurse (create new user with username and password for login the system) #done
+# Add new doctor/nurse (create new user with username and password for login the system) DONE
 @app.route("/<string:staff_type>_add/<string:staff_id>", methods=["GET", "POST"])
 def add_record(staff_type, staff_id):
     # Mapping for table names and ID keys based on staff type
@@ -302,61 +337,83 @@ def add_record(staff_type, staff_id):
         return render_template(f"manage/{staff_type}_add.html", id=record_id, staff_id=staff_id)
 
 ###########################################################################################################
-
-@app.route("/doctor/<string:staff_id>")
-def doctors_db(staff_id):
+# Display functions that can be done by doctors only (Patient list, Schedule, Appointment for scan, Profile) DONE
+@app.route("/doctor/<string:id>")
+def doctor_index(id):
     try:
-        # Fetch all doctor data from Supabase
-        response = supabase.table("doctor").select("*").execute()
-        
-        if response.data:
-            doctors = response.data
+        # Fetch doctor details from Supabase (Ensuring the logged-in doctor exists)
+        doctor_response = supabase.table("doctor").select("*").eq("id", id).execute()
+        if not doctor_response.data:
+            print(f"Doctor with ID {id} not found.")
+            return "Doctor not found", 404
+
+        doctor = doctor_response.data[0]  # Extract the doctor details
+
+        # Fetch appointments from today onwards
+        today_date = datetime.now().date().strftime('%Y-%m-%d')  # Format today's date
+        appointment_response = (
+            supabase.table("appointment")
+            .select("id, patient_id, date, time, status, nurse_id")
+            .eq("doctor_id", id)
+            .eq("date", today_date)  # Get appointments for today and future dates
+            .execute()
+        )
+
+        if not appointment_response.data:
+            print(f"No appointments found for Doctor {id} today.")
+            appointments = []
         else:
-            doctors = []
+            appointments = appointment_response.data  # List of appointments from today onwards
+
+            # Fetch patient names and nurse names
+            patient_ids = list(set(app["patient_id"] for app in appointments if app["patient_id"]))
+            nurse_ids = list(set(app["nurse_id"] for app in appointments if app["nurse_id"]))
+
+            # Get patient names from the patient table
+            patient_response = (
+                supabase.table("patient")
+                .select("id, name")
+                .in_("id", patient_ids)
+                .execute()
+            )
+            patient_map = {p["id"]: p["name"] for p in patient_response.data}  # Map patient ID to name
+
+            # Get nurse names from the nurse table
+            nurse_response = (
+                supabase.table("nurse")
+                .select("id, name")
+                .in_("id", nurse_ids)
+                .execute()
+            )
+            nurse_map = {n["id"]: n["name"] for n in nurse_response.data}  # Map nurse ID to name
+
+            # Replace IDs with names in the appointments list
+            for app in appointments:
+                app["patient_name"] = patient_map.get(app["patient_id"], "Unknown")
+                app["nurse_name"] = nurse_map.get(app["nurse_id"], "Unknown")
+
+            # Remove unnecessary fields to return only required attributes
+            for app in appointments:
+                app.pop("patient_id", None)
+                app.pop("nurse_id", None)
+
+            # Sort appointments by date and then by time
+            appointments.sort(
+                key=lambda app: (datetime.strptime(app["date"], "%Y-%m-%d"), 
+                                 datetime.strptime(app["time"], "%H:%M"))
+            )
+
+        print(appointments)  # Debugging output
+
+        return render_template("doctors/doctor_index.html", doctor=doctor, appointments=appointments)
 
     except Exception as e:
-        print(f"Error fetching doctors: {e}")
-        doctors = []
-
-    return render_template("doctors/doctors_db.html", data=doctors, staff_id=staff_id)
-
-
-###########################################################################################################
-@app.route("/doctor/<string:id>")
-def doctors_index(id):
-    # Load nurse data from the database or file
-    doctors = load_db(DOCTORS_FILE)
-    patients = load_db(PATIENTS_FILE)
-    
-    db = []
-
-    # Search for the doctor with the given ID
-    for doctor in doctors:
-        if id == doctor["id"]:
-            print(doctor["name"])
-            # Loop through the patients to find their appointments
-            for patient in patients:
-                if 'appointment' in patient:  # Ensure appointments exist for the patient
-                    for app in patient['appointment']:
-                        # Check if the appointment is for the doctor and on today's date
-                        if app.get('doctor_name') == doctor['name']:
-                            try:
-                                appointment_date = datetime.strptime(app['date'], '%Y-%m-%d').date()
-                                # Check if the appointment date is today
-                                if appointment_date == datetime.now().date():  
-                                    db.append(app)
-                            except ValueError:
-                                print(f"Skipping invalid date format: {app['date']}")
-            break  # Assuming one doctor is found, no need to loop further
-    
-    db.sort(key=lambda app: datetime.strptime(f"{app['date']} {app['time']}", '%Y-%m-%d %H:%M'))
-    print(db)  # Add print statements for debugging purposes
-    return render_template("doctors/doctors_index.html", doctor=doctor, db=db, patients=patients)
-
+        print(f"Error fetching doctor or appointment data: {e}")
+        return "An error occurred while retrieving data", 500
 
 
 @app.route("/nurse/<string:id>")
-def nurses_index(id):
+def nurse_index(id):
     # Load nurse data from the database or file
     nurses = load_db(NURSE_FILE)
     patients = load_db(PATIENTS_FILE)
@@ -371,37 +428,42 @@ def nurses_index(id):
                     patient_db.append(patient)
             
             print(patient_db)
-            return render_template("nurses/nurses_index.html", nurse=nurse, patient_db=patient_db)
+            return render_template("nurses/nurse_index.html", nurse=nurse, patient_db=patient_db)
 
 ##############################################################################################################
 
-@app.route("/nurse_profile/<string:id>")
-def nurse_profile(id):
+@app.route("/nurse_profile/<string:nurse_id>")
+def nurse_profile(nurse_id):
     # Load nurse data from the database or file
     nurses = load_db(NURSE_FILE)
     
     # Search for the nurse with the given ID
     for nurse in nurses:
-        if id == nurse["id"]:
+        if nurse_id == nurse["id"]:
             # Render the nurse profile page
             return render_template("nurses/nurses_profile.html", nurse=nurse)
     
     # Handle case when the nurse is not found
     return "Nurse not found", 404
 
-@app.route("/doctor_profile/<string:id>")
-def doctor_profile(id):
-    # Load doctor data from the database or file
-    doctors = load_db(DOCTORS_FILE)
-    
-    # Search for the doctor with the given ID
-    for doctor in doctors:
-        if id == doctor["id"]:
-            # Render the doctor profile page
+
+# Display the doctor's data DONE
+@app.route("/doctor_profile/<string:doctor_id>")
+def doctor_profile(doctor_id):
+    try:
+        # Fetch only the required fields from the "doctor" table in Supabase
+        response = supabase.table("doctor").select("id, name, dob, gender, phone, email, department").eq("id", doctor_id).execute()
+        
+        # Check if doctor data is retrieved
+        if response.data:
+            doctor = response.data[0]  # Get the first record since ID is unique
             return render_template("doctors/doctors_profile.html", doctor=doctor)
     
-    # Handle case when the nurse is not found
+    except Exception as e:
+        print(f"Error fetching doctor data from Supabase: {e}")
+
     return "Doctor not found", 404
+
 
 
 def get_details_by_id(id,filePath):
@@ -504,6 +566,9 @@ def edit_profile(id):
     return render_template('main/update_profile.html', staff=staff, staff_type=staff_type)
 
 
+
+
+
 #####################################################################################################################
 # edit password for all users
 @app.route("/edit_psw/<string:id>", methods=['GET', 'POST'])
@@ -523,14 +588,69 @@ def edit_psw(id):
 
 
 ########################################################################################################
+# Display Patient's data that had or have appointment with the doctor DONE
 @app.route("/patient/<string:staff_id>")
 def index(staff_id):
-    patients = load_db(PATIENTS_FILE)
-    staff_id= staff_id
-    return render_template("patients/patients_index.html", patients=patients, staff_id=staff_id)
+    try:
+        # Query to get all patients with appointments for the given doctor
+        appointment_response = supabase.table("appointment").select("patient_id").eq("doctor_id", staff_id).execute()
+        
+        if not appointment_response.data:
+            return render_template("patients/patients_index.html", patients=[], staff_id=staff_id)
+
+        # Extract patient IDs from appointments
+        patient_ids = [appointment["patient_id"] for appointment in appointment_response.data]
+
+        # Fetch patient details for these patient IDs
+        patient_response = supabase.table("patient").select("id, name, nic, dob, gender").in_("id", patient_ids).execute()
+
+        # Render the patients' details in the template
+        patients = patient_response.data  # List of patients who have appointments with the doctor
+        return render_template("patients/patients_index.html", patients=patients, staff_id=staff_id)
+
+    except Exception as e:
+        print(f"Error fetching patient list: {e}")
+        return f"An error occurred while retrieving data: {e}", 500
+
+# Search patient in the patient table DONE
+@app.route("/doctors/search_patient/<string:staff_id>", methods=["GET"])
+def search_patient(staff_id):
+    query = request.args.get("query")  # Get search input from the doctor
+
+    # If no query, return empty search results
+    if not query:
+        # Redirect to the doctor-specific patient list if no search query is provided
+        return render_template("patients/patients_index.html", patients=[], staff_id=staff_id)
+
+    try:
+        # Check if query is numeric (possible patient ID)
+        if query.isdigit():
+            # If query is a patient ID, search by ID
+            patient_response = (
+                supabase.table("patient")
+                .select("id, name, nic, dob, gender")  # Select required fields
+                .eq("id", query)  # Exact match for patient ID
+                .execute()
+            )
+        else:
+            # If query is a name, search by name
+            patient_response = (
+                supabase.table("patient")
+                .select("id, name, nic, dob, gender")  # Select required fields
+                .ilike("name", f"%{query}%")  # Case-insensitive search for patient name
+                .execute()
+            )
+
+        patients = patient_response.data
+        # Return the search results, passing the patients and staff_id
+        return render_template("patients/patients_index.html", patients=patients, staff_id=staff_id)
+
+    except Exception as e:
+        print(f"Error searching patient: {e}")
+        return "An error occurred while searching", 500
 
 
-# Add new patient in database # done
+# Add new patient in database DONE
 @app.route("/add/<string:department>/<string:staff_id>", methods=["GET", "POST"])
 def add_patient(department, staff_id):
     # Fetch the latest patient ID from the patient table
@@ -569,10 +689,10 @@ def add_patient(department, staff_id):
                 nurse_department = nurse_response.data[0]["department"]
             else:
                 print("Error: Nurse department not found.")
-                return redirect(url_for("nurses_index", id=staff_id))
+                return redirect(url_for("nurse_index", id=staff_id))
         except Exception as e:
             print(f"Error fetching nurse department: {e}")
-            return redirect(url_for("nurses_index", id=staff_id))
+            return redirect(url_for("nurse_index", id=staff_id))
 
         
 
@@ -581,10 +701,10 @@ def add_patient(department, staff_id):
             nic_check_response = supabase.table("patient").select("nic").eq("nic", nic).execute()
             if nic_check_response.data:
                 print("Error: NIC already exists.")
-                return redirect(url_for("nurses_index", id=staff_id))
+                return redirect(url_for("nurse_index", id=staff_id))
         except Exception as e:
             print(f"Error checking NIC existence: {e}")
-            return redirect(url_for("nurses_index", id=staff_id))
+            return redirect(url_for("nurse_index", id=staff_id))
 
         # Create the patient record
         try:
@@ -603,11 +723,11 @@ def add_patient(department, staff_id):
             insert_response = supabase.table("patient").insert(patient_data).execute()
             if hasattr(insert_response, 'error') and insert_response.error:
                 print(f"Error inserting into Supabase: {insert_response.error}")
-                return redirect(url_for("nurses_index", id=staff_id))
-            return redirect(url_for("nurses_index", id=staff_id))
+                return redirect(url_for("nurse_index", id=staff_id))
+            return redirect(url_for("nurse_index", id=staff_id))
         except Exception as e:
             print(f"Error inserting into Supabase: {e}")
-            return redirect(url_for("nurses_index", id=staff_id))
+            return redirect(url_for("nurse_index", id=staff_id))
     
     return render_template("patients/patients_add.html", id=record_id, staff_id=staff_id, department=department)
 
@@ -634,7 +754,7 @@ def add_existing_or_search(department, staff_id):
                 break
 
         save_ppl(PATIENTS_FILE, patients)
-        return redirect(url_for("nurses_index", id=staff_id))
+        return redirect(url_for("nurse_index", id=staff_id))
 
     if request.method == "GET":
         query = request.args.get("query", "").lower()  # Ensure query is a string and lowercase
@@ -671,7 +791,7 @@ def update_patient_info(patient_id, staff_id):
         address = request.form["address"]
 
         update_patient(patient_id, phone, email,address, PATIENTS_FILE)
-        return redirect(url_for("nurses_index", id=staff_id))
+        return redirect(url_for("nurse_index", id=staff_id))
 
     return render_template('patients/patients_update.html', patient=patient, staff_id=staff_id)
 
@@ -819,26 +939,52 @@ def update_appointment(patient_id, staff_id, appointment_index):
     
     return "Patient or appointment not found", 404
 
-@app.route('/doctor_schedule/<string:id>', methods=["GET", "POST"])
+# Display the doctor's upcoming appointments DONE
+@app.route("/doctor_schedule/<string:id>", methods=["GET", "POST"])
 def doctor_schedule(id):
-    doctor = get_details_by_id(id, DOCTORS_FILE)
-    patients = load_db(PATIENTS_FILE)
-    
-    db = []
-    
-    for patient in patients:
-        # Check if patient has appointments and loop through them if it is a list
-        if patient and 'appointment' in patient:
-            for app in patient['appointment']:  # Loop through each appointment
-                if app.get('doctor_name') == doctor['name']:  # Use .get() to avoid KeyError
-                    db.append(app)
-    
-    # Sort the appointments by date and time in ascending order
-    db.sort(key=lambda app: datetime.strptime(f"{app['date']} {app['time']}", '%Y-%m-%d %H:%M'))
+    try:
+        # Fetch doctor details
+        doctor_response = supabase.table("doctor").select("*").eq("id", id).execute()
+        if not doctor_response.data:
+            return "Doctor not found", 404
+        doctor = doctor_response.data[0]
 
-    return render_template('doctors/doctors_schedule.html', id=id, db=db, patients=patients, doctor=doctor)
+        # Get selected date or default to future appointments
+        selected_date = request.form.get("selected_date")
+        today_date = datetime.now().date().strftime('%Y-%m-%d')
 
+        query = supabase.table("appointment").select("id, patient_id, date, time, status, nurse_id").eq("doctor_id", id)
+        query = query.eq("date", selected_date) if selected_date else query.gt("date", today_date)
+        
+        appointment_response = query.execute()
+        appointments = appointment_response.data or []
 
+        # Fetch patient and nurse details
+        patient_map, nurse_map = {}, {}
+        if appointments:
+            patient_ids = {app["patient_id"] for app in appointments if app["patient_id"]}
+            nurse_ids = {app["nurse_id"] for app in appointments if app["nurse_id"]}
+
+            if patient_ids:
+                patient_response = supabase.table("patient").select("id, name").in_("id", list(patient_ids)).execute()
+                patient_map = {p["id"]: p["name"] for p in patient_response.data}
+
+            if nurse_ids:
+                nurse_response = supabase.table("nurse").select("id, name").in_("id", list(nurse_ids)).execute()
+                nurse_map = {n["id"]: n["name"] for n in nurse_response.data}
+
+            for app in appointments:
+                app["patient_name"] = patient_map.get(app.pop("patient_id"), "Unknown")
+                app["nurse_name"] = nurse_map.get(app.pop("nurse_id"), "Unknown")
+
+            appointments.sort(
+                key=lambda app: (datetime.strptime(app["date"], "%Y-%m-%d"),
+                                 datetime.strptime(app["time"], "%H:%M"))
+            )
+
+        return render_template("doctors/doctors_schedule.html", id=id, doctor=doctor, appointments=appointments, selected_date=selected_date)
+    except Exception as e:
+        return f"Error fetching doctor schedule: {e}", 500
 
 
 

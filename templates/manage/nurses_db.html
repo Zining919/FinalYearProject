@@ -33,20 +33,20 @@
             </tr>
             {% for nurse in data %}
             <tr>
-                <td>{{ nurse.id }}</td>
-                <td>{{ nurse.name }}</td>
-                <td>{{ nurse.nic }} </td>
-                <td>{{ nurse.dob }}</td>
-                <td>{{ nurse.gender }}</td>
-                <td>{{ nurse.phone }}</td>
-                <td>{{ nurse.email }}</td>
-                <td>{{ nurse.department }}</td>
-                <td>{{ nurse.startDate }}</td>
-                <td>{{ nurse.endDate }}</td>
+                <td>{{ nurse['id'] }}</td>
+                <td>{{ nurse['name'] }}</td>
+                <td>{{ nurse['nic'] }}</td>
+                <td>{{ nurse['dob'] }}</td>
+                <td>{{ nurse['gender'] }}</td>
+                <td>{{ nurse['phone'] }}</td>
+                <td>{{ nurse['email'] }}</td>
+                <td>{{ nurse['department'] }}</td>
+                <td>{{ nurse['startdate'] }}</td>
+                <td>{{ nurse['enddate'] }}</td>
                 <td>
                     <span 
-                        class="{% if nurse.status == 'active' %}status-active{% else %}status-expired{% endif %}">
-                        {{ nurse.status }}
+                        class="{% if nurse['status'] == 'active' %}status-active{% elif nurse['status'] == 'terminated' %}status-terminated{% else %}status-expired{% endif %}">
+                        {{ nurse['status'] }}
                     </span>
                 </td>
                 <td>

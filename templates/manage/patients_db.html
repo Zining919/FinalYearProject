@@ -11,6 +11,7 @@
             <tr>
                 <th>#</th>
                 <th>Name</th>
+                <th>NIC</th>
                 <th>DOB</th>
                 <th>Gender</th>
                 <th>Phone</th>
@@ -19,13 +20,14 @@
             </tr>
             {% for patient in data %}
             <tr>
-                <td>{{ patient.id }}</td>
-                <td>{{ patient.name }}</td>
-                <td>{{ patient.dob }}</td>
-                <td>{{ patient.gender }}</td>
-                <td>{{ patient.phone }}</td>
-                <td>{{ patient.email }}</td>
-                <td>{{ patient.address }}</td>
+                <td>{{ patient['id'] }}</td>
+                <td>{{ patient['name'] }}</td>
+                <td>{{ patient['nic'] }}</td>
+                <td>{{ patient['dob'] }}</td>
+                <td>{{ patient['gender'] }}</td>
+                <td>{{ patient['phone'] }}</td>
+                <td>{{ patient['email'] }}</td>
+                <td>{{ patient['address'] }}</td>
             </tr>
             {% endfor %}
         </table>

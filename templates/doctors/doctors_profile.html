@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,7 +8,7 @@
         <h1>Doctor Profile</h1>
         <table>
             <tr>
-                <th>#</th>
+                <th>ID</th>
                 <th>Name</th>
                 <th>DOB</th>
                 <th>Gender</th>
@@ -29,5 +29,40 @@
         <a href="/edit_profile/{{doctor.id}}">Edit Profile</a>
         <a href="/edit_psw/{{doctor.id}}">Edit Password</a>
         <a href="/doctor/{{doctor.id}}">Back</a>
+    </body>
+</html>-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+        <title>Doctor Profile</title>
+    </head>
+    <body>
+        <h1>Doctor Profile</h1>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>DOB</th>
+                <th>Gender</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Department</th>
+            </tr>
+            <tr>
+                <td>{{ doctor.id }}</td>
+                <td>{{ doctor.name }}</td>
+                <td>{{ doctor.dob }}</td>
+                <td>{{ doctor.gender }}</td>
+                <td>{{ doctor.phone }}</td>
+                <td>{{ doctor.email }}</td>
+                <td>{{ doctor.department }}</td>
+            </tr>
+        </table>
+        <a href="/edit_profile/{{ doctor.id }}">Edit Profile</a>
+        <a href="/edit_psw/{{ doctor.id }}">Edit Password</a>
+        <a href="/dashboard">Back</a>
     </body>
 </html>

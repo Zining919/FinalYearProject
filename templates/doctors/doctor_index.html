@@ -17,26 +17,26 @@
 
         <h2>Today's Appointment</h2>
         <section>      
-            {% if db %}
+            {% if appointments %}
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Patient ID</th>
+                            <th>ID</th>
                             <th>Patient Name</th>
                             <th>Appointment Time</th>
                             <th>Status</th>
+                            <th>Assistance (Nurse)</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for app in db %}
+                        {% for appointment in appointments %}
                             <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>{{ app['patient_id'] }}</td>
-                                <td>{{ app['patient_name'] }}</td>
-                                <td>{{ app['date'] }} at {{ app['time'] }}</td>
-                                <td>{{ app['status'] }}</td>
+                                <td>{{ appointment['id'] }}</td>
+                                <td>{{ appointment['patient_name'] }}</td>
+                                <td>{{ appointment['date'] }} at {{ appointment['time'] }}</td>
+                                <td>{{ appointment['status'] }}</td>
+                                <td>{{ appointment['nurse_name'] }}</td>
                                 <td>
                                     <table class="action-table">
                                         <tr>

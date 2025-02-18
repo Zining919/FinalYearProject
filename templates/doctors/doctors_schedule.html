@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -18,7 +18,6 @@
         <button class="search-button" onclick="searchPatient()">Search</button>
     </div>
 
-    <!-- Appointment Table -->
     <table>
         <thead>
             <tr>
@@ -66,6 +65,104 @@
             }
         }
     </script>
+
+    <footer>
+        <a href="/doctor/{{ id }}">Back</a>
+    </footer>
+</body>
+</html>-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor's Schedule</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+</head>
+
+<body>
+    <header>
+        <h1>Upcoming Appointments</h1>
+        <p><b>Doctor Name: </b>{{ doctor['name'] }}</p>
+    </header>
+
+    <div class="search-container">
+        <input type="date" id="searchInput" class="search-input">
+        <button class="search-button" onclick="searchPatient()">Search</button>
+    </div>
+
+    <script>
+        function searchPatient() {
+            const inputDate = document.getElementById('searchInput').value;
+            const table = document.getElementById('appointmentTable');
+            const rows = table.getElementsByTagName('tr');
+            let hasAppointments = false;
+    
+            for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header
+                const dateCell = rows[i].querySelector('.appointment-date');
+                if (dateCell) {
+                    const appointmentDate = dateCell.textContent.split(' at ')[0].trim();
+                    if (appointmentDate === inputDate || inputDate === "") {
+                        rows[i].style.display = "";
+                        hasAppointments = true;
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+    
+            const noAppointmentMessage = document.getElementById('noAppointmentMessage');
+            if (hasAppointments) {
+                table.style.display = "";
+                noAppointmentMessage.style.display = "none";
+            } else {
+                table.style.display = "none";
+                noAppointmentMessage.style.display = "block";
+            }
+        }
+    </script>
+    
+    <section>      
+        {% if appointments %}
+            <table id="appointmentTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Patient Name</th>
+                        <th>Appointment Time</th>
+                        <th>Status</th>
+                        <th>Assistance (Nurse)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appointment in appointments %}
+                        <tr>
+                            <td>{{ appointment['id'] }}</td>
+                            <td>{{ appointment['patient_name'] }}</td>
+                            <td class="appointment-date">{{ appointment['date'] }} at {{ appointment['time'] }}</td>
+                            <td>{{ appointment['status'] }}</td>
+                            <td>{{ appointment['nurse_name'] }}</td>
+                            <td>
+                                <table class="action-table">
+                                    <tr>
+                                        <td>
+                                            <span style="color: green">Yes</span>
+                                        </td>
+                                        <td>
+                                            <span style="color: red">No</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        <p id="noAppointmentMessage" style="display: none; text-align: center; font-weight: bold;">No upcoming appointment. Get a good rest!</p>
+    </section>
 
     <footer>
         <a href="/doctor/{{ id }}">Back</a>
