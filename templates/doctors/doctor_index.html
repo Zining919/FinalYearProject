@@ -40,11 +40,11 @@
                                 <td>
                                     <table class="action-table">
                                         <tr>
-                                            <td>
-                                                <span style="color: green">Yes</span>
+                                            <td class="action">
+                                                <button><a href="/accept_appointment/{{app['num']}}/{{doctor.id}}" style="color: green">Yes</a></button>
                                             </td>
-                                            <td>
-                                                <span style="color: red">No</span>
+                                            <td class="action">
+                                                <button><a href="/delete_appointment/{{app['num']}}/{{doctor.id}}" style="color: red">No</a></button>    
                                             </td>
                                         </tr>
                                     </table>

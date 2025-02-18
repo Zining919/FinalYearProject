@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+        <title>Doctor</title>
+    </head>
+    <body>
+        <h1>Doctor Page</h1>
+        <h2>Hi, {{doctor.name}}</h2>
+
+        <h2>Today's Appointment</h2>
+        <section>      
+            {% if db %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Appointment ID</th>
+                            <th>Patient ID</th>
+                            <th>Patient Name</th>
+                            <th>Appointment Time</th>
+                            <th>Upload Image</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in db %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ app['num'] }}</td>
+                                <td>{{ app['patient_id'] }}</td>
+                                <td>{{ app['patient_name'] }}</td>
+                                <td>{{ app['date'] }} at {{ app['time'] }}</td>
+                                <td><a href="#">+</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No upcoming appointments for this doctor.</p>
+            {% endif %}
+        </section>
+
+        <button><a href="/doctor_profile/{{doctor.id}}">Profile</a></button>
+        <button><a href="/">Log Out</a></button>
+    </body>
+</html>

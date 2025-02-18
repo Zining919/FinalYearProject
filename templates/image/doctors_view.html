@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
-    <title>Medical History</title>
+    <title>Medical Image</title>
 </head>
 <body>
-    <h1>Medical History</h1>
+    <h1>Medical Image</h1>
     <p><b>ID: </b> {{patient.id}}</p>
     <p><b>Name: </b>{{patient.name}}</p>
     <p><b>DOB: </b> {{patient.dob}}</p>
@@ -17,35 +17,23 @@
 
     <table>
         <tr>
-            <th>#</th>
+            <th>Number</th>
             <th>Appoinment ID</th>
-            <th>Department</th>
-            <th>Doctor Name</th>
             <th>Date Time</th>
-            <th>Make Appoinment</th>
-            <th>Medical Report (PDF)</th>
+            <th>Result</th>
+            <th>Generate Report</th>
         </tr>
         {% if patient.history %}
             {% for h in patient.history %}
                 <tr id="history-{{ h.num }}">
                     <td>{{ loop.index }}</td>
                     <td>{{ h.num }}</td>
-                    <td>{{ h.department }}</td>
-                    <td>{{ h.doctor_name }}</td>
                     <td>{{ h.date }} {{ h.time }}</td>
                     <td>
-                        {% if h.scan == "False" %}
-                            <a href="/scan_appointment/{{ h.num }}/{{ staff_id }}" class="update-link" id="update-link-{{ h.num }}">Do Now</a>
-                        {% else %}
-                        <span>Done</span>
-                        {% endif %}
+                        <a href="/scan_appointment/{{ h.num }}/{{ staff_id }}" class="update-link" id="update-link-{{ h.num }}">View</a>
                     </td>
                     <td>
-                        {% if h.report is none %}
-                            <span>-</span>
-                        {% else %}
-                            <a href="/update_appointment/{{ patient.id }}/{{ staff_id }}/{{ h.num }}" class="update-link" id="update-link-{{ h.num }}">Update</a>
-                        {% endif %}
+                        <a href="/update_appointment/{{ patient.id }}/{{ staff_id }}/{{ h.num }}" class="update-link" id="update-link-{{ h.num }}">Generate</a>
                     </td>
                 </tr>
             {% endfor %}
