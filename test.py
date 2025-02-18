@@ -1,7 +1,7 @@
 import json
 import os
 from flask import Flask, render_template, request, redirect, url_for
-from datetime import datetime
+from datetime import datetime, timedelta
 import supabase
 from supabase import create_client, Client
 
@@ -85,8 +85,6 @@ def index_main():
 
                 # Save the updated nurses' data
                 save_ppl(NURSE_FILE, n_count)
-
-                print(navs)
                 return redirect(url_for(navs, id=id))
 
         # If no match is found
@@ -333,12 +331,10 @@ def doctors_index(id):
     # Search for the doctor with the given ID
     for doctor in doctors:
         if id == doctor["id"]:
-            print(doctor["name"])
             # Loop through the patients to find their appointments
             for patient in patients:
-                if 'appointment' in patient:  # Ensure appointments exist for the patient
+                if 'appointment' in patient:  
                     for app in patient['appointment']:
-                        # Check if the appointment is for the doctor and on today's date
                         if app.get('doctor_name') == doctor['name']:
                             try:
                                 appointment_date = datetime.strptime(app['date'], '%Y-%m-%d').date()
@@ -350,7 +346,6 @@ def doctors_index(id):
             break  # Assuming one doctor is found, no need to loop further
     
     db.sort(key=lambda app: datetime.strptime(f"{app['date']} {app['time']}", '%Y-%m-%d %H:%M'))
-    print(db)  # Add print statements for debugging purposes
     return render_template("doctors/doctors_index.html", doctor=doctor, db=db, patients=patients)
 
 
@@ -370,7 +365,6 @@ def nurses_index(id):
                 if nurse["department"] in patient.get("departments", []):
                     patient_db.append(patient)
             
-            print(patient_db)
             return render_template("nurses/nurses_index.html", nurse=nurse, patient_db=patient_db)
 
 ##############################################################################################################
@@ -454,7 +448,6 @@ def update_contract(staff_type,staff_id,id):
         "nurses": NURSE_FILE,
         "patients": PATIENTS_FILE,
     }
-    print("OK 2")
     # Check if the db_type is valid
     if staff_type not in db_files:
         return "Invalid database type.", 404
@@ -462,18 +455,16 @@ def update_contract(staff_type,staff_id,id):
     file_path = db_files[staff_type]
     ppl = get_details_by_id(id,file_path)
 
-    print(ppl)
     if request.method == 'POST':
         startDate = request.form['startDate']
         endDate = request.form["endDate"]
         status = "active"
 
-        print("OK 3")
 
         update_details(id, ppl["name"],ppl["nic"],ppl["dob"],ppl["gender"], 
                        ppl["department"], ppl["phone"], ppl["email"],
                        startDate, endDate,status,file_path)
-        print("OK 4")
+
         return redirect(url_for("manage_db",db_type=staff_type, staff_id=staff_id))
     return render_template('manage/update_contract.html',ppl=ppl,staff_type=staff_type,staff_id=staff_id)
 
@@ -491,8 +482,6 @@ def edit_profile(id):
     else:
         # Handle the case if the id doesn't start with 'n' or 'd'
         return "Invalid ID", 400
-
-    print(staff)
 
     if request.method == 'POST':
         phone = request.form['phone']

@@ -23,6 +23,7 @@
         <thead>
             <tr>
                 <th>#</th>
+                <th>Appointment ID</th>
                 <th>Patient ID</th>
                 <th>Patient Name</th>
                 <th>Appointment Time</th>
@@ -34,6 +35,7 @@
             {% for app in db %}
                 <tr>
                     <td>{{ loop.index }}</td>
+                    <td>{{app["num"]}}</td>
                     <td class="patient-id">{{ app['patient_id'] }}</td>
                     <td class="patient-name">{{ app['patient_name'] }}</td>
                     <td class="appointment-date">{{ app['date'] }} at {{ app['time'] }}</td>

@@ -111,9 +111,9 @@ a {
     background-color: #ddd;
   }
   
-  .action button{
+  .action{
+    border:none;
+    cursor:pointer;
     background-color: transparent;
     width: 90%;
-    border: transparent;
-  }
-  
+}
