@@ -1,0 +1,36 @@
+<!-- Validation: date(at least be current date), time(9am-5pm)-->
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+    <title>Add Scan Appoinment</title>
+    <script>
+        function showConfirmation(event) {
+            alert("New Appointment added successfully!"); 
+        }
+    </script>
+</head>
+<body>
+    <h1>Add New Apoointment</h1>
+    <form action="/scan_appointment/{{patient.id}}/{{num}}/{{staff_id}}" method="POST" onsubmit="showConfirmation(event)">
+        <label for="patient_id">Patient ID: {{patient.id}}</label>
+        <input type="hidden" id="patient_id" name="patient_id" value= "{{patient.id}}">
+
+        <label for="patient_name">Patient Name: {{patient.name}}</label>
+        <input type="hidden" id="patient_name" name="patient_name" value= "{{patient.name}}" >
+   
+        <label for="purpose">Purpose:</label>
+        <select id="purpose" name="purpose">
+            <option value="CT Scan">CT Scan</option>
+            <option value="MRI Scan">MRI Scan</option>
+        </select>
+        <br>
+
+        <button type="submit">Add Appoinment</button>
+    </form>
+    <a href="/appointment/{{ patient.id }}/{{staff_id}}">Back to Appoinment List</a>
+</body>
+</html>

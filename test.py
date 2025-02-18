@@ -690,18 +690,59 @@ def update_patient(patient_id, phone, email, address, file_name):
 
 ######################################################################################################################
 # Appointment
-
-
 @app.route('/appointment/<int:patient_id>/<string:staff_id>')
-def get_appointment(patient_id, staff_id):
-    patient = get_details_by_id(patient_id, PATIENTS_FILE)
-    return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
-
-@app.route('/app_history/<int:patient_id>/<string:staff_id>')
-def get_history(patient_id, staff_id):
+def appointment(patient_id, staff_id):
     patient = get_details_by_id(patient_id, PATIENTS_FILE)
     nurse = get_details_by_id(staff_id, NURSE_FILE)
-    return render_template('patients/patients_history.html', patient=patient, nurse=nurse)
+    return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
+    
+@app.route('/accept_appointment/<int:patient_id>/<int:num>/<string:staff_id>')
+def get_appointment(patient_id, num, staff_id):
+    patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    doctor = get_details_by_id(staff_id, DOCTORS_FILE)
+    
+    patients = load_db(PATIENTS_FILE)
+    app_id = str(patient_id) + "/" + str(num)
+    if num != 0:
+        for p in patients:
+            print(doctor["name"])
+            if 'appointment' in p:  
+                for app in p['appointment']:
+                    print("2")
+                    if app.get('doctor_name') == doctor['name'] and app.get('num') == app_id:
+                        print(app) 
+                        if "history" not in p:
+                            p["history"] = []
+                        print("OK")
+                        p["history"].append({
+                            "num": app["num"],
+                            "patient_id": app["patient_id"],
+                            "patient_name": app["patient_name"],
+                            "department": app["department"],
+                            "doctor_name": app["doctor_name"],
+                            "date": app["date"],
+                            "time": app["num"],
+                            "report": None
+                            })
+                        p["appointment"].remove(app)
+                        
+                        break  # Stop loop once the patient is found
+                
+                print("OK2")
+                # Save the updated records list
+                try:
+                    save_ppl(PATIENTS_FILE, patients)  # This will save the modified patients list
+                    return redirect(url_for("get_history", patient_id=patient_id, staff_id=staff_id,num=0))
+                except Exception as e:
+                    print(f"File saving error: {e}")
+    return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
+
+@app.route('/app_history/<int:patient_id>/<int:num>/<string:staff_id>')
+def get_history(num,patient_id, staff_id):
+    patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    doctor = get_details_by_id(staff_id, DOCTORS_FILE)
+
+    return render_template('patients/patients_history.html', patient=patient, doctor=doctor, staff_id=staff_id)
 
 
 @app.route('/add_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
@@ -727,24 +768,28 @@ def new_appointment(patient_id, staff_id):
             doctor_name = request.form["doctor_name"]
             date = request.form["date"]
             time = request.form["time"]
+            scan = False
             status = "active"
              
             for p in patients: 
                 if p["id"] == int(patient_id):  # Make sure patient_id is compared as int
                     if "appointment" not in p:
                         p["appointment"] = []  # Ensure there's an appointment key
-                    
-                    count = len(p["appointment"])
-                    print(count)
-                    
+                        count = 0
+                    else:
+                        last = p["appointment"][-1]
+                        count = int(last["num"].replace("10000/", ""))
+                    print("count: " + str(count))
+                    print(str(p["id"]) + "/" + str(count + 1))
                     p["appointment"].append({
-                        "num": count + 1,
+                        "num": str(p["id"]) + "/" + str(count + 1),
                         "patient_id": patient_id,
                         "patient_name": patient_name,
                         "department": department,
                         "doctor_name": doctor_name,
                         "date": date,
                         "time": time,
+                        "scan": scan,
                         "status": status                    
                     })
                     break  # Stop loop once the patient is found
@@ -752,7 +797,7 @@ def new_appointment(patient_id, staff_id):
             # Save the updated records list
             try:
                 save_ppl(PATIENTS_FILE, patients)  # This will save the modified patients list
-                return redirect(url_for("get_appointment", patient_id=patient_id, staff_id=staff_id))
+                return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
             except Exception as e:
                 print(f"File saving error: {e}")
         
@@ -819,6 +864,156 @@ def update_appointment(patient_id, staff_id, appointment_index):
     
     return "Patient or appointment not found", 404
 
+##############################################################################################################################
+@app.route('/image_history/<int:patient_id>/<int:num>/<string:staff_id>')
+def get_image(num,patient_id, staff_id):
+    patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    doctor = get_details_by_id(staff_id, DOCTORS_FILE)
+    patients = load_db(PATIENTS_FILE)
+    
+    app_id = str(patient_id) + "/" + str(num)
+    for p in patients:
+        print(doctor["name"])
+        if 'appointment' in p:  
+            for app in p['appointment']:
+                if app.get('doctor_name') == doctor['name'] and app.get('num') == app_id:
+                    print(app) 
+                    if "history" not in p:
+                        p["history"] = []
+                    print("OK")
+                    p["history"].append({
+                        "num": app["num"],
+                        "patient_id": app["patient_id"],
+                        "patient_name": app["patient_name"],
+                        "department": app["department"],
+                        "doctor_name": app["doctor_name"],
+                        "date": app["date"],
+                        "time": app["time"],
+                        "report": "pdf"
+                        })
+                    p["appointment"].remove(app)
+                    
+                    break  # Stop loop once the patient is found
+            
+            print("OK2")
+            # Save the updated records list
+            try:
+                save_ppl(PATIENTS_FILE, patients)  # This will save the modified patients list
+                return render_template('image/doctors_view.html', patient=patient, doctor=doctor, staff_id=staff_id)
+            except Exception as e:
+                print(f"File saving error: {e}")
+                
+    return render_template('image/doctors_view.html', patient=patient, doctor=doctor, staff_id=staff_id)
+
+def is_radiologist_available(radiologist, new_start_time, duration, patients,slot_durations):
+    """Check if the radiologist is available by ensuring no overlapping appointments."""
+    new_end_time = new_start_time + timedelta(minutes=duration)
+
+    for p in patients:
+        if "appointment" in p:
+            for appointment in p["appointment"]:
+                if appointment["doctor_name"] == radiologist["name"]:  # Same radiologist
+                    existing_start = datetime.strptime(f"{appointment['date']} {appointment['time']}", "%Y-%m-%d %H:%M")
+                    existing_end = existing_start + timedelta(minutes=slot_durations.get(appointment["purpose"], 20))
+
+                    # Check if the new slot overlaps with an existing appointment
+                    if (new_start_time < existing_end and new_end_time > existing_start):
+                        return False  # Conflict found, radiologist is not available
+    return True  # No conflicts, radiologist is available
+
+@app.route('/scan_appointment/<int:patient_id>/<int:num>/<string:doctor_id>', methods=["GET", "POST"])
+def scan_appointment(patient_id, num, doctor_id):
+    patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    doctors_db = load_db(DOCTORS_FILE)
+
+    radiologist_db = [doctor for doctor in doctors_db if doctor["department"] == "Radiology"]
+
+    # Define slot durations for different types of scans
+    slot_durations = {
+        "CT Scan": 20,  # in minutes
+        "MRI Scan": 30  # in minutes
+    }
+
+    # Load all patients' data to check existing appointments
+    patients = load_db(PATIENTS_FILE)
+
+    # Find the first available radiologist with a non-clashing slot
+    available_radiologist = None
+    date = datetime.now().strftime("%Y-%m-%d")
+    current_time = datetime.now()
+
+    for radiologist in radiologist_db:
+        proposed_time = current_time + timedelta(minutes=20)  # Start checking from 20 minutes later
+        duration = slot_durations.get("CT Scan", 20)  # Default to CT scan duration
+
+        if is_radiologist_available(radiologist, proposed_time, duration, patients,slot_durations):
+            available_radiologist = radiologist
+            break  # Stop searching when the first available radiologist is found
+
+    if not available_radiologist:
+        return "No available radiologist at this time", 400  # Error if no radiologist is free
+
+    if request.method == "POST":
+        patient_id = request.form["patient_id"]
+        patient_name = request.form["patient_name"]
+        purpose = request.form["purpose"]
+        status = "active"
+
+        duration = slot_durations.get(purpose, 20)  # Get scan duration
+        start_time = proposed_time
+        end_time = start_time + timedelta(minutes=duration)
+
+        # Ensure the selected radiologist is still available at this point
+        if not is_radiologist_available(available_radiologist, start_time, duration, patients,slot_durations):
+            return "Selected time slot is no longer available", 400
+
+        # Schedule the appointment
+        for p in patients:
+            if p["id"] == int(patient_id):
+                if "appointment" not in p:
+                    p["appointment"] = []
+                
+                p["appointment"].append({
+                    "num": f"{purpose}/{patient_id}",
+                    "patient_id": patient_id,
+                    "patient_name": patient_name,
+                    "purpose": purpose,
+                    "doctor_id": available_radiologist["id"],
+                    "doctor_name": available_radiologist["name"],
+                    "date": date,
+                    "start_time": start_time.strftime("%H:%M"),
+                    "end_time": end_time.strftime("%H:%M"),
+                    "status": status
+                })
+
+                for h in p["history"]:
+                    if h.get("num") == f"{patient_id}/{num}":
+                        h["scan"] = "True"
+                break  # Stop once the patient is found
+
+        try:
+            save_ppl(PATIENTS_FILE, patients)
+            return redirect(url_for("get_history", patient_id=patient_id, num=num, staff_id=doctor_id))
+        except Exception as e:
+            print(f"File saving error: {e}")
+
+    return render_template('doctors/scan_appointment.html', patient=patient, staff_id=doctor_id, doctors=radiologist_db, num=num)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####################################################################################################################
 @app.route('/doctor_schedule/<string:id>', methods=["GET", "POST"])
 def doctor_schedule(id):
     doctor = get_details_by_id(id, DOCTORS_FILE)
@@ -837,8 +1032,6 @@ def doctor_schedule(id):
     db.sort(key=lambda app: datetime.strptime(f"{app['date']} {app['time']}", '%Y-%m-%d %H:%M'))
 
     return render_template('doctors/doctors_schedule.html', id=id, db=db, patients=patients, doctor=doctor)
-
-
 
 
 

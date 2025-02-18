@@ -8,12 +8,6 @@
     <body>
         <h1>Doctor Page</h1>
         <h2>Hi, {{doctor.name}}</h2>
-        <div>
-            <button><a href="/patient/{{doctor.id}}">Patient List </a></button>
-            <button><a href="/doctor_schedule/{{doctor.id}}">Schedule </a></button>
-            <button><a href="">Appointment for scan</a></button>
-        </div>
-        <br><br>
 
         <h2>Today's Appointment</h2>
         <section>      
@@ -26,8 +20,7 @@
                             <th>Patient ID</th>
                             <th>Patient Name</th>
                             <th>Appointment Time</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th>Upload Image</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -38,19 +31,7 @@
                                 <td>{{ app['patient_id'] }}</td>
                                 <td>{{ app['patient_name'] }}</td>
                                 <td>{{ app['date'] }} at {{ app['time'] }}</td>
-                                <td>{{ app['status'] }}</td>
-                                <td>
-                                    <table class="action-table">
-                                        <tr>
-                                            <td class="action">
-                                                <button><a href="/accept_appointment/{{app['num']}}/{{doctor.id}}" style="color: green">Yes</a></button>
-                                            </td>
-                                            <td class="action">
-                                                <button><a href="/delete_appointment/{{app['num']}}/{{doctor.id}}" style="color: red">No</a></button>    
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
+                                <td><a href="#">+</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>
