@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,7 +25,7 @@
 
         <table id="patientTable">
             <tr>
-                <th>#</th>
+                <th>ID</th>
                 <th>Name</th>
                 <th>NIC</th>
                 <th>DOB</th>
@@ -37,21 +37,24 @@
                 <th>Actions</th>
             </tr>
             {% for patient in patient_db %}
-            <tr>
-                <td>{{ patient.id }}</td>
-                <td>{{ patient.name }}</td>
-                <td>{{ patient.nic }}</td>
-                <td>{{ patient.dob }}</td>
-                <td>{{ patient.gender }}</td>
-                <td>{{ patient.phone }}</td>
-                <td>{{ patient.email }}</td>
-                <td>{{ patient.address }}</td>
+            <tr class="patient-row">
+                <td>{{ patient['id'] }}</td>
+                <td>{{ patient['name'] }}</td>
+                <td>{{ patient['nic'] }}</td>
+                <td>{{ patient['dob'] }}</td>
+                <td>{{ patient['gender'] }}</td>
+                <td>{{ patient['phone'] }}</td>
+                <td>{{ patient['email'] }}</td>
+                <td>{{ patient['address'] }}</td>
                 <td><a href="/appointment/{{ patient.id }}/{{nurse.id}}" class="appointment">View</a></td>
                 <td>
                     <a href="/update/{{ patient.id }}/{{nurse.id}}" class="update-link">Update</a>
                 </td>
             </tr>
             {% endfor %}
+            <tr id="noPatientRow" style="display: none;">
+                <td colspan="10" style="text-align: center; color: red; font-weight: bold;">No Such Patient Found in the System</td>
+            </tr>
         </table>
 
         <button><a href="/">Log Out</a></button>
@@ -60,9 +63,11 @@
             function searchPatient() {
                 const input = document.getElementById('searchInput').value.toLowerCase();
                 const table = document.getElementById('patientTable');
-                const rows = table.getElementsByTagName('tr');
+                const rows = document.getElementsByClassName('patient-row');
+                const noPatientRow = document.getElementById('noPatientRow');
+                let found = false;
 
-                for (let i = 1; i < rows.length; i++) {
+                for (let i = 0; i < rows.length; i++) {
                     const cells = rows[i].getElementsByTagName('td');
                     let match = false;
 
@@ -76,9 +81,115 @@
                         }
                     }
 
-                    rows[i].style.display = match ? '' : 'none';
+                    if (match) {
+                        rows[i].style.display = '';
+                        found = true;
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
                 }
+
+                noPatientRow.style.display = found ? 'none' : '';
+            }
+        </script>
+    </body>
+</html>-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+        <title>Nurse</title>
+    </head>
+    <body>
+        <h1>Nurse Page</h1>
+        <h2>Hi, {{nurse.name}}</h2>
+        <button><a href="/staff_profile/{{nurse.id}}">Profile</a></button>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search by ID, Name, or NIC">
+            <button class="search-button" onclick="searchPatient()">Search</button>
+        </div>
+
+        <div class="subnav">
+            <button class="subnavbtn">Add New Patient</button>
+            <div class="subnav-content">
+              <a href="/add/{{nurse.department}}/{{nurse.id}}">First Time Patient</a> <br><br>
+              <a href="/add_existing/{{nurse.department}}/{{nurse.id}}">Existing Patient</a>
+            </div>
+        </div>
+
+        <table id="patientTable">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>NIC</th>
+                <th>DOB</th>
+                <th>Gender</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Address</th>
+                <th>Appointment</th>
+                <th>Actions</th>
+            </tr>
+            {% for patient in patient_db %}
+            <tr class="patient-row">
+                <td class="searchable">{{ patient['id'] }}</td>
+                <td class="searchable">{{ patient['name'] }}</td>
+                <td class="searchable">{{ patient['nic'] }}</td>
+                <td>{{ patient['dob'] }}</td>
+                <td>{{ patient['gender'] }}</td>
+                <td>{{ patient['phone'] }}</td>
+                <td>{{ patient['email'] }}</td>
+                <td>{{ patient['address'] }}</td>
+                <td><a href="/appointment/{{ patient.id }}/{{nurse.id}}" class="appointment">View</a></td>
+                <td>
+                    <a href="/update/{{ patient.id }}/{{nurse.id}}" class="update-link">Update</a>
+                </td>
+            </tr>
+            {% endfor %}
+            <!-- Row for 'No Such Patient Found' message -->
+            <tr id="noPatientRow" style="display: none;">
+                <td colspan="10" style="text-align: center; color: red; font-weight: bold;">No Such Patient Found in the System</td>
+            </tr>
+        </table>
+
+        <button><a href="/">Log Out</a></button>
+
+        <script>
+            function searchPatient() {
+                const input = document.getElementById('searchInput').value.toLowerCase();
+                const rows = document.getElementsByClassName('patient-row');
+                const noPatientRow = document.getElementById('noPatientRow');
+                let found = false;
+
+                for (let i = 0; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByClassName('searchable');
+                    let match = false;
+
+                    for (let j = 0; j < cells.length; j++) {
+                        if (cells[j]) {
+                            const text = cells[j].textContent.toLowerCase();
+                            if (text.includes(input)) {
+                                match = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (match) {
+                        rows[i].style.display = '';
+                        found = true;
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+
+                // Show or hide the "No Such Patient Found" message
+                noPatientRow.style.display = found ? 'none' : '';
             }
         </script>
     </body>
 </html>
+

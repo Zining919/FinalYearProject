@@ -1,62 +1,93 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
-        <title>Change Password</title>
-        <style>
-            .container {
-                max-width: 400px;
-                margin: 50px auto;
-                padding: 20px;
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                background-color: #f9f9f9;
-            }
-            .form-group {
-                margin-bottom: 15px;
-            }
-            label {
-                display: block;
-                margin-bottom: 5px;
-            }
-            input[type="password"] {
-                width: 100%;
-                padding: 8px;
-                box-sizing: border-box;
-            }
-            .submit-button {
-                padding: 10px 15px;
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                cursor: pointer;
-                width: 100%;
-                border-radius: 4px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h2>Change Password</h2>
-            <form action="/edit_psw/{{id}}" method="POST">
-                <div class="form-group">
-                    <label for="current_password">Current Password:</label>
-                    <input type="password" id="current_password" name="current_password" required>
-                </div>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+    <title>Change Password</title>
+    <style>
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .submit-button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        function redirectToProfile(url) {
+            setTimeout(function() {
+                window.location.href = url;
+            }, 2000);
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Change Password</h1>
 
-                <div class="form-group">
-                    <label for="new_password">New Password:</label>
-                    <input type="password" id="new_password" name="new_password" required>
-                </div>
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+        
+        {% if success %}
+            <p class="success">{{ success }}</p>
+            <script>
+                redirectToProfile("{{ url_for('staff_profile', staff_id = id) }}");
+            </script>
+        {% endif %}
 
-                <div class="form-group">
-                    <label for="confirm_password">Confirm New Password:</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required>
-                </div>
 
-                <button type="submit" class="submit-button">Change Password</button>
-            </form>
-        </div>
-    </body>
+        <form action="{{ url_for('edit_psw', id=id) }}" method="POST">
+            <div class="form-group">
+                <label for="current_psw">Current Password:</label>
+                <input type="password" id="current_psw" name="current_psw" required>
+            </div>
+
+            <div class="form-group">
+                <label for="new_psw">New Password:</label>
+                <input type="password" id="new_psw" name="new_psw" required>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_psw">Confirm New Password:</label>
+                <input type="password" id="confirm_psw" name="confirm_psw" required>
+            </div>
+
+            <button type="submit" class="submit-button">Change Password</button>
+        </form>
+    </div>
+</body>
 </html>
+
+

@@ -5,41 +5,54 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
         <title>Update Profile</title>
     </head>
-    <body>
-        <h1>Update Profile</h1>
-        <form action="/edit_profile/{{staff.id}}" method="POST">
-            <div class="profile-container">
-                <div class="profile-row">
-                    <div class="profile-label">ID</div>
-                    <div class="profile-value"><b>: </b>{{ staff.id }}</div>
-                </div>
-                <div class="profile-row">
-                    <div class="profile-label">Name</div>
-                    <div class="profile-value"><b>: </b>{{ staff.name }}</div>
-                </div>
-                <div class="profile-row">
-                    <div class="profile-label">Date Of Birth</div>
-                    <div class="profile-value"><b>: </b>{{ staff.dob }}</div>
-                </div>
-                <div class="profile-row">
-                    <div class="profile-label">Gender</div>
-                    <div class="profile-value"><b>: </b>{{ staff.gender }}</div>
-                </div>
-                <div class="profile-row">
-                    <div class="profile-label">Department</div>
-                    <div class="profile-value"><b>: </b>{{ staff.department }}</div>
-                </div>
+<body>
+    <h1>Update {{ staff_type.capitalize() }} Profile</h1>
+    
+    <!-- Flash Message Popup -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <script>
+                {% for category, message in messages %}
+                    alert("{{ message }}");  // Display flash message as a popup
+                {% endfor %}
+            </script>
+        {% endif %}
+    {% endwith %}
+    <form action="/edit_profile/{{staff.id}}" method="POST">
+        <div class="profile-container">
+            <div class="profile-row">
+                <div class="profile-label">ID</div>
+                <div class="profile-value"><b>: </b>{{ staff.id }}</div>
             </div>
-            <label for="phone">Phone:</label>
-            <input type="text" id="phone" name="phone" value="{{ staff.phone }}" required><br><br>
-            
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" placeholder="example@gmail.com" value="{{ staff.email }}" required>
-            <br>
+            <div class="profile-row">
+                <div class="profile-label">Name</div>
+                <div class="profile-value"><b>: </b>{{ staff.name }}</div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">Date Of Birth</div>
+                <div class="profile-value"><b>: </b>{{ staff.dob }}</div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">Gender</div>
+                <div class="profile-value"><b>: </b>{{ staff.gender }}</div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">Department</div>
+                <div class="profile-value"><b>: </b>{{ staff.department }}</div>
+            </div>
+        </div>
 
-            <input type="submit" value="Update Profile">
-        </form>
+        <label>Phone:</label>
+        <input type="text" name="phone" value="{{ staff['phone'] }}" required><br>
 
-        <a href="/{{staff_type}}_profile/{{staff.id}}">Back</a>
-    </body>
+        <label>Email:</label>
+        <input type="email" name="email" value="{{ staff['email'] }}" required><br>
+
+        <button type="submit">Update Profile</button>
+    </form>
+
+    <a href="{{ url_for('staff_profile', staff_id=staff['id']) }}">Back to Profile</a>
+</body>
 </html>
+
+

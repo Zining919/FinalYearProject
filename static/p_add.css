@@ -78,9 +78,9 @@ a {
     font-size: 14px;
 }
 
-a:hover {
+/*a:hover {
     text-decoration: underline;
-}
+}/*
 
 /* Form alignment */
 form input[type="radio"] + label {

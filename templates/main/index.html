@@ -18,7 +18,11 @@
             <br>
             <button type="submit" id = "index-submit">Login</button>
         </form> 
-
+        {% if error %}
+            <script>
+                showError("{{ error }}");
+            </script>
+        {% endif %}
         <!-- <button><a href="/doctor">Doctor</a></button>
         <button><a href="/nurse">Nurse</a></button>
         <button><a href="/management">Management</a></button>
