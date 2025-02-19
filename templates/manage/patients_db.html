@@ -9,7 +9,7 @@
         <h1>Patient Database</h1>
         <table>
             <tr>
-                <th>#</th>
+                <th>ID</th>
                 <th>Name</th>
                 <th>NIC</th>
                 <th>DOB</th>
@@ -17,6 +17,7 @@
                 <th>Phone</th>
                 <th>Email</th>
                 <th>Address</th>
+                <th>Department</th>
             </tr>
             {% for patient in data %}
             <tr>
@@ -28,6 +29,7 @@
                 <td>{{ patient['phone'] }}</td>
                 <td>{{ patient['email'] }}</td>
                 <td>{{ patient['address'] }}</td>
+                <td>{{ patient['department'] }}</td>
             </tr>
             {% endfor %}
         </table>

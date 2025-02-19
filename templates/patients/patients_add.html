@@ -43,17 +43,16 @@
     </div>
     {% endif %}
 
-
-    <form action="/add/{{department}}/{{staff_id}}" method="POST" onsubmit="validateDates(event)">
-        <label for="patient_id">Patient ID: {{id}}</label><br>
+    <form action="/add/{{ department_id }}/{{ staff_id }}" method="POST" onsubmit="validateDates(event)">
+        <label for="patient_id">Patient ID: {{ id }}</label><br>
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required><br>
 
         <label for="nic">NIC:</label>
-        <input type="number" id="nic" name="nic" placeholder="000101021234" min="0" maxlength="12" required><br>
+        <input type="text" id="nic" name="nic" pattern="\d{12}" title="NIC must be exactly 12 digits" required><br>
 
         <label for="dob">Date of Birth:</label>
-        <input type="date" id="dob" name="dob" value="{{ dob|default('') }}" required><br>
+        <input type="date" id="dob" name="dob" required><br>
 
         <label for="gender">Gender:</label>
         <input type="radio" id="gender1" name="gender" value="Male" checked> Male
@@ -69,11 +68,11 @@
         <input type="text" id="address" name="address" required><br>
 
         <label for="department">Department:</label>
-        <input type="text" id="department" name="department" value="{{department}}" readonly><br>
+        <input type="text" id="department" name="department" value="{{ department_name }}" readonly><br>
 
         <button type="submit">Add New Patient</button>
     </form>
     
-    <a href="/nurse/{{staff_id}}">Back</a>
+    <a href="/nurse/{{ staff_id }}">Back</a>
 </body>
 </html>

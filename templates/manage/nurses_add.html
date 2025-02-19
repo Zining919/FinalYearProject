@@ -96,13 +96,12 @@
         <input type="email" id="email" name="email" placeholder="example@gmail.com" required>
         <br>
 
-        <label for="department">Department:</label>
-        <input type="radio" id="department1" name="department" value="Neurology" checked>
-        <label for="department1">Neurology</label>
-        <input type="radio" id="department2" name="department" value="Cardiology">
-        <label for="department2">Cardiology</label>
-        <input type="radio" id="department3" name="department" value="Emergency">
-        <label for="department3">Emergency</label>
+        <label>Department:</label>
+        <select name="department_id" required>
+            {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+        </select>
         <br>
 
         <label for="startDate">Contract Start Date: </label>

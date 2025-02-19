@@ -19,73 +19,103 @@
             margin-top: 10px;
             display: none;
         }
+        .error-message {
+            color: red;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
         button:disabled {
             background-color: #ccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <h1>Add New Patient</h1>
+    <h1>Add Patient to Department</h1>
+
+    <!-- Display department name -->
+    <h2>Department: {{ department_name }}</h2>
 
     <!-- Search Form -->
     <div class="search-container">
-        <form action="/add_existing/{{ department }}/{{ staff_id }}" method="GET">
-            <input type="text" id="searchInput" name="query" placeholder="Search by ID, or NIC" value="{{ query }}">
+        <form action="/add_existing/{{ department_id }}/{{ staff_id }}" method="GET">
+            <input type="text" id="searchInput" name="query" placeholder="Search by ID or NIC" value="{{ query }}">
             <button type="submit">Search</button>
         </form>
     </div>
 
-    <form action="/add_existing/{{ department }}/{{ staff_id }}" method="POST">
+    <!-- Display Error Message -->
+    {% if error_message %}
+        <p class="error-message" id="errorMessage">{{ error_message }}</p>
+    {% endif %}
+
+    <form action="/add_existing/{{ department_id }}/{{ staff_id }}" method="POST">
         <!-- Display Search Results -->
         <div id="searchResults">
-            {% if patients %}
-                {% for patient in patients %}
-                    <div class="result-item" onclick="displayPatientDetails('{{ patient.id }}', '{{ patient.name }}', '{{ patient.dob }}', '{{ patient.email }}')">
-                        ID: {{ patient.id }} | Name: {{ patient.name }} | NIC: {{ patient.nic }}
-                    </div>
-                {% else %}
-                    <p>No patients found matching "{{ query }}"</p>
-                {% endfor %}
+            {% if patient %}
+                <div class="result-item" onclick="displayPatientDetails('{{ patient.id }}', '{{ patient.name }}', '{{ patient.dob }}', '{{ patient.email }}')">
+                    ID: {{ patient.id }} | Name: {{ patient.name }} | NIC: {{ patient.nic }}
+                </div>
+            {% else %}
+                <p>No patients found matching "{{ query }}"</p>
             {% endif %}
         </div>
     
-        <!-- Hidden fields to store selected patient details -->
-        <input type="hidden" id="patient_id" name="patient_id">
+        <!-- Hidden field for selected patient ID -->
+        <input type="hidden" id="patient_id" name="patient_id" value="{{ patient.id if patient else '' }}">
+
+        <!-- Patient Details Section -->
+        {% if patient %}
+            <div id="patientDetails">
+                <p><strong>ID:</strong> <span id="patientID"></span></p>
+                <p><strong>Name:</strong> <span id="patientName"></span></p>
+                <p><strong>DOB:</strong> <span id="patientDOB"></span></p>
+                <p><strong>Email:</strong> <span id="patientEmail"></span></p>
+                <p><strong>Existing Departments:</strong> 
+                    {% if patient_departments %}
+                        {% for dept in patient_departments %}
+                            {{ dept["name"] }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        None
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
     
-        <!-- Patient Details Section (Hidden initially) -->
-        <div id="patientDetails">
-            <p>ID: <span id="patientID"></span></p>
-            <p>Name: <span id="patientName"></span></p>
-            <p>DOB: <span id="patientDOB"></span></p>
-            <p>Email: <span id="patientEmail"></span></p>
-        </div>
+        <!-- Department Selection (Pre-filled and Read-Only) -->
+        <label for="existing_department">Department To Be Added:</label>
+        <input type="text" id="existing_department" name="existing_department" value="{{ department_name }}" readonly><br>
     
-        <!-- Department Selection -->
-        <label for="existing_department">Department:</label>
-        <input type="text" id="existing_department" name="existing_department" value="{{ department }}" readonly><br>
-    
-        <!-- Submit Button (Disabled initially) -->
-        <button type="submit" id="submitBtn" disabled>Add Department</button>
+        <!-- Submit Button -->
+        <button type="submit" id="submitBtn" {% if not can_add_department %}disabled{% endif %}>Add Patient to Department</button>
     </form>
-    
 
     <a href="/nurse/{{ staff_id }}">Back</a>
 
     <script>
-        // Function to update patient details when a result is clicked
         function displayPatientDetails(id, name, dob, email) {
             document.getElementById("patient_id").value = id;
             document.getElementById("patientID").textContent = id;
             document.getElementById("patientName").textContent = name;
             document.getElementById("patientDOB").textContent = dob;
             document.getElementById("patientEmail").textContent = email;
-
-            // Show the patient details section
+        
             document.getElementById("patientDetails").style.display = "block";
-
-            // Enable the submit button
             document.getElementById("submitBtn").disabled = false;
         }
+
+        // Disable submit button if an error message is present
+        window.onload = function() {
+            let errorMessage = document.getElementById("errorMessage");
+            let submitBtn = document.getElementById("submitBtn");
+
+            if (errorMessage) {
+                submitBtn.disabled = true;
+            }
+        };
     </script>
 </body>
 </html>

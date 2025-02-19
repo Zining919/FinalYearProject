@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,4 +31,40 @@
         <a href="/edit_psw/{{ staff.id }}">Edit Password</a>
         <a href="/{{ staff_type }}/{{ staff.id }}">Back</a>
     </body>
+</html>-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+    <title>{{ staff_type.capitalize() }} Profile</title>
+</head>
+<body>
+    <h1>{{ staff_type.capitalize() }} Profile</h1>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>DOB</th>
+            <th>Gender</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Department</th>
+        </tr>
+        <tr>
+            <td>{{ staff['id'] }}</td>
+            <td>{{ staff['name'] }}</td>
+            <td>{{ staff['dob'] }}</td>
+            <td>{{ staff['gender'] }}</td>
+            <td>{{ staff['phone'] }}</td>
+            <td>{{ staff['email'] }}</td>
+            <td>{{ department_name }}</td>  <!-- Fixed department display -->
+        </tr>
+    </table>
+    
+    <a href="/edit_profile/{{ staff.id }}">Edit Profile</a>
+    <a href="/edit_psw/{{ staff.id }}">Edit Password</a>
+    <a href="/{{ staff_type }}/{{ staff.id }}">Back</a>
+</body>
 </html>
