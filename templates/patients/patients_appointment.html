@@ -20,47 +20,51 @@
     <table>
         <tr>
             <th>#</th>
+            <th>ID</th>
             <th>Department</th>
             <th>Doctor Name</th>
+            <th>Purpose</th>
             <th>Date Time</th>
             <th>Appointment Status</th>
             <th>Action</th>
         </tr>
-        {% if patient.appointment %}
-            {% for app in patient.appointment %}
-                <tr id="appointment-{{ app.num }}">
-                    <td>{{ app.num }}</td>
-                    <td>{{ app.department }}</td>
-                    <td>{{ app.doctor_name }}</td>
-                    <td>{{ app.date }} {{ app.time }}</td>
-                    <td>{{ app.status }}</td>
-                    <td>
-                        <a href="/update_appointment/{{ patient.id }}/{{ staff_id }}/{{ app.num }}" class="update-link" id="update-link-{{ app.num }}">Update</a>
-                    </td>
+            {% if patient.appointment|length > 0 %}
+                {% for app in patient.appointment %}
+                    <tr id="appointment-{{ app.num }}">
+                        <td>{{ app.num }}</td>
+                        <td>{{ app.id }}</td>
+                        <td>{{ app.department }}</td>
+                        <td>{{ app.doctor_name }}</td>
+                        <td>{{ app.purpose }}</td>
+                        <td>{{ app.date }} at {{ app.time }}</td>
+                        <td>{{ app.status }}</td>
+                        <td>
+                            <a href="{{ url_for('update_appointment', patient_id=patient.id, staff_id=staff_id, appointment_index=app.num) }}" class="update-link">Update</a>
+
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6">No appointments available</td>
                 </tr>
-            {% endfor %}
-        {% else %}
-            <tr>
-                <td colspan="6">No appointments available</td>
-            </tr>
-        {% endif %}
+            {% endif %}
+
+
     </table>
     <a href="/nurse/{{ staff_id }}">Back</a>
 
     <script>
-        // JavaScript to validate if the appointment is more than 3 days ahead
         document.addEventListener("DOMContentLoaded", function() {
             const today = new Date();
-            const threeDaysAhead = new Date(today);
-            threeDaysAhead.setDate(today.getDate() + 3);  // Add 3 days to the current date
-
-            // Loop through each appointment and compare dates
+            const threeDaysAhead = new Date();
+            threeDaysAhead.setDate(today.getDate() + 3); // Set limit to 3 days ahead
+    
             {% for app in patient.appointment %}
-                const appointmentDate = new Date("{{ app.date }}");
+                const appointmentDate = new Date("{{ app.date }}"); 
                 const updateLink = document.getElementById("update-link-{{ app.num }}");
-
+    
                 if (appointmentDate > threeDaysAhead) {
-                    // Disable the update link and show a message
                     updateLink.style.color = "red";
                     updateLink.style.pointerEvents = "none";
                     updateLink.title = "You cannot update this appointment as it is more than 3 days ahead.";

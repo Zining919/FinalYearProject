@@ -1020,86 +1020,169 @@ def add_existing_or_search(department_id, staff_id):
     )
 
 
-
-# Update patient details (phone,email,address)
-@app.route('/update/<int:patient_id>/<string:staff_id>', methods=['GET', 'POST'])
+# Update patient details (phone, email and address) DONE
+@app.route('/update/<string:patient_id>/<string:staff_id>', methods=['GET', 'POST'])
 def update_patient_info(patient_id, staff_id):
-    patient = get_details_by_id(patient_id, PATIENTS_FILE)
-    
-    if not patient:
-        return "Patient not found", 404
+    try:
+        # ✅ Retrieve patient details from Supabase
+        response = supabase.table("patient").select("id, name, nic, dob, gender, phone, email, address").eq("id", patient_id).execute()
+        
+        if hasattr(response, 'error') and response.error:
+            print(f"Error fetching patient data: {response.error}")
+            return "Error retrieving patient data", 500
+        
+        if not response.data:
+            return "Patient not found", 404
+
+        patient = response.data[0]
+        
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        return "Error retrieving patient data", 500
 
     if request.method == 'POST':
         phone = request.form['phone']
-        email = request.form["email"]
-        address = request.form["address"]
+        email = request.form['email']
+        address = request.form['address']
 
-        update_patient(patient_id, phone, email,address, PATIENTS_FILE)
-        return redirect(url_for("nurse_index", id=staff_id))
-
-    return render_template('patients/patients_update.html', patient=patient, staff_id=staff_id)
-
-def update_patient(patient_id, phone, email, address, file_name):
-    patients = load_db(file_name)
-    for patient in patients: 
-        if patient["id"] == patient_id:
+        try:
+            # ✅ Update patient details in Supabase
+            update_response = supabase.table("patient").update({
+                "phone": phone,
+                "email": email,
+                "address": address
+            }).eq("id", patient_id).execute()
             
-            # Update only phone, email, and address
-            patient["phone"] = phone
-            patient["email"] = email
-            patient["address"] = address
-            break
-        
-    save_ppl(file_name, patients)
+            if hasattr(update_response, 'error') and update_response.error:
+                print(f"Error updating patient data: {update_response.error}")
+                return "Error updating patient data", 500
+
+        except Exception as e:
+            print(f"Exception occurred while updating: {e}")
+            return "Error updating patient data", 500
+
+        return redirect(url_for("nurse_index", id=staff_id))
+    
+    return render_template('patients/patients_update.html', patient=patient, staff_id=staff_id)
 
 ######################################################################################################################
 # Appointment
+# Generate apopointment id based on apopointment purpose DONE
+def generate_appointment_id(purpose):
+    """Generate unique appointment ID with prefix based on purpose"""
+    prefix = "CONS" if purpose == "Consultation" else "SCAN"
+    base_number = 10000  # Start IDs from 10000
+    
+    # Get the latest appointment with this prefix
+    result = (
+        supabase.table("appointment")
+        .select("id")
+        .like("id", f"{prefix}-%")
+        .order("id", desc=True)
+        .limit(1)
+        .execute()
+    )
+    
+    if result.data:
+        # Extract last numeric part and increment
+        last_id = result.data[0]["id"]
+        last_num = int(last_id.split("-")[1]) + 1
+    else:
+        last_num = base_number  # First appointment for this type starts at 10000
+    
+    return f"{prefix}-{last_num}"  # Generates IDs like "CONS-10000", "SCAN-10000"
+
+
+
+# Display the appoitment of the patient chosen DONE
 @app.route('/appointment/<int:patient_id>/<string:staff_id>')
 def appointment(patient_id, staff_id):
-    patient = get_details_by_id(patient_id, PATIENTS_FILE)
-    nurse = get_details_by_id(staff_id, NURSE_FILE)
+    try:
+        # Fetch patient details
+        patient_response = supabase.table("patient").select(
+            "id, name, nic, dob, gender"
+        ).eq("id", patient_id).single().execute()
+
+        if hasattr(patient_response, 'error') and patient_response.error:
+            print(f"Error fetching patient data: {patient_response.error}")
+            return "Error retrieving patient data", 500
+
+        patient = patient_response.data  # Get patient details
+
+        # Fetch patient appointments
+        appointments_response = supabase.table("appointment").select(
+            "id, purpose, date, time, status, "
+            "doctor(name), nurse(department(name))"
+        ).eq("patient_id", patient_id).execute()
+
+        if hasattr(appointments_response, 'error') and appointments_response.error:
+            print(f"Error fetching appointments: {appointments_response.error}")
+            return "Error retrieving appointments", 500
+
+        appointments = appointments_response.data
+
+        # Convert data to match expected template format
+        patient["appointment"] = [
+            {
+                "num": idx + 1,
+                "id": app["id"],
+                "department": app["nurse"]["department"]["name"],
+                "doctor_name": app["doctor"]["name"],
+                "purpose": app["purpose"],
+                "date": app["date"],
+                "time": app["time"],
+                "status": app["status"]
+            }
+            for idx, app in enumerate(appointments)
+        ]
+
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        return "Error retrieving appointment data", 500
+
     return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
+
     
-@app.route('/accept_appointment/<int:patient_id>/<int:num>/<string:staff_id>')
-def get_appointment(patient_id, num, staff_id):
-    patient = get_details_by_id(patient_id, PATIENTS_FILE)
-    doctor = get_details_by_id(staff_id, DOCTORS_FILE)
+# @app.route('/accept_appointment/<int:patient_id>/<int:num>/<string:staff_id>')
+# def get_appointment(patient_id, num, staff_id):
+#     patient = get_details_by_id(patient_id, PATIENTS_FILE)
+#     doctor = get_details_by_id(staff_id, DOCTORS_FILE)
     
-    patients = load_db(PATIENTS_FILE)
-    app_id = str(patient_id) + "/" + str(num)
-    if num != 0:
-        for p in patients:
-            print(doctor["name"])
-            if 'appointment' in p:  
-                for app in p['appointment']:
-                    print("2")
-                    if app.get('doctor_name') == doctor['name'] and app.get('num') == app_id:
-                        print(app) 
-                        if "history" not in p:
-                            p["history"] = []
-                        print("OK")
-                        p["history"].append({
-                            "num": app["num"],
-                            "patient_id": app["patient_id"],
-                            "patient_name": app["patient_name"],
-                            "department": app["department"],
-                            "doctor_name": app["doctor_name"],
-                            "date": app["date"],
-                            "time": app["num"],
-                            "report": None
-                            })
-                        p["appointment"].remove(app)
+#     patients = load_db(PATIENTS_FILE)
+#     app_id = str(patient_id) + "/" + str(num)
+#     if num != 0:
+#         for p in patients:
+#             print(doctor["name"])
+#             if 'appointment' in p:  
+#                 for app in p['appointment']:
+#                     print("2")
+#                     if app.get('doctor_name') == doctor['name'] and app.get('num') == app_id:
+#                         print(app) 
+#                         if "history" not in p:
+#                             p["history"] = []
+#                         print("OK")
+#                         p["history"].append({
+#                             "num": app["num"],
+#                             "patient_id": app["patient_id"],
+#                             "patient_name": app["patient_name"],
+#                             "department": app["department"],
+#                             "doctor_name": app["doctor_name"],
+#                             "date": app["date"],
+#                             "time": app["num"],
+#                             "report": None
+#                             })
+#                         p["appointment"].remove(app)
                         
-                        break  # Stop loop once the patient is found
+#                         break  # Stop loop once the patient is found
                 
-                print("OK2")
-                # Save the updated records list
-                try:
-                    save_ppl(PATIENTS_FILE, patients)  # This will save the modified patients list
-                    return redirect(url_for("get_history", patient_id=patient_id, staff_id=staff_id,num=0))
-                except Exception as e:
-                    print(f"File saving error: {e}")
-    return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
+#                 print("OK2")
+#                 # Save the updated records list
+#                 try:
+#                     save_ppl(PATIENTS_FILE, patients)  # This will save the modified patients list
+#                     return redirect(url_for("get_history", patient_id=patient_id, staff_id=staff_id,num=0))
+#                 except Exception as e:
+#                     print(f"File saving error: {e}")
+#     return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
 
 @app.route('/app_history/<int:patient_id>/<int:num>/<string:staff_id>')
 def get_history(num,patient_id, staff_id):
@@ -1108,127 +1191,153 @@ def get_history(num,patient_id, staff_id):
 
     return render_template('patients/patients_history.html', patient=patient, doctor=doctor, staff_id=staff_id)
 
-
+# Add new appointment for the patient DONE
 @app.route('/add_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
 def new_appointment(patient_id, staff_id):
-    patient = get_details_by_id(patient_id, PATIENTS_FILE)
+    # Fetch patient details from Supabase
+    patient_response = supabase.table("patient").select("id, name, " "department(name)").eq("id", patient_id).single().execute()
+    patient = patient_response.data if patient_response.data else None
     
-    # Check if id starts with 'n' or 'd'
+    if not patient:
+        return "Patient not found", 404
+    
+    # Check if the staff ID belongs to a nurse and fetch the department
     if staff_id.startswith('n'):
-        staff = get_details_by_id(staff_id, NURSE_FILE)
+        staff_response = supabase.table("nurse").select("id, name, department_id, " "department(name)").eq("id", staff_id).single().execute()
+        staff = staff_response.data if staff_response.data else None
         
-        doctors = load_db(DOCTORS_FILE)
-        db = []
-        for doctor in doctors:
-            if doctor["department"] == staff["department"]:
-                db.append(doctor)
+        if not staff:
+            return "Nurse not found", 404
         
-        if request.method == "POST":            
-            patients = load_db(PATIENTS_FILE)
-            
-            patient_id = request.form["patient_id"]
-            patient_name = request.form["patient_name"]
-            department = request.form["department"]
+        # Fetch doctors in the same department
+        doctors_response = supabase.table("doctor").select("id, name").eq("department_id", staff["department_id"]).execute()
+        doctors = doctors_response.data if doctors_response.data else []
+        print("Doctors found:", doctors_response.data)  # Debugging statement
+        
+        if request.method == "POST":
+            purpose = request.form["purpose"]
             doctor_name = request.form["doctor_name"]
             date = request.form["date"]
             time = request.form["time"]
-            scan = False
-            status = "active"
-             
-            for p in patients: 
-                if p["id"] == int(patient_id):  # Make sure patient_id is compared as int
-                    if "appointment" not in p:
-                        p["appointment"] = []  # Ensure there's an appointment key
-                        count = 0
-                    else:
-                        last = p["appointment"][-1]
-                        count = int(last["num"].replace("10000/", ""))
-                    print("count: " + str(count))
-                    print(str(p["id"]) + "/" + str(count + 1))
-                    p["appointment"].append({
-                        "num": str(p["id"]) + "/" + str(count + 1),
-                        "patient_id": patient_id,
-                        "patient_name": patient_name,
-                        "department": department,
-                        "doctor_name": doctor_name,
-                        "date": date,
-                        "time": time,
-                        "scan": scan,
-                        "status": status                    
-                    })
-                    break  # Stop loop once the patient is found
+            notes = request.form["notes"]
+            status = "Scheduled"
             
-            # Save the updated records list
-            try:
-                save_ppl(PATIENTS_FILE, patients)  # This will save the modified patients list
-                return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
-            except Exception as e:
-                print(f"File saving error: {e}")
+            # Get doctor ID from doctor name
+            doctor_response = supabase.table("doctor").select("id").eq("name", doctor_name).single().execute()
+            doctor = doctor_response.data if doctor_response.data else None
+            if not doctor:
+                return "Doctor not found", 404
+            
+            doctor_id = doctor["id"]
+            appointment_id = generate_appointment_id(purpose)
+            
+            # Insert into the appointment table
+            appointment_data = {
+                "id": appointment_id,
+                "patient_id": patient_id,
+                "nurse_id": staff_id,
+                "doctor_id": doctor_id,
+                "purpose": purpose,
+                "date": date,
+                "time": time,
+                "notes": notes,
+                "status": status
+            }
+            
+            supabase.table("appointment").insert(appointment_data).execute()
+            
+            return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
         
-        return render_template('patients/patients_add_appointment.html', patient=patient, staff=staff, doctors=db)
-   
-    elif staff_id.startswith('d'):
-        staff_type = 'doctor'
-        staff = get_details_by_id(staff_id, DOCTORS_FILE)
-        
-    else:
-        # Handle the case if the id doesn't start with 'n' or 'd'
-        return "Invalid ID", 400
+        return render_template('patients/patients_add_appointment.html', patient=patient, staff=staff, doctors=doctors)
     
-    
-    return render_template('patients/patients_add_appointment.html', patient=patient,  staff=staff, doctors=doctors)
+    return "Invalid Staff ID", 400
 
 
+# Update patient's appointment DONE
 @app.route('/update_appointment/<int:patient_id>/<string:staff_id>/<int:appointment_index>', methods=["GET", "POST"])
 def update_appointment(patient_id, staff_id, appointment_index):
-    # Fetch patient details
-    patient = get_details_by_id(patient_id, PATIENTS_FILE)
-    staff = get_details_by_id(staff_id, NURSE_FILE)
-    doctors_db = load_db(DOCTORS_FILE)
-    doctors = []
-    for doctor in doctors_db:
-        if doctor["department"] == staff["department"]:
-            doctors.append(doctor)
-                
-    # Check if patient has appointments
-    if patient and 'appointment' in patient:
-        try:
-            # Get the specific appointment by its index
-            app = patient['appointment'][appointment_index - 1]  # list is 0-indexed, so subtract 1
-        except IndexError:
-            # Handle case if index is out of range
+    try:
+        # ✅ Fetch staff (nurse) details
+        staff_response = supabase.table("nurse").select("department_id").eq("id", staff_id).single().execute()
+        if not staff_response.data:
+            return "Nurse not found", 404
+
+        department_id = staff_response.data["department_id"]
+
+        # ✅ Fetch department name
+        department_response = supabase.table("department").select("name").eq("id", department_id).single().execute()
+        department_name = department_response.data["name"] if department_response.data else "Unknown"
+
+        # ✅ Fetch patient details
+        patient_response = supabase.table("patient").select("id, name").eq("id", patient_id).single().execute()
+        if not patient_response.data:
+            return "Patient not found", 404
+
+        patient = patient_response.data
+
+        # ✅ Fetch all appointments for the patient
+        appointment_response = (
+            supabase.table("appointment")
+            .select("id, doctor_id, date, time")
+            .eq("patient_id", patient_id)
+            .execute()
+        )
+
+        # ✅ Check if the requested appointment index is valid
+        if not appointment_response.data or appointment_index <= 0 or appointment_index > len(appointment_response.data):
             return "Appointment not found", 404
 
+        # ✅ Get the correct appointment using the 1-based index
+        app = appointment_response.data[appointment_index - 1]  # Adjust for zero-based index
+
+        # ✅ Fetch doctor name from doctor table
+        doctor_response = supabase.table("doctor").select("name").eq("id", app["doctor_id"]).single().execute()
+        app["doctor_name"] = doctor_response.data["name"] if doctor_response.data else "Unknown"
+
+        # ✅ Fetch list of doctors in the same department as the nurse
+        doctors_response = supabase.table("doctor").select("id, name").eq("department_id", department_id).execute()
+        doctors = doctors_response.data if doctors_response.data else []
+
         if request.method == "POST":
-            # Get updated data from the form
-            doctor_name = request.form["doctor_name"]
+            # ✅ Get updated data from the form
+            doctor_id = request.form["doctor_id"]  # Correct field name
             date = request.form["date"]
             time = request.form["time"]
-            
-            # Update the appointment details
-            app['doctor_name'] = doctor_name
-            app['date'] = date
-            app['time'] = time
-            
-            # Save the updated patient record
-            try:
-                # Save the updated list of patients
-                patients = load_db(PATIENTS_FILE)
-                for p in patients:
-                    if p['id'] == patient_id:
-                        p['appointment'] = patient['appointment']
-                        break
-                save_ppl(PATIENTS_FILE, patients)
-                return redirect(url_for('get_appointment', patient_id=patient_id, staff_id=staff_id))
-            except Exception as e:
-                return f"Error saving updates: {e}", 500
 
-        # Render the form to update the appointment
-        return render_template('patients/patients_update_appointment.html', patient_id=patient_id, staff_id=staff_id, app=app, doctors=doctors)
-    
-    return "Patient or appointment not found", 404
+            # ✅ Update the appointment details in Supabase
+            update_response = (
+                supabase.table("appointment")
+                .update({"doctor_id": doctor_id, "date": date, "time": time})
+                .eq("id", app["id"])
+                .execute()
+            )
+
+            if hasattr(update_response, 'error') and update_response.error:
+                print(f"Error fetching appointment data: {update_response.error}")
+                return "Error retrieving appointment data", 500
+
+
+            return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
+
+        # ✅ Render the update appointment form
+        return render_template(
+            'patients/patients_update_appointment.html',
+            patient=patient,
+            staff_id=staff_id,
+            department=department_name,
+            app=app,
+            doctors=doctors,
+            appointment_index=appointment_index  # Pass the index for reference
+        )
+
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        return "Error retrieving appointment data", 500
+
+
 
 ##############################################################################################################################
+
 @app.route('/image_history/<int:patient_id>/<int:num>/<string:staff_id>')
 def get_image(num,patient_id, staff_id):
     patient = get_details_by_id(patient_id, PATIENTS_FILE)

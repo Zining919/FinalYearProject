@@ -1,12 +1,10 @@
-<!-- Validation: date(at least be current date), time(9am-5pm)-->
- 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
-    <title>Add Patient</title>
+    <title>Add Appointment</title>
     <script>
         function showConfirmation(event) {
             alert("New Appointment added successfully!"); 
@@ -14,39 +12,50 @@
     </script>
 </head>
 <body>
-    <h1>Add New Apoointment</h1>
-    <form action="/add_appointment/{{patient.id}}/{{staff.id}}" method="POST" onsubmit="showConfirmation(event)">
-        <label for="patient_id">Patient ID: {{patient.id}}</label>
-        <input type="hidden" id="patient_id" name="patient_id" value= "{{patient.id}}">
+    <h1>Add New Appointment</h1>
+    <form action="/add_appointment/{{ patient.id }}/{{ staff.id }}" method="POST" onsubmit="showConfirmation(event)">
+        <label for="patient_id">Patient ID: {{ patient.id }}</label>
+        <input type="hidden" id="patient_id" name="patient_id" value="{{ patient.id }}">
 
-        <label for="patient_name">Patient Name: {{patient.name}}</label>
-        <input type="hidden" id="patient_name" name="patient_name" value= "{{patient.name}}" >
-        
-        <label for="department">Department: {{staff.department}}</label>
-        <input type="hidden" id="department" name="department" value= "{{staff.department}}">
+        <label for="patient_name">Patient Name: {{ patient.name }}</label>
+        <input type="hidden" id="patient_name" name="patient_name" value="{{ patient.name }}">
 
-        <label for="purpose">Purpose: Consultation/Follow Up</label>
-        <input type="hidden" id="purpose" name="purpose" value= "Consultation/Follow Up">
-        <br>
+        <label for="department">Department: {{ staff['department']['name'] }}</label>
+        <input type="hidden" id="department" name="department" value="{{ staff.department }}">
 
-        <label for="doctor_name">Doctor Name: </label>
-        <select id="doctor_name" name="doctor_name" required>
-            {% for doctor in doctors %}
-            <option value="{{doctor.name}}">{{doctor.name}}</option>
-            {% endfor %}              
+        <!-- Updated Purpose Selection -->
+        <label for="purpose">Purpose:</label>
+        <select id="purpose" name="purpose" required>
+            <option value="Consultation">Consultation</option>
+            <option value="Scan">Scan</option>
         </select>
         <br>
-            
-        <label for="date">Date: </label>
-        <input type="date" id="date" name="date" required>
+
+        <label for="doctor_name">Doctor Name:</label>
+        <select id="doctor_name" name="doctor_name" required>
+            {% for doctor in doctors %}
+                <option value="{{ doctor.name }}">{{ doctor.name }}</option>
+            {% endfor %}
+        </select>
         <br>
 
-        <label for="time">Time: </label>
-        <input type="time" id="time" name="time" required>
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required min="{{ min_date }}">
         <br>
 
-        <button type="submit">Add Appoinment</button>
+        <label for="time">Time:</label>
+        <input type="time" id="time" name="time" required min="09:00" max="17:00">
+        <br>
+
+        <!-- New Notes Input Field -->
+        <label for="notes">Notes:</label>
+        <textarea id="notes" name="notes" rows="4" cols="40" placeholder="Enter any notes here..."></textarea>
+        <br>
+
+        <button type="submit">Add Appointment</button>
     </form>
-    <a href="/appointment/{{ patient.id }}/{{staff.id}}">Back to Appoinment List</a>
+
+    <a href="/appointment/{{ patient.id }}/{{ staff.id }}">Back to Appointment List</a>
 </body>
 </html>
+

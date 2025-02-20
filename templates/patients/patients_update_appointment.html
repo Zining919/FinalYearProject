@@ -7,44 +7,43 @@
     </head>
     <body>
         <h1>Update Patient Appointment</h1>
-        <form action="/update_appointment/{{patient_id}}/{{staff_id}}/{{app.num}}" method="POST">
+        <form action="{{ url_for('update_appointment', patient_id=patient.id, staff_id=staff_id, appointment_index = appointment_index) }}" method="POST">
+            
             <div class="profile-container">
                 <div class="profile-row">
                     <div class="profile-label">Patient ID</div>
-                    <div class="profile-value"><b>: </b>{{ app.patient_id }}</div>
+                    <div class="profile-value"><b>: </b>{{ patient.id }}</div>
                 </div>
                 <div class="profile-row">
                     <div class="profile-label">Patient Name</div>
-                    <div class="profile-value"><b>: </b>{{ app.patient_name }}</div>
+                    <div class="profile-value"><b>: </b>{{ patient.name }}</div>
                 </div>
                 <div class="profile-row">
                     <div class="profile-label">Department</div>
-                    <div class="profile-value"><b>: </b>{{ app.department }}</div>
+                    <div class="profile-value"><b>: </b>{{ department }}</div>
                 </div>
             </div>
 
-            <label for="doctor_name">Doctor Name: </label>
-            <select id="doctor_name" name="doctor_name" required>
-                <!-- Dynamically populate the doctor list -->
+            <label for="doctor_id">Doctor Name: </label>
+            <select id="doctor_id" name="doctor_id" required>
                 {% for doctor in doctors %}
-                    <option value="{{ doctor['name'] }}" {% if doctor['name'] == app['doctor_name'] %} selected {% endif %}>
-                        {{ doctor['name'] }}
+                    <option value="{{ doctor.id }}" {% if doctor.id == app.doctor_id %} selected {% endif %}>
+                        {{ doctor.name }}
                     </option>
                 {% endfor %}
             </select><br>
-                
+
             <label for="date">Date: </label>
-            <input type="date" id="date" name="date" value="{{app.date}}" required>
+            <input type="date" id="date" name="date" value="{{ app.date }}" required>
             <br>
 
             <label for="time">Time: </label>
-            <input type="time" id="time" name="time" value="{{app.time}}" required>
+            <input type="time" id="time" name="time" value="{{ app.time }}" required>
             <br>
-            
 
-            <input type="submit" value="Update Profile">
+            <input type="submit" value="Update Appointment">
         </form>
 
-        <a href="/nurse/{{staff_id}}">Back</a>
+        <a href="{{ url_for('appointment', patient_id=patient.id, staff_id=staff_id) }}">Back</a>
     </body>
 </html>
