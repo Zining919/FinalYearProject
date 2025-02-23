@@ -10,6 +10,37 @@
             alert("New Appointment added successfully!"); 
         }
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let dateInput = document.getElementById("date");
+            let doctorDropdown = document.getElementById("doctor_name");
+    
+            dateInput.addEventListener("change", function() {
+                let selectedDate = dateInput.value;
+                let staffId = "{{ staff.id }}";
+    
+                if (selectedDate) {
+                    fetch(`/get_available_doctors/${staffId}/${selectedDate}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            doctorDropdown.innerHTML = ""; // Clear previous options
+                            if (data.error) {
+                                doctorDropdown.innerHTML = `<option value="">${data.error}</option>`;
+                            } else {
+                                data.forEach(doctor => {
+                                    let option = document.createElement("option");
+                                    option.value = doctor.name;
+                                    option.textContent = doctor.name;
+                                    doctorDropdown.appendChild(option);
+                                });
+                            }
+                        })
+                        .catch(error => console.error("Error fetching doctors:", error));
+                }
+            });
+        });
+    </script>
+    
 </head>
 <body>
     <h1>Add New Appointment</h1>
@@ -23,20 +54,8 @@
         <label for="department">Department: {{ staff['department']['name'] }}</label>
         <input type="hidden" id="department" name="department" value="{{ staff.department }}">
 
-        <!-- Updated Purpose Selection -->
-        <label for="purpose">Purpose:</label>
-        <select id="purpose" name="purpose" required>
-            <option value="Consultation">Consultation</option>
-            <option value="Scan">Scan</option>
-        </select>
-        <br>
-
-        <label for="doctor_name">Doctor Name:</label>
-        <select id="doctor_name" name="doctor_name" required>
-            {% for doctor in doctors %}
-                <option value="{{ doctor.name }}">{{ doctor.name }}</option>
-            {% endfor %}
-        </select>
+        <label for="purpose">Purpose: Consultation/Follow Up</label>
+        <input type="hidden" id="purpose" name="purpose" value= "Consultation/Follow Up">
         <br>
 
         <label for="date">Date:</label>
@@ -47,7 +66,14 @@
         <input type="time" id="time" name="time" required min="09:00" max="17:00">
         <br>
 
-        <!-- New Notes Input Field -->
+        <label for="doctor_name">Doctor Name:</label>
+        <select id="doctor_name" name="doctor_name" required>
+            {% for doctor in doctors %}
+                <option value="{{ doctor.name }}">{{ doctor.name }}</option>
+            {% endfor %}
+        </select>
+        <br>
+
         <label for="notes">Notes:</label>
         <textarea id="notes" name="notes" rows="4" cols="40" placeholder="Enter any notes here..."></textarea>
         <br>

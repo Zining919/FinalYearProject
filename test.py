@@ -1,9 +1,10 @@
 import json
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from datetime import datetime, timedelta
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
+from datetime import datetime, timedelta, timezone
 import supabase
 from supabase import create_client, Client
+import random
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -89,43 +90,66 @@ def index_main():
 ## NOTE: add code to check end date for status(expired/active/terminated)
 @app.route("/manage/<string:id>")
 def manager_index(id):
-    # Fetch people data from Supabase
+    # Fetch manager data
     m_response = supabase.table("manager").select("*").execute()
 
-    # Fetch doctors and nurses data from Supabase
+    # Fetch doctors and nurses data
     d_response = supabase.table("doctor").select("*").execute()
     n_response = supabase.table("nurse").select("*").execute()
 
-    # Initialize the count for doctors, nurses, and patients
-    active = expired = terminated = 0  # Default counts for each status
+    # Fetch doctor leave requests with department details
+    leave_response = (
+        supabase.table("doctor_leave")
+        .select("id, doctor_id, leave_date, reason, status, doctor(id, name, department_id)")
+        .eq('status', 'Pending')
+        .execute()
+    )
 
-    # Count active, expired, and terminated doctors
+    # Fetch all departments
+    departments = supabase.table("department").select("id, name").execute()
+
+    # ✅ Create a lookup dictionary for department names
+    department_lookup = {dept["id"]: dept["name"] for dept in departments.data} if departments.data else {}
+
+    # ✅ Process the leave response and assign department names
+    pending_leaves = []
+    if leave_response.data:
+        for leave in leave_response.data:  
+            doc = leave.get("doctor", {})
+            department_id = doc.get("department_id")
+                
+            # ✅ Make sure department_name is assigned correctly
+            leave["department_name"] = department_lookup.get(department_id, "Unknown")
+                
+            pending_leaves.append(leave)
+
+    # ✅ Count active, expired, and terminated doctors and nurses
+    active = expired = terminated = 0  
+
     if d_response.data:
         active += sum(1 for doctor in d_response.data if doctor.get("status") == "active")
         expired += sum(1 for doctor in d_response.data if doctor.get("status") == "expired")
         terminated += sum(1 for doctor in d_response.data if doctor.get("status") == "terminated")
 
-    # Count active, expired, and terminated nurses
     if n_response.data:
         active += sum(1 for nurse in n_response.data if nurse.get("status") == "active")
         expired += sum(1 for nurse in n_response.data if nurse.get("status") == "expired")
         terminated += sum(1 for nurse in n_response.data if nurse.get("status") == "terminated")
 
-    # Total counts for doctors, nurses, and patients
     count = {
-        "d_count": len(d_response.data) if d_response.data else 0,  # Total doctors
-        "n_count": len(n_response.data) if n_response.data else 0,  # Total nurses
-        "p_count": len(m_response.data) if m_response.data else 0,  # Total people (patients)
+        "d_count": len(d_response.data) if d_response.data else 0,
+        "n_count": len(n_response.data) if n_response.data else 0,
+        "p_count": len(m_response.data) if m_response.data else 0,
         "active": active,
         "expired": expired,
         "terminated": terminated
     }
 
-    # Find the specific person matching the id
+    # ✅ Find the specific manager
     if m_response.data:
         for ppl in m_response.data:
             if id == ppl["id"]:
-                return render_template("manage/manager_index.html", ppl=ppl, count=count)
+                return render_template("manage/manager_index.html", ppl=ppl, count=count, leave_requests=pending_leaves)
 
     return "Person not found.", 404
 
@@ -208,51 +232,7 @@ def manage_db(db_type, staff_id):
         data=data,
         staff_id=staff_id,
         count=status_counts if status_counts else {}
-    )
-
-
-
-
-# can delete since no more use .json file
-##########################################################################################################
-# def get_current_ids():
-#     """Load the current IDs from the JSON file or initialize if not found."""
-#     try:
-#         with open(ID_TRACKER_FILE, "r") as file:
-#             ids = json.load(file)
-#     except FileNotFoundError:
-#         # Initialize IDs if the file does not exist
-#         ids = {
-#             "patient_id": 10000,
-#             "doctor_id": 1000,
-#             "nurse_id": 1000
-#         }
-#     return ids
-
-# def save_current_ids(ids):
-#     """Save the current IDs to the JSON file."""
-#     with open(ID_TRACKER_FILE, "w") as file:
-#         json.dump(ids, file)
-
-# def get_next_id(id_type):
-#     """Get the next ID for the given type (e.g., patient, doctor, nurse)."""
-#     ids = get_current_ids()
-    
-#     if id_type not in ids:
-#         raise ValueError(f"Invalid ID type: {id_type}")
-    
-#     # Increment the ID
-#     next_id = ids[id_type] + 1
-#     ids[id_type] = next_id
-    
-#     # Save the updated IDs back to the JSON file
-#     save_current_ids(ids)
-#     if id_type == "doctor_id":
-#         return f"d{next_id}"
-#     elif id_type == "nurse_id":
-#         return f"n{next_id}"
-#     else:
-#         return next_id 
+    ) 
 
 
 # Add new doctor/nurse (create new user with username and password for login the system) DONE
@@ -381,67 +361,51 @@ def add_record(staff_type, staff_id):
 @app.route("/doctor/<string:id>")
 def doctor_index(id):
     try:
-        # Fetch doctor details from Supabase (Ensuring the logged-in doctor exists)
+        # Fetch doctor details
         doctor_response = supabase.table("doctor").select("*").eq("id", id).execute()
         if not doctor_response.data:
             print(f"Doctor with ID {id} not found.")
             return "Doctor not found", 404
 
-        doctor = doctor_response.data[0]  # Extract the doctor details
+        doctor = doctor_response.data[0]  # Extract doctor details
 
-        # Fetch appointments from today onwards
-        today_date = datetime.now().date().strftime('%Y-%m-%d')  # Format today's date
+        # Get today's date in YYYY-MM-DD format
+        today_date = datetime.now().strftime('%Y-%m-%d')
+
+        # Fetch appointments ONLY for today
         appointment_response = (
             supabase.table("appointment")
-            .select("id, patient_id, date, time, status, nurse_id")
+            .select("id, patient_id, date, time, status")
             .eq("doctor_id", id)
-            .eq("date", today_date)  # Get appointments for today and future dates
+            .like("id", "CONS%")
+            .eq("status", "Active")
+            .eq("date", today_date)  # Only today's appointments
             .execute()
         )
 
-        if not appointment_response.data:
-            print(f"No appointments found for Doctor {id} today.")
-            appointments = []
-        else:
-            appointments = appointment_response.data  # List of appointments from today onwards
+        appointments = appointment_response.data if appointment_response.data else []
 
-            # Fetch patient names and nurse names
-            patient_ids = list(set(app["patient_id"] for app in appointments if app["patient_id"]))
-            nurse_ids = list(set(app["nurse_id"] for app in appointments if app["nurse_id"]))
+        if appointments:
+            # Fetch patient names for today's appointments
+            patient_ids = list(set(app["patient_id"] for app in appointments))
+            
+            if patient_ids:  # Ensure patient_ids is not empty before querying
+                patient_response = (
+                    supabase.table("patient")
+                    .select("id, name")
+                    .in_("id", patient_ids)
+                    .execute()
+                )
+                patient_map = {p["id"]: p["name"] for p in patient_response.data} if patient_response.data else {}
+            else:
+                patient_map = {}
 
-            # Get patient names from the patient table
-            patient_response = (
-                supabase.table("patient")
-                .select("id, name")
-                .in_("id", patient_ids)
-                .execute()
-            )
-            patient_map = {p["id"]: p["name"] for p in patient_response.data}  # Map patient ID to name
-
-            # Get nurse names from the nurse table
-            nurse_response = (
-                supabase.table("nurse")
-                .select("id, name")
-                .in_("id", nurse_ids)
-                .execute()
-            )
-            nurse_map = {n["id"]: n["name"] for n in nurse_response.data}  # Map nurse ID to name
-
-            # Replace IDs with names in the appointments list
+            # Add patient names to appointments
             for app in appointments:
                 app["patient_name"] = patient_map.get(app["patient_id"], "Unknown")
-                app["nurse_name"] = nurse_map.get(app["nurse_id"], "Unknown")
 
-            # Remove unnecessary fields to return only required attributes
-            for app in appointments:
-                app.pop("patient_id", None)
-                app.pop("nurse_id", None)
-
-            # Sort appointments by date and then by time
-            appointments.sort(
-                key=lambda app: (datetime.strptime(app["date"], "%Y-%m-%d"), 
-                                 datetime.strptime(app["time"], "%H:%M"))
-            )
+            # Sort appointments by time
+            appointments.sort(key=lambda app: datetime.strptime(app["time"], "%H:%M"))
 
         print(appointments)  # Debugging output
 
@@ -450,6 +414,8 @@ def doctor_index(id):
     except Exception as e:
         print(f"Error fetching doctor or appointment data: {e}")
         return "An error occurred while retrieving data", 500
+
+
 
 
 @app.route("/nurse/<string:id>")
@@ -543,39 +509,7 @@ def staff_profile(staff_id):
 
 
 
-# #No use cuz i combine nurse and doctor in def staff_profile
-# @app.route("/nurse_profile/<string:nurse_id>")
-# def nurse_profile(nurse_id):
-#     try:
-#         # Fetch only the required fields from the "nurse" table in Supabase
-#         response = supabase.table("nurse").select("id, name, dob, gender, phone, email, department").eq("id", nurse_id).execute()
-        
-#         # Check if nurse data is retrieved
-#         if response.data:
-#             nurse = response.data[0]  # Get the first record since ID is unique
-#             return render_template("nurses/nurses_profile.html", nurse=nurse)
-    
-#     except Exception as e:
-#         print(f"Error fetching nurse data from Supabase: {e}")
 
-#     return "nurse not found", 404
-
-# #No use cuz i combine nurse and doctor in def staff_profile
-# @app.route("/doctor_profile/<string:doctor_id>")
-# def doctor_profile(doctor_id):
-#     try:
-#         # Fetch only the required fields from the "doctor" table in Supabase
-#         response = supabase.table("doctor").select("id, name, dob, gender, phone, email, department").eq("id", doctor_id).execute()
-        
-#         # Check if doctor data is retrieved
-#         if response.data:
-#             doctor = response.data[0]  # Get the first record since ID is unique
-#             return render_template("doctors/doctors_profile.html", doctor=doctor)
-    
-#     except Exception as e:
-#         print(f"Error fetching doctor data from Supabase: {e}")
-
-#     return "Doctor not found", 404
 
 
 
@@ -583,43 +517,6 @@ def get_details_by_id(id,filePath):
     details = load_db(filePath)
     return next((p for p in details if p["id"] == id), None)
 
-def save_profile(persons,filePath):
-    with open(filePath, "w") as file:
-        json.dump(persons, file, indent=4)
-
-# no use anymore
-# def update_nurse(id, name, dob, gender, phone, email, department):
-#     nurses = load_db(NURSE_FILE)
-#     for nurse in nurses:
-#         if nurse["id"] == id:
-#             nurse["name"] = name
-#             nurse["dob"] = dob
-#             nurse["gender"] = gender
-#             nurse["phone"] = phone
-#             nurse["email"] = email
-#             nurse["department"] = department
-#             break
-
-#     save_profile(nurses,NURSE_FILE)
-
-# no use anymore
-# def update_details(id, name,nic, dob, gender, department, phone, email, startDate, endDate, status,filePath):
-#     ppls = load_db(filePath)
-#     for ppl in ppls:
-#         if ppl["id"] == id:
-#             ppl["name"] = name
-#             ppl["nic"] = nic
-#             ppl["dob"] = dob
-#             ppl["gender"] = gender
-#             ppl["department"] = department
-#             ppl["phone"] = phone
-#             ppl["email"] = email
-#             ppl["startDate"] = startDate
-#             ppl["endDate"] = endDate
-#             ppl["status"] = status
-#             break
-
-#     save_profile(ppls,filePath)
 
 # update the contract start date and end date DONE
 @app.route("/update_contract/<string:staff_type>/<string:staff_id>/<string:id>", methods=['GET', 'POST'])
@@ -1070,7 +967,13 @@ def update_patient_info(patient_id, staff_id):
 # Generate apopointment id based on apopointment purpose DONE
 def generate_appointment_id(purpose):
     """Generate unique appointment ID with prefix based on purpose"""
-    prefix = "CONS" if purpose == "Consultation" else "SCAN"
+    if purpose in ["Consultation/Follow Up"]:
+        prefix = "CONS"
+    elif purpose == "CT Scan":
+        prefix = "CT-SCAN"
+    else:
+        prefix = "MRI-SCAN"
+        
     base_number = 10000  # Start IDs from 10000
     
     # Get the latest appointment with this prefix
@@ -1252,6 +1155,30 @@ def new_appointment(patient_id, staff_id):
     
     return "Invalid Staff ID", 400
 
+# filter only available doctor for consultation DONE
+@app.route('/get_available_doctors/<string:staff_id>/<string:date>', methods=["GET"])
+def get_available_doctors(staff_id, date):
+    # Fetch staff details to determine the department
+    staff_response = supabase.table("nurse").select("id, department_id").eq("id", staff_id).single().execute()
+    staff = staff_response.data if staff_response.data else None
+    
+    if not staff:
+        return jsonify({"error": "Nurse not found"}), 404
+    
+    department_id = staff["department_id"]
+
+    # Get doctors in the same department who are NOT on leave on the selected date
+    doctors_response = supabase.table("doctor").select("id, name").eq("department_id", department_id).execute()
+    all_doctors = doctors_response.data if doctors_response.data else []
+
+    # Fetch doctors who are on leave on the selected date
+    leave_response = supabase.table("doctor_leave").select("doctor_id").eq("leave_date", date).execute()
+    doctors_on_leave = {leave["doctor_id"] for leave in leave_response.data} if leave_response.data else set()
+
+    # Filter out unavailable doctors
+    available_doctors = [doctor for doctor in all_doctors if doctor["id"] not in doctors_on_leave]
+
+    return jsonify(available_doctors)
 
 # Update patient's appointment DONE
 @app.route('/update_appointment/<int:patient_id>/<string:staff_id>/<int:appointment_index>', methods=["GET", "POST"])
@@ -1378,99 +1305,157 @@ def get_image(num,patient_id, staff_id):
                 
     return render_template('image/doctors_view.html', patient=patient, doctor=doctor, staff_id=staff_id)
 
-def is_radiologist_available(radiologist, new_start_time, duration, patients,slot_durations):
-    """Check if the radiologist is available by ensuring no overlapping appointments."""
-    new_end_time = new_start_time + timedelta(minutes=duration)
+# def is_radiologist_available(radiologist, new_start_time, duration, patients,slot_durations):
+#     """Check if the radiologist is available by ensuring no overlapping appointments."""
+#     new_end_time = new_start_time + timedelta(minutes=duration)
 
-    for p in patients:
-        if "appointment" in p:
-            for appointment in p["appointment"]:
-                if appointment["doctor_name"] == radiologist["name"]:  # Same radiologist
-                    existing_start = datetime.strptime(f"{appointment['date']} {appointment['time']}", "%Y-%m-%d %H:%M")
-                    existing_end = existing_start + timedelta(minutes=slot_durations.get(appointment["purpose"], 20))
+#     for p in patients:
+#         if "appointment" in p:
+#             for appointment in p["appointment"]:
+#                 if appointment["doctor_name"] == radiologist["name"]:  # Same radiologist
+#                     existing_start = datetime.strptime(f"{appointment['date']} {appointment['time']}", "%Y-%m-%d %H:%M")
+#                     existing_end = existing_start + timedelta(minutes=slot_durations.get(appointment["purpose"], 20))
 
-                    # Check if the new slot overlaps with an existing appointment
-                    if (new_start_time < existing_end and new_end_time > existing_start):
-                        return False  # Conflict found, radiologist is not available
-    return True  # No conflicts, radiologist is available
+#                     # Check if the new slot overlaps with an existing appointment
+#                     if (new_start_time < existing_end and new_end_time > existing_start):
+#                         return False  # Conflict found, radiologist is not available
+#     return True  # No conflicts, radiologist is available
 
-@app.route('/scan_appointment/<int:patient_id>/<int:num>/<string:doctor_id>', methods=["GET", "POST"])
-def scan_appointment(patient_id, num, doctor_id):
-    patient = get_details_by_id(patient_id, PATIENTS_FILE)
-    doctors_db = load_db(DOCTORS_FILE)
+# Add new appointment for scan DONE
+@app.route('/scan_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
+def scan_appointment(patient_id, staff_id):
+    # Retrieve patient data from Supabase
+    patient_response = supabase.table("patient").select("id, name").eq("id", patient_id).single().execute()
+    patient = patient_response.data if patient_response.data else None
 
-    radiologist_db = [doctor for doctor in doctors_db if doctor["department"] == "Radiology"]
+    if not patient:
+        return "Patient not found", 404
 
-    # Define slot durations for different types of scans
-    slot_durations = {
-        "CT Scan": 20,  # in minutes
-        "MRI Scan": 30  # in minutes
-    }
+    # Retrieve all radiologists from department "dep1002"
+    radiologists_response = supabase.table("doctor").select("id, name").eq("department_id", "dep1002").execute()
+    radiologists = radiologists_response.data if radiologists_response.data else []
 
-    # Load all patients' data to check existing appointments
-    patients = load_db(PATIENTS_FILE)
-
-    # Find the first available radiologist with a non-clashing slot
-    available_radiologist = None
-    date = datetime.now().strftime("%Y-%m-%d")
-    current_time = datetime.now()
-
-    for radiologist in radiologist_db:
-        proposed_time = current_time + timedelta(minutes=20)  # Start checking from 20 minutes later
-        duration = slot_durations.get("CT Scan", 20)  # Default to CT scan duration
-
-        if is_radiologist_available(radiologist, proposed_time, duration, patients,slot_durations):
-            available_radiologist = radiologist
-            break  # Stop searching when the first available radiologist is found
-
-    if not available_radiologist:
-        return "No available radiologist at this time", 400  # Error if no radiologist is free
+    slot_durations = {"CT Scan": 20, "MRI Scan": 30}  # Slot durations
 
     if request.method == "POST":
         patient_id = request.form["patient_id"]
-        patient_name = request.form["patient_name"]
         purpose = request.form["purpose"]
-        status = "active"
+        date = request.form["date"]
+        time = request.form["time"]
+        notes = request.form.get("notes", "")
 
-        duration = slot_durations.get(purpose, 20)  # Get scan duration
-        start_time = proposed_time
-        end_time = start_time + timedelta(minutes=duration)
+        # Validate date and time
+        selected_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+        if selected_datetime < datetime.now():
+            flash("Cannot book an appointment in the past", "error")
+            return redirect(request.url)
 
-        # Ensure the selected radiologist is still available at this point
-        if not is_radiologist_available(available_radiologist, start_time, duration, patients,slot_durations):
-            return "Selected time slot is no longer available", 400
+        if selected_datetime.hour < 9 or selected_datetime.hour > 17:
+            flash("Appointment time must be between 9 AM and 5 PM", "error")
+            return redirect(request.url)
 
-        # Schedule the appointment
-        for p in patients:
-            if p["id"] == int(patient_id):
-                if "appointment" not in p:
-                    p["appointment"] = []
-                
-                p["appointment"].append({
-                    "num": f"{purpose}/{patient_id}",
-                    "patient_id": patient_id,
-                    "patient_name": patient_name,
-                    "purpose": purpose,
-                    "doctor_id": available_radiologist["id"],
-                    "doctor_name": available_radiologist["name"],
-                    "date": date,
-                    "start_time": start_time.strftime("%H:%M"),
-                    "end_time": end_time.strftime("%H:%M"),
-                    "status": status
-                })
+        duration = slot_durations.get(purpose, 20)
 
-                for h in p["history"]:
-                    if h.get("num") == f"{patient_id}/{num}":
-                        h["scan"] = "True"
-                break  # Stop once the patient is found
+        # Retrieve the latest active appointment for the patient
+        current_appointment_response = supabase.table("appointment") \
+            .select("id, status") \
+            .eq("patient_id", patient_id) \
+            .eq("status", "Active") \
+            .order("date", desc=True) \
+            .limit(1) \
+            .single() \
+            .execute()
 
-        try:
-            save_ppl(PATIENTS_FILE, patients)
-            return redirect(url_for("get_history", patient_id=patient_id, num=num, staff_id=doctor_id))
-        except Exception as e:
-            print(f"File saving error: {e}")
+        current_appointment = current_appointment_response.data if current_appointment_response.data else None
 
-    return render_template('doctors/scan_appointment.html', patient=patient, staff_id=doctor_id, doctors=radiologist_db, num=num)
+        if current_appointment:
+            # Update the current appointment's status to "Done"
+            supabase.table("appointment") \
+                .update({"status": "Done"}) \
+                .eq("id", current_appointment["id"]) \
+                .execute()
+
+        # Generate new appointment ID based on the purpose
+        new_appointment_id = generate_appointment_id(purpose)
+
+        # Select a random doctor from department "dep1002" to receive the notification
+        if not radiologists:
+            flash("No doctors available in this department", "error")
+            return redirect(request.url)
+
+        selected_doctor = random.choice(radiologists)  # Pick a random radiologist
+        doctor_id = selected_doctor["id"]
+
+        # Insert new scan appointment into Supabase
+        new_appointment = {
+            "id": new_appointment_id,
+            "patient_id": patient_id,
+            "purpose": purpose,
+            "doctor_id": doctor_id,
+            "date": date,
+            "time": time,
+            "status": "Active",
+            "notes": notes
+        }
+
+        supabase.table("appointment").insert(new_appointment).execute()
+
+        # # Send notification to the selected doctor
+        # notification_message = f"New scan appointment for Patient {patient_id} on {date} at {time}"
+        # supabase.table("notifications").insert({"doctor_id": doctor_id, "message": notification_message}).execute()
+
+        # flash(f"Notification sent to {selected_doctor['name']}!", "success")
+        return redirect(url_for("doctor_index", id=staff_id))
+
+    return render_template('doctors/scan_appointment.html', patient=patient, staff_id=staff_id)
+
+
+# def find_available_doctor(department_id, proposed_time, duration):
+#     """Find an available doctor from a specific department for the given time slot."""
+#     # Retrieve all doctors in the department
+#     doctors_response = supabase.table("doctor").select("id, name").eq("department_id", department_id).execute()
+#     doctors = doctors_response.data if doctors_response.data else []
+
+#     if not doctors:
+#         return None  # No doctors found in this department
+
+#     # Retrieve all appointments
+#     appointments_response = supabase.table("appointment").select("*").execute()
+#     appointments = appointments_response.data if appointments_response.data else []
+
+#     # Retrieve doctors on leave for the selected date
+#     leave_response = supabase.table("doctor_leave").select("doctor_id").eq("leave_date", proposed_time).eq("status", "Approved").execute()
+#     doctors_on_leave = {leave["doctor_id"] for leave in leave_response.data} if leave_response.data else set()
+
+#     # Check each doctor for availability
+    
+
+#     return None  # No available doctor found
+
+
+# def is_radiologist_available(radiologist, new_start_time, duration, appointments, slot_durations):
+#     """Check if the radiologist is available by ensuring no overlapping appointments."""
+#     new_end_time = new_start_time + timedelta(minutes=duration)
+
+#     # Retrieve all appointments for the given radiologist from Supabase
+#     appointments_response = supabase.table("appointments") \
+#         .select("doctor_id, date, start_time, purpose") \
+#         .eq("doctor_id", radiologist["id"]) \
+#         .execute()
+    
+#     existing_appointments = appointments_response.data if appointments_response.data else []
+
+#     for appointment in existing_appointments:
+#         existing_start = datetime.strptime(f"{appointment['date']} {appointment['start_time']}", "%Y-%m-%d %H:%M")
+#         existing_end = existing_start + timedelta(minutes=slot_durations.get(appointment["purpose"], 20))
+
+#         # Check if the new slot overlaps with an existing appointment
+#         if new_start_time < existing_end and new_end_time > existing_start:
+#             return False  # Conflict found, radiologist is not available
+
+#     return True  # No conflicts, radiologist is available
+
+
 
 
 
@@ -1535,6 +1520,131 @@ def doctor_schedule(id):
         return f"Error fetching doctor schedule: {e}", 500
 
 
+
+@app.route('/submit-leave', methods=['POST'])
+def submit_leave():
+    data = request.json
+    doctor_id = data.get("doctor_id")
+    leave_date = data.get("leave_date")
+
+    if not doctor_id or not leave_date:
+        return jsonify({"error": "Missing doctor ID or leave date"}), 400
+
+    response = supabase.table("doctor_leave").insert({
+        "doctor_id": doctor_id,
+        "leave_date": leave_date,
+        "status": "Pending"
+    }).execute()
+
+    return jsonify({"message": "Leave request submitted successfully"}), 201
+
+@app.route('/approve-leave', methods=['POST'])
+def approve_leave():
+    data = request.json
+    leave_id = data.get("leave_id")
+
+    if not leave_id:
+        return jsonify({"error": "Missing leave ID"}), 400
+
+    response = supabase.table("doctor_leave").update({
+        "status": "Approved"
+    }).eq("id", leave_id).execute()
+
+    return jsonify({"message": "Leave approved successfully"}), 200
+
+@app.route('/available-doctors', methods=['GET'])
+def available_doctors():
+    department_id = request.args.get("department_id")
+    appointment_date = request.args.get("date")
+
+    if not department_id or not appointment_date:
+        return jsonify({"error": "Missing department ID or date"}), 400
+
+    # Get doctors in the department
+    doctors = supabase.table("doctor").select("id, name").eq("department_id", department_id).execute()
+
+    # Get doctors on leave for the given date
+    leaves = supabase.table("doctor_leave").select("doctor_id").eq("leave_date", appointment_date).eq("status", "Approved").execute()
+    doctors_on_leave = {leave["doctor_id"] for leave in leaves.data}
+
+    # Filter out doctors on leave
+    available_doctors = [doctor for doctor in doctors.data if doctor["id"] not in doctors_on_leave]
+
+    return jsonify(available_doctors)
+
+@app.route('/not_available/<doctor_id>')
+def not_available_dates(doctor_id):
+    return render_template("/doctors/not_available.html", doctor_id=doctor_id)
+
+
+
+@app.route('/update-leave-status/<string:leave_id>', methods=['POST'])
+def update_leave_status(leave_id):
+    try:
+        data = request.get_json()
+        new_status = data.get("action")
+
+        print(f"Received request to update leave_id: {leave_id} to status: {new_status}")  # Debugging
+
+        if new_status not in ["Approved", "Rejected"]:
+            return jsonify({"success": False, "message": "Invalid action"}), 400
+        
+        # ✅ Debug: Print before updating
+        print(f"Attempting to update leave request with ID: {leave_id}")
+
+        # ✅ Update the status in Supabase
+        update_response = (
+            supabase.table("doctor_leave")
+            .update({"status": new_status})
+            .eq("id", leave_id)
+            .execute()
+        )
+
+        print(f"Update response: {update_response.data}")  # Debugging
+
+        if update_response.data:
+            return jsonify({"success": True, "message": f"Leave request {new_status} successfully."})
+        else:
+            return jsonify({"success": False, "message": "Failed to update leave status."}), 500
+
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Debugging
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+
+
+# Add doctor leave DONE
+@app.route('/add_doctor_leave/<string:doctor_id>', methods=['GET', 'POST'])
+def add_doctor_leave(doctor_id):
+    try:
+        # Retrieve doctor_id based on staff_id
+        response = supabase.table("doctor").select("id").eq("id", doctor_id).single().execute()
+        
+        if not response.data:
+            return jsonify({"success": False, "error": "Doctor ID not found"}), 404
+        
+        doctor_id = response.data['id']
+        
+        if request.method == 'POST':
+            leave_date = request.form["leave_date"]
+            leave_reason = request.form["leave_reason"]
+            
+            # Insert leave request into Supabase
+            supabase.table("doctor_leave").insert({
+                "doctor_id": doctor_id,
+                "leave_date": leave_date,
+                "reason": leave_reason,
+                "status": "Pending"
+            }).execute()
+            
+            return redirect(url_for("add_doctor_leave", doctor_id=doctor_id))
+        
+        return render_template('doctors/not_available.html')
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

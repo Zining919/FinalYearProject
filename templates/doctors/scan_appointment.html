@@ -1,6 +1,6 @@
 <!-- Validation: date(at least be current date), time(9am-5pm)-->
  
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -33,4 +33,70 @@
     </form>
     <a href="/appointment/{{ patient.id }}/{{staff_id}}">Back to Appoinment List</a>
 </body>
+</html>-->
+
+<!-- Validation: Date (at least current date), Time (9 AM - 5 PM) -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+    <title>Add Scan Appointment</title>
+    <script>
+        function validateForm(event) {
+            const dateInput = document.getElementById("date").value;
+            const timeInput = document.getElementById("time").value;
+            const currentDate = new Date().toISOString().split("T")[0];
+
+            if (dateInput < currentDate) {
+                alert("Please select a valid date (today or later).");
+                event.preventDefault();
+                return false;
+            }
+
+            const timeParts = timeInput.split(":");
+            const hours = parseInt(timeParts[0]);
+
+            if (hours < 9 || hours > 17) {
+                alert("Please select a time between 9 AM and 5 PM.");
+                event.preventDefault();
+                return false;
+            }
+
+            alert("New Appointment added successfully!");
+        }
+    </script>
+</head>
+<body>
+    <h1>Add New Appointment</h1>
+    <form action="/scan_appointment/{{ patient.id }}/{{ staff_id }}" method="POST" onsubmit="validateForm(event)">
+        <label>Patient ID: {{ patient.id }}</label>
+        <input type="hidden" name="patient_id" value="{{ patient.id }}">
+
+        <label>Patient Name: {{ patient.name }}</label>
+        <input type="hidden" name="patient_name" value="{{ patient.name }}">
+
+        <label for="purpose">Purpose:</label>
+        <select id="purpose" name="purpose" required>
+            <option value="">-- Select Scan Type --</option>
+            <option value="CT Scan">CT Scan</option>
+            <option value="MRI Scan">MRI Scan</option>
+        </select>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required>
+
+        <label for="time">Time:</label>
+        <input type="time" id="time" name="time" required>
+
+        <label for="notes">Notes (Optional):</label>
+        <textarea id="notes" name="notes" rows="3"></textarea>
+
+        <button type="submit">Add Appointment</button>
+    </form>
+    <a href="/appointment/{{ patient.id }}/{{ staff_id }}">Back to Appointment List</a>
+</body>
 </html>
+

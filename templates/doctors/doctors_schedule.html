@@ -135,7 +135,6 @@
                         <th>Appointment Time</th>
                         <th>Status</th>
                         <th>Assistance (Nurse)</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -146,18 +145,6 @@
                             <td class="appointment-date">{{ appointment['date'] }} at {{ appointment['time'] }}</td>
                             <td>{{ appointment['status'] }}</td>
                             <td>{{ appointment['nurse_name'] }}</td>
-                            <td>
-                                <table class="action-table">
-                                    <tr>
-                                        <td>
-                                            <span style="color: green">Yes</span>
-                                        </td>
-                                        <td>
-                                            <span style="color: red">No</span>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>

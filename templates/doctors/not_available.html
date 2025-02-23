@@ -1,0 +1,269 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Leave Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        h2 { text-align: center; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; }
+        button:hover { background: #218838; }
+        .pending { background: #ffc107; padding: 5px; border-radius: 5px; }
+        .approved { background: #28a745; color: white; padding: 5px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Doctor Leave Request</h2>
+        <label>Doctor ID:</label>
+        <input type="text" id="doctor_id" placeholder="Enter your Doctor ID">
+        <label>Leave Date:</label>
+        <input type="date" id="leave_date">
+        <button onclick="submitLeave()">Request Leave</button>
+
+        <h2>Pending Leave Requests</h2>
+        <div id="leave_requests"></div>
+    </div>
+
+    <script>
+        async function submitLeave() {
+            const doctor_id = document.getElementById("doctor_id").value;
+            const leave_date = document.getElementById("leave_date").value;
+
+            const response = await fetch("/submit-leave", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ doctor_id, leave_date })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+            loadLeaveRequests();
+        }
+
+        async function loadLeaveRequests() {
+            const response = await fetch("/available-doctors?department_id=1&date=" + new Date().toISOString().split("T")[0]);
+            const doctors = await response.json();
+            
+            let output = "<ul>";
+            doctors.forEach(doc => {
+                output += `<li>${doc.name} - <span class="pending">Pending</span> 
+                    <button onclick="approveLeave('${doc.id}')">Approve</button></li>`;
+            });
+            output += "</ul>";
+            document.getElementById("leave_requests").innerHTML = output;
+        }
+
+        async function approveLeave(leave_id) {
+            const response = await fetch("/approve-leave", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ leave_id })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+            loadLeaveRequests();
+        }
+
+        loadLeaveRequests();
+    </script>
+</body>
+</html>-->
+
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Leave Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        h2 { text-align: center; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; }
+        button:hover { background: #218838; }
+        .pending { background: #ffc107; padding: 5px; border-radius: 5px; }
+        .approved { background: #28a745; color: white; padding: 5px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Doctor Leave Request</h2>
+        
+        <label>Doctor Name:</label>
+        <input type="text" id="doctor_name" readonly>
+        
+        <label>Leave Date:</label>
+        <input type="date" id="leave_date">
+        
+        <label>Reason:</label>
+        <input type="text" id="leave_reason" placeholder="Enter reason for leave">
+        
+        <button onclick="submitLeave()">Request Leave</button>
+
+        <h2>Pending Leave Requests</h2>
+        <div id="leave_requests"></div>
+    </div>
+
+    <script>
+        let doctor_id = "";  // This will be assigned dynamically
+
+        // Fetch logged-in doctor details
+        async function fetchDoctorDetails() {
+            const response = await fetch("/current-doctor");
+            const doctor = await response.json();
+            doctor_id = doctor.id;
+            document.getElementById("doctor_name").value = doctor.name;
+        }
+
+        async function submitLeave() {
+            const leave_date = document.getElementById("leave_date").value;
+            const leave_reason = document.getElementById("leave_reason").value;
+
+            if (!leave_date || !leave_reason) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const response = await fetch("/submit-leave", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ doctor_id, leave_date, reason: leave_reason })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+            
+            // Redirect to doctor_index.html after clicking "OK"
+            window.location.href = "doctor_index.html";
+        }
+
+        async function loadLeaveRequests() {
+            const response = await fetch("/doctor-leave-requests?doctor_id=" + doctor_id);
+            const leaveRequests = await response.json();
+            
+            let output = "<ul>";
+            leaveRequests.forEach(leave => {
+                output += `<li>${leave.leave_date} - ${leave.reason} - <span class="pending">Pending</span></li>`;
+            });
+            output += "</ul>";
+            document.getElementById("leave_requests").innerHTML = output;
+        }
+
+        fetchDoctorDetails();
+        loadLeaveRequests();
+    </script>
+</body>
+</html>-->
+
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Leave Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        h2 { text-align: center; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; }
+        button:hover { background: #218838; }
+        .message { text-align: center; color: red; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Request Leave</h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="message">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <form action="/add_doctor_leave/{{ doctor_id }}" method="POST">
+            <label>Leave Date:</label>
+            <input type="date" name="leave_date" required>
+
+            <label>Reason:</label>
+            <input type="text" name="leave_reason" placeholder="Enter reason for leave" required>
+
+            <button type="submit">Request Leave</button>
+        </form>
+    </div>
+
+</body>
+</html>-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Leave Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        h2 { text-align: center; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; }
+        button:hover { background: #218838; }
+        .message { text-align: center; color: red; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Request Leave</h2>
+
+        <!-- Flash Messages (Success/Error) -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="message">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <form id="leaveForm" action="/add_doctor_leave/{{ doctor_id }}" method="POST">
+            <label>Leave Date:</label>
+            <input type="date" name="leave_date" id="leave_date" required>
+
+            <label>Reason:</label>
+            <input type="text" name="leave_reason" id="leave_reason" placeholder="Enter reason for leave" required>
+
+            <button type="submit">Request Leave</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("leaveForm").addEventListener("submit", function(event) {
+            event.preventDefault();  // ✅ Prevent default form submission
+    
+            // ✅ Submit the form using Fetch API (AJAX request)
+            fetch(this.action, {
+                method: this.method,
+                body: new FormData(this)
+            }).then(response => {
+                if (response.ok) {
+                    alert("Your leave request has been submitted successfully! Click OK to continue.");
+                    window.location.href = "/doctor/{{ doctor_id }}";  // ✅ Flask route redirection
+                } else {
+                    alert("Error submitting leave request. Please try again.");
+                }
+            }).catch(error => {
+                console.error("Error:", error);
+                alert("Something went wrong. Please try again.");
+            });
+        });
+    </script>
+
+</body>
+</html>
+
+
