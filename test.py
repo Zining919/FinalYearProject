@@ -11,6 +11,9 @@ import tensorflow as tf
 from io import BytesIO
 from PIL import Image
 from werkzeug.utils import secure_filename
+from keras.models import load_model
+from keras.preprocessing.image import img_to_array
+import numpy as np
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -36,8 +39,12 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 CT_MODEL_PATH = "ct_effnet_best_model.keras"
 MRI_MODEL_PATH = "MRI_model.keras"
 
-ct_model = tf.keras.models.load_model(CT_MODEL_PATH)
-mri_model = tf.keras.models.load_model(MRI_MODEL_PATH)
+ct_model = load_model(CT_MODEL_PATH)
+mri_model = load_model(MRI_MODEL_PATH)
+
+# Define label mappings (adjust the mapping if needed)
+brain_labels = {0: "glioma", 1: "meningioma", 2: "notumor", 3: "pituitary"}
+lung_labels = {0: "adenocarcinoma", 1: "large.cell.carcinoma", 2: "normal", 3: "squamous.cell.carcinoma"}
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'jfif'}
@@ -1710,95 +1717,34 @@ def add_doctor_leave(doctor_id):
         print(f"Error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-# Route for uploading images
-@app.route('/upload/<string:appointment_id>', methods=['GET', 'POST'])
-def upload_image(appointment_id):
-    try:
-        # Fetch doctor details
-        doctor = supabase.table("doctor").select("*").eq("id", session["doctor_id"]).execute().data[0]
 
-        # Fetch patient details
-        appointment = supabase.table("appointment").select("patient_id").eq("id", appointment_id).execute().data[0]
-        patient = supabase.table("patient").select("*").eq("id", appointment["patient_id"]).execute().data[0]
+@app.route('/radio_upload')
+def radio_upload():
+    return render_template('/image/radio_upload.html')
 
-        image_url = None
 
-        if request.method == 'POST':
-            if doctor['department_id'] != 'dep1002':
-                return "Unauthorized Access", 403
 
-            # Validate file
-            file = request.files['image']
-            if not file or not allowed_file(file.filename):
-                flash("Only image files (PNG, JPG, JPEG) are allowed.")
-                return redirect(request.url)
 
-            # Secure and store file
-            filename = secure_filename(file.filename)
-            file_ext = filename.rsplit('.', 1)[1].lower()
-            unique_filename = f"{appointment_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{file_ext}"
-            file_bytes = BytesIO(file.read())
 
-            # Upload to Supabase Storage
-            bucket_name = "patient_images"
-            supabase.storage.from_(bucket_name).upload(file=BytesIO(file_bytes.getvalue()), path=unique_filename)
 
-            # Get file URL
-            image_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{unique_filename}"
 
-            # Store image reference in database
-            supabase.table("patient_images").insert({
-                "patient_id": patient["id"],
-                "image_url": image_url,
-                "appointment_id": appointment_id
-            }).execute()
 
-            # Determine model to use
-            if appointment_id.startswith("CT"):
-                model = ct_model
-            elif appointment_id.startswith("MRI"):
-                model = mri_model
-            else:
-                flash("Invalid appointment type.")
-                return redirect(request.url)
 
-            # Preprocess and Predict
-            img = Image.open(file_bytes).resize((224, 224))  # Resize for model input
-            img_array = tf.keras.preprocessing.image.img_to_array(img)
-            img_array = tf.expand_dims(img_array, 0)  # Expand dims for batch input
-            predictions = model.predict(img_array)
-            predicted_class = "Normal" if predictions[0][0] > 0.5 else "Abnormal"
 
-            flash(f"Prediction: {predicted_class}")
 
-        return render_template("upload.html", doctor=doctor, patient=patient, appointment_id=appointment_id, image_url=image_url)
 
-    except Exception as e:
-        return f"Error: {e}", 500
 
-# Route for adding comments (for non-radiologists)
-@app.route('/comment/<string:appointment_id>', methods=['POST'])
-def add_comment(appointment_id):
-    try:
-        doctor = supabase.table("doctor").select("*").eq("id", session["doctor_id"]).execute().data[0]
 
-        # Only non-radiologists can comment
-        if doctor['department_id'] == 'dep1002':
-            return "Radiologists cannot add comments here.", 403
 
-        comment_text = request.form['comment']
-        supabase.table("comments").insert({
-            "appointment_id": appointment_id,
-            "doctor_id": doctor["id"],
-            "comment": comment_text,
-            "timestamp": datetime.now()
-        }).execute()
 
-        flash("Comment added successfully.")
-        return redirect(url_for('upload_image', appointment_id=appointment_id))
 
-    except Exception as e:
-        return f"Error: {e}", 500
+
+
+
+
+
+
+
 
 
 

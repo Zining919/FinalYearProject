@@ -1,35 +1,99 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Patient Image</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Radiology Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        .upload-section, .comment-section {
+            margin-top: 20px;
+        }
+        .comment-box {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Patient Image Upload</h1>
-    <p><b>Patient ID:</b> {{ patient['id'] }}</p>
-    <p><b>Patient Name:</b> {{ patient['name'] }}</p>
-    
-    {% if doctor['department_id'] == 'dep1002' %}
-        <form action="{{ url_for('upload_image', appointment_id=appointment_id) }}" method="post" enctype="multipart/form-data">
-            <label for="image">Upload Image:</label>
-            <input type="file" name="image" id="image" accept="image/*" required>
-            <button type="submit">Upload</button>
-        </form>
-    {% else %}
-        <h2>Diagnosis/Comments</h2>
-        <form action="{{ url_for('add_comment', appointment_id=appointment_id) }}" method="post">
-            <textarea name="comment" placeholder="Enter your diagnosis or comment" required></textarea>
-            <button type="submit">Submit Comment</button>
-        </form>
-    {% endif %}
+    <div class="container">
+        <h2>Patient Details</h2>
+        <p><strong>ID:</strong> <span id="patient-id"></span></p>
+        <p><strong>Name:</strong> <span id="patient-name"></span></p>
+        
+        <div class="upload-section" id="upload-section" style="display: none;">
+            <h3>Upload Image</h3>
+            <input type="file" id="image-upload">
+            <button onclick="uploadImage()">Upload</button>
+        </div>
 
-    <h2>Uploaded Image</h2>
-    {% if image_url %}
-        <img src="{{ image_url }}" alt="Patient Scan" width="300">
-    {% else %}
-        <p>No image uploaded yet.</p>
-    {% endif %}
+        <div class="result-section" id="result-section" style="display: none;">
+            <h3>Model Prediction</h3>
+            <p id="model-result"></p>
+        </div>
+
+        <div class="comment-section" id="comment-section" style="display: none;">
+            <h3>Comments</h3>
+            <textarea class="comment-box" id="comment-box"></textarea>
+            <button onclick="submitComment()">Submit Comment</button>
+        </div>
+    </div>
+    
+    <script>
+        const userId = "<DOCTOR_ID>";
+        const departmentId = "<DEPARTMENT_ID>";
+        const appointmentPurpose = "<APPOINTMENT_PURPOSE>";
+        document.getElementById("patient-id").innerText = "<PATIENT_ID>";
+        document.getElementById("patient-name").innerText = "<PATIENT_NAME>";
+
+        if (departmentId === "dep1002") {
+            document.getElementById("upload-section").style.display = "block";
+        } else {
+            document.getElementById("comment-section").style.display = "block";
+        }
+
+        function uploadImage() {
+            const fileInput = document.getElementById("image-upload");
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append("image", file);
+                fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                }).then(response => response.json()).then(data => {
+                    document.getElementById("model-result").innerText = data.prediction;
+                    document.getElementById("result-section").style.display = "block";
+                });
+            }
+        }
+
+        function submitComment() {
+            const comment = document.getElementById("comment-box").value;
+            fetch("/comment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ comment: comment })
+            }).then(() => alert("Comment submitted!"));
+        }
+    </script>
 </body>
 </html>
+
+
+
