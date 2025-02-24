@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Patient Image</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Patient Image Upload</h1>
+    <p><b>Patient ID:</b> {{ patient['id'] }}</p>
+    <p><b>Patient Name:</b> {{ patient['name'] }}</p>
+    
+    {% if doctor['department_id'] == 'dep1002' %}
+        <form action="{{ url_for('upload_image', appointment_id=appointment_id) }}" method="post" enctype="multipart/form-data">
+            <label for="image">Upload Image:</label>
+            <input type="file" name="image" id="image" accept="image/*" required>
+            <button type="submit">Upload</button>
+        </form>
+    {% else %}
+        <h2>Diagnosis/Comments</h2>
+        <form action="{{ url_for('add_comment', appointment_id=appointment_id) }}" method="post">
+            <textarea name="comment" placeholder="Enter your diagnosis or comment" required></textarea>
+            <button type="submit">Submit Comment</button>
+        </form>
+    {% endif %}
+
+    <h2>Uploaded Image</h2>
+    {% if image_url %}
+        <img src="{{ image_url }}" alt="Patient Scan" width="300">
+    {% else %}
+        <p>No image uploaded yet.</p>
+    {% endif %}
+</body>
+</html>
