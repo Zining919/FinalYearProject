@@ -125,7 +125,7 @@
         }
     </script>
     
-    <section>      
+    <section>
         {% if appointments %}
             <table id="appointmentTable">
                 <thead>
@@ -134,7 +134,7 @@
                         <th>Patient Name</th>
                         <th>Appointment Time</th>
                         <th>Status</th>
-                        <th>Assistance (Nurse)</th>
+                        <th>Notes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -144,14 +144,17 @@
                             <td>{{ appointment['patient_name'] }}</td>
                             <td class="appointment-date">{{ appointment['date'] }} at {{ appointment['time'] }}</td>
                             <td>{{ appointment['status'] }}</td>
-                            <td>{{ appointment['nurse_name'] }}</td>
+                            <td>{{ appointment['notes'] }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        {% else %}
+            <!-- Always show this message if there are no appointments -->
+            <p id="noAppointmentMessage" style="text-align: center; font-weight: bold;">No upcoming appointments. Get a good rest!</p>
         {% endif %}
-        <p id="noAppointmentMessage" style="display: none; text-align: center; font-weight: bold;">No upcoming appointment. Get a good rest!</p>
     </section>
+    
 
     <footer>
         <a href="/doctor/{{ id }}">Back</a>

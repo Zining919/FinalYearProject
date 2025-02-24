@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -44,4 +44,64 @@
         <button><a href="/doctor_profile/{{doctor.id}}">Profile</a></button>
         <button><a href="/">Log Out</a></button>
     </body>
+</html>-->
+
+
+
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+        <title>Doctor</title>
+    </head>
+    <body>
+        <h1>Doctor Page</h1>
+        <h2>Hi, {{ doctor.name }}</h2>
+        <div>
+            <button><a href="/patient/{{ doctor.id }}">Patient List</a></button>
+            <!--<button><a href="/doctor_schedule/{{ doctor.id }}">Schedule</a></button>-->
+            <button><a href="/not_available/{{ doctor.id }}">Not Available Date</a></button>
+        </div>
+        <br><br>
+
+        <h2>Today's Appointment</h2>
+        <section>      
+            {% if appointments %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient Name</th>
+                            <th>Appointment Time</th>
+                            <th>Status</th>
+                            <th>Appointment For Scan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                            <tr>
+                                <td>{{ appointment['id'] }}</td>
+                                <td>{{ appointment['patient_name'] }}</td>
+                                <td>{{ appointment['date'] }} at {{ appointment['time'] }}</td>
+                                <td>{{ appointment['status'] }}</td>
+                                <td>
+                                    <a href="/image_history/{{patient_id}}/{{appointment.num}}/{{staff_id}}" class="update-link">
+                                        Upload
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No appointments for today.</p>
+            {% endif %}
+        </section>
+
+        <button><a href="/staff_profile/{{ doctor.id }}">Profile</a></button>
+        <button><a href="/">Log Out</a></button>
+    </body>
 </html>
+

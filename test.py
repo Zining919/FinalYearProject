@@ -84,8 +84,6 @@ def index_main():
 
     return render_template("main/index.html")
 
-
-
 # Access Management index page DONE
 ## NOTE: add code to check end date for status(expired/active/terminated)
 @app.route("/manage/<string:id>")
@@ -368,7 +366,8 @@ def doctor_index(id):
             return "Doctor not found", 404
 
         doctor = doctor_response.data[0]  # Extract doctor details
-
+        department_id = doctor.get("department_id", "")
+        
         # Get today's date in YYYY-MM-DD format
         today_date = datetime.now().strftime('%Y-%m-%d')
 
@@ -377,7 +376,6 @@ def doctor_index(id):
             supabase.table("appointment")
             .select("id, patient_id, date, time, status")
             .eq("doctor_id", id)
-            .like("id", "CONS%")
             .eq("status", "Active")
             .eq("date", today_date)  # Only today's appointments
             .execute()
@@ -408,12 +406,102 @@ def doctor_index(id):
             appointments.sort(key=lambda app: datetime.strptime(app["time"], "%H:%M"))
 
         print(appointments)  # Debugging output
+        
+        #**Determine which template to render**
+        # if department_id == "dep1002":  # Radiology department
+        #     print("➡️ Rendering Radiology Template")
+        #     return render_template("image/radio_index.html", doctor=doctor, appointments=appointments)
 
         return render_template("doctors/doctor_index.html", doctor=doctor, appointments=appointments)
 
     except Exception as e:
         print(f"Error fetching doctor or appointment data: {e}")
         return "An error occurred while retrieving data", 500
+
+# not neccesary to have a radio_index.html since the doctor also have the same function 
+# just different appointment and the appointment is based on the doctor_id 
+
+# @app.route("/doctor/<string:id>")
+# def doctor_index(id):
+#     try:
+#         # Fetch doctor details, including department_id
+#         doctor_response = supabase.table("doctor").select("id, name, department_id").eq("id", id).execute()
+        
+#         if not doctor_response.data:
+#             print(f"❌ Doctor with ID {id} not found.")
+#             return "Doctor not found", 404
+
+#         doctor = doctor_response.data[0]  # Extract doctor details
+#         department_id = doctor.get("department_id", "")
+        
+#         print(f"✅ Doctor found: {doctor}")  # DEBUG: Check doctor details
+
+#         # # Determine appointment type based on department
+#         # if department_id == "dep1002":  # Radiology department → Show only "Scan" appointments
+#         #     appointment_filter = ["CT Scan", "MRI Scan"]
+#         # else:  # Other doctors → Show "Consultation/Follow-up" appointments
+#         #     appointment_filter = ["Consultation/Follow up"]
+
+#         #print(f"📌 Department ID: {department_id}, Filter: {appointment_filter}")  # DEBUG: Check department and filter
+
+#         # Get today's date in YYYY-MM-DD format
+#         today_date = datetime.now().strftime('%Y-%m-%d')
+#         print(f"📅 Today's date: {today_date}")  # DEBUG: Check today's date
+
+#         # Fetch appointments ONLY for today with correct purpose
+#         appointment_response = (
+#             supabase.table("appointment")
+#             .select("id, patient_id, date, time, status, purpose")
+#             .eq("doctor_id", id)
+#             #.in_("purpose", appointment_filter)  # ✅ FIXED: Use .in_() instead of .eq()
+#             .eq("status", "Active")
+#             .eq("date", today_date)  # Only today's appointments
+#             .execute()
+#         )
+
+#         appointments = appointment_response.data if appointment_response.data else []
+#         print(f"📝 Appointments retrieved: {appointments}")  # DEBUG: Check retrieved appointments
+
+#         if not appointments:
+#             print("⚠️ No active appointments found for today.")
+        
+#         if appointments:
+#             # Fetch patient names for today's appointments
+#             patient_ids = list(set(app["patient_id"] for app in appointments))
+            
+#             if patient_ids:  # Ensure patient_ids is not empty before querying
+#                 patient_response = (
+#                     supabase.table("patient")
+#                     .select("id, name")
+#                     .in_("id", patient_ids)
+#                     .execute()
+#                 )
+#                 patient_map = {p["id"]: p["name"] for p in patient_response.data} if patient_response.data else {}
+#             else:
+#                 patient_map = {}
+
+#             # Add patient names to appointments
+#             for app in appointments:
+#                 app["patient_name"] = patient_map.get(app["patient_id"], "Unknown")
+
+#             # Sort appointments by time
+#             appointments.sort(key=lambda app: datetime.strptime(app["time"], "%H:%M"))
+
+#         print(f"📋 Final Appointments List: {appointments}")  # DEBUG: Check processed appointments
+
+#         # **Determine which template to render**
+#         if department_id == "dep1002":  # Radiology department
+#             print("➡️ Rendering Radiology Template")
+#             return render_template("image/radio_index.html", doctor=doctor, appointments=appointments)
+
+#         print("➡️ Rendering Doctor Template")
+#         return render_template("doctors/doctor_index.html", doctor=doctor, appointments=appointments)
+
+#     except Exception as e:
+#         print(f"❌ Error fetching doctor or appointment data: {e}")
+#         return "An error occurred while retrieving data", 500
+
+
 
 
 
@@ -970,9 +1058,9 @@ def generate_appointment_id(purpose):
     if purpose in ["Consultation/Follow Up"]:
         prefix = "CONS"
     elif purpose == "CT Scan":
-        prefix = "CT-SCAN"
+        prefix = "CTSCAN"
     else:
-        prefix = "MRI-SCAN"
+        prefix = "MRISCAN"
         
     base_number = 10000  # Start IDs from 10000
     
@@ -1015,7 +1103,7 @@ def appointment(patient_id, staff_id):
         # Fetch patient appointments
         appointments_response = supabase.table("appointment").select(
             "id, purpose, date, time, status, "
-            "doctor(name), nurse(department(name))"
+            "doctor(name, department(name))"
         ).eq("patient_id", patient_id).execute()
 
         if hasattr(appointments_response, 'error') and appointments_response.error:
@@ -1029,7 +1117,7 @@ def appointment(patient_id, staff_id):
             {
                 "num": idx + 1,
                 "id": app["id"],
-                "department": app["nurse"]["department"]["name"],
+                "department": app["doctor"]["department"]["name"],
                 "doctor_name": app["doctor"]["name"],
                 "purpose": app["purpose"],
                 "date": app["date"],
@@ -1044,48 +1132,6 @@ def appointment(patient_id, staff_id):
         return "Error retrieving appointment data", 500
 
     return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
-
-    
-# @app.route('/accept_appointment/<int:patient_id>/<int:num>/<string:staff_id>')
-# def get_appointment(patient_id, num, staff_id):
-#     patient = get_details_by_id(patient_id, PATIENTS_FILE)
-#     doctor = get_details_by_id(staff_id, DOCTORS_FILE)
-    
-#     patients = load_db(PATIENTS_FILE)
-#     app_id = str(patient_id) + "/" + str(num)
-#     if num != 0:
-#         for p in patients:
-#             print(doctor["name"])
-#             if 'appointment' in p:  
-#                 for app in p['appointment']:
-#                     print("2")
-#                     if app.get('doctor_name') == doctor['name'] and app.get('num') == app_id:
-#                         print(app) 
-#                         if "history" not in p:
-#                             p["history"] = []
-#                         print("OK")
-#                         p["history"].append({
-#                             "num": app["num"],
-#                             "patient_id": app["patient_id"],
-#                             "patient_name": app["patient_name"],
-#                             "department": app["department"],
-#                             "doctor_name": app["doctor_name"],
-#                             "date": app["date"],
-#                             "time": app["num"],
-#                             "report": None
-#                             })
-#                         p["appointment"].remove(app)
-                        
-#                         break  # Stop loop once the patient is found
-                
-#                 print("OK2")
-#                 # Save the updated records list
-#                 try:
-#                     save_ppl(PATIENTS_FILE, patients)  # This will save the modified patients list
-#                     return redirect(url_for("get_history", patient_id=patient_id, staff_id=staff_id,num=0))
-#                 except Exception as e:
-#                     print(f"File saving error: {e}")
-#     return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
 
 @app.route('/app_history/<int:patient_id>/<int:num>/<string:staff_id>')
 def get_history(num,patient_id, staff_id):
@@ -1123,7 +1169,7 @@ def new_appointment(patient_id, staff_id):
             date = request.form["date"]
             time = request.form["time"]
             notes = request.form["notes"]
-            status = "Scheduled"
+            status = "Active"
             
             # Get doctor ID from doctor name
             doctor_response = supabase.table("doctor").select("id").eq("name", doctor_name).single().execute()
@@ -1138,7 +1184,6 @@ def new_appointment(patient_id, staff_id):
             appointment_data = {
                 "id": appointment_id,
                 "patient_id": patient_id,
-                "nurse_id": staff_id,
                 "doctor_id": doctor_id,
                 "purpose": purpose,
                 "date": date,
@@ -1486,7 +1531,7 @@ def doctor_schedule(id):
         selected_date = request.form.get("selected_date")
         today_date = datetime.now().date().strftime('%Y-%m-%d')
 
-        query = supabase.table("appointment").select("id, patient_id, date, time, status, nurse_id").eq("doctor_id", id)
+        query = supabase.table("appointment").select("id, patient_id, date, time, status, notes").eq("doctor_id", id)
         query = query.eq("date", selected_date) if selected_date else query.gt("date", today_date)
         
         appointment_response = query.execute()
@@ -1496,19 +1541,19 @@ def doctor_schedule(id):
         patient_map, nurse_map = {}, {}
         if appointments:
             patient_ids = {app["patient_id"] for app in appointments if app["patient_id"]}
-            nurse_ids = {app["nurse_id"] for app in appointments if app["nurse_id"]}
+            #nurse_ids = {app["nurse_id"] for app in appointments if app["nurse_id"]}
 
             if patient_ids:
                 patient_response = supabase.table("patient").select("id, name").in_("id", list(patient_ids)).execute()
                 patient_map = {p["id"]: p["name"] for p in patient_response.data}
 
-            if nurse_ids:
-                nurse_response = supabase.table("nurse").select("id, name").in_("id", list(nurse_ids)).execute()
-                nurse_map = {n["id"]: n["name"] for n in nurse_response.data}
+            # if nurse_ids:
+            #     nurse_response = supabase.table("nurse").select("id, name").in_("id", list(nurse_ids)).execute()
+            #     nurse_map = {n["id"]: n["name"] for n in nurse_response.data}
 
             for app in appointments:
                 app["patient_name"] = patient_map.get(app.pop("patient_id"), "Unknown")
-                app["nurse_name"] = nurse_map.get(app.pop("nurse_id"), "Unknown")
+                #app["nurse_name"] = nurse_map.get(app.pop("nurse_id"), "Unknown")
 
             appointments.sort(
                 key=lambda app: (datetime.strptime(app["date"], "%Y-%m-%d"),
