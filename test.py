@@ -37,7 +37,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Load Models
 CT_MODEL_PATH = "ct_effnet_best_model.keras"
-MRI_MODEL_PATH = "MRI_model.keras"
+MRI_MODEL_PATH = "ct_effnet_best_model.keras"
 
 ct_model = load_model(CT_MODEL_PATH)
 mri_model = load_model(MRI_MODEL_PATH)
