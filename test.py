@@ -3,16 +3,18 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from datetime import datetime, timedelta, timezone
 import supabase
-from supabase import create_client, Client
+from supabase import create_client
 import random
-import mimetypes
-import supabase
-import tensorflow as tf
-from io import BytesIO
-from PIL import Image
+import uuid
 from werkzeug.utils import secure_filename
+#import mimetypes
+import supabase
+# import tensorflow as tf
+# from io import BytesIO
+from PIL import Image
+#from werkzeug.utils import secure_filename
 from keras.models import load_model
-from keras.preprocessing.image import img_to_array
+#from keras.preprocessing.image import img_to_array
 import numpy as np
 
 app = Flask(__name__)
@@ -47,7 +49,12 @@ brain_labels = {0: "glioma", 1: "meningioma", 2: "notumor", 3: "pituitary"}
 lung_labels = {0: "adenocarcinoma", 1: "large.cell.carcinoma", 2: "normal", 3: "squamous.cell.carcinoma"}
 
 # Allowed file extensions
+UPLOAD_FOLDER = "/upload/image"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'jfif'}
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -65,6 +72,7 @@ def load_db(filePath):
     except FileNotFoundError:
         return []  # Return an empty list if the file does not exist
 
+print(supabase.auth.get_session())
 # Only allow Manager, Doctor and Nurse to LogIn DONE
 @app.route("/", methods=["GET", "POST"])
 def index_main():
@@ -1592,63 +1600,33 @@ def doctor_schedule(id):
 
 
 
-@app.route('/submit-leave', methods=['POST'])
-def submit_leave():
-    data = request.json
-    doctor_id = data.get("doctor_id")
-    leave_date = data.get("leave_date")
+# @app.route('/available-doctors', methods=['GET'])
+# def available_doctors():
+#     department_id = request.args.get("department_id")
+#     appointment_date = request.args.get("date")
 
-    if not doctor_id or not leave_date:
-        return jsonify({"error": "Missing doctor ID or leave date"}), 400
+#     if not department_id or not appointment_date:
+#         return jsonify({"error": "Missing department ID or date"}), 400
 
-    response = supabase.table("doctor_leave").insert({
-        "doctor_id": doctor_id,
-        "leave_date": leave_date,
-        "status": "Pending"
-    }).execute()
+#     # Get doctors in the department
+#     doctors = supabase.table("doctor").select("id, name").eq("department_id", department_id).execute()
 
-    return jsonify({"message": "Leave request submitted successfully"}), 201
+#     # Get doctors on leave for the given date
+#     leaves = supabase.table("doctor_leave").select("doctor_id").eq("leave_date", appointment_date).eq("status", "Approved").execute()
+#     doctors_on_leave = {leave["doctor_id"] for leave in leaves.data}
 
-@app.route('/approve-leave', methods=['POST'])
-def approve_leave():
-    data = request.json
-    leave_id = data.get("leave_id")
+#     # Filter out doctors on leave
+#     available_doctors = [doctor for doctor in doctors.data if doctor["id"] not in doctors_on_leave]
 
-    if not leave_id:
-        return jsonify({"error": "Missing leave ID"}), 400
+#     return jsonify(available_doctors)
 
-    response = supabase.table("doctor_leave").update({
-        "status": "Approved"
-    }).eq("id", leave_id).execute()
-
-    return jsonify({"message": "Leave approved successfully"}), 200
-
-@app.route('/available-doctors', methods=['GET'])
-def available_doctors():
-    department_id = request.args.get("department_id")
-    appointment_date = request.args.get("date")
-
-    if not department_id or not appointment_date:
-        return jsonify({"error": "Missing department ID or date"}), 400
-
-    # Get doctors in the department
-    doctors = supabase.table("doctor").select("id, name").eq("department_id", department_id).execute()
-
-    # Get doctors on leave for the given date
-    leaves = supabase.table("doctor_leave").select("doctor_id").eq("leave_date", appointment_date).eq("status", "Approved").execute()
-    doctors_on_leave = {leave["doctor_id"] for leave in leaves.data}
-
-    # Filter out doctors on leave
-    available_doctors = [doctor for doctor in doctors.data if doctor["id"] not in doctors_on_leave]
-
-    return jsonify(available_doctors)
-
+# done
 @app.route('/not_available/<doctor_id>')
 def not_available_dates(doctor_id):
     return render_template("/doctors/not_available.html", doctor_id=doctor_id)
 
 
-
+# done
 @app.route('/update-leave-status/<string:leave_id>', methods=['POST'])
 def update_leave_status(leave_id):
     try:
@@ -1718,14 +1696,221 @@ def add_doctor_leave(doctor_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route('/radio_upload')
-def radio_upload():
-    return render_template('/image/radio_upload.html')
+# @app.route('/radio_upload/<string:patient_id>/<string:staff_id>', methods=["GET", "POST"])
+# def radio_upload(patient_id, staff_id):
+    
+#     # Fetch patient details from Supabase
+#     patient_response = supabase.table("patient").select("id, name, " "department(name)").eq("id", patient_id).single().execute()
+#     patient = patient_response.data if patient_response.data else None
+    
+#     if not patient:
+#         return "Patient not found", 404
+    
+#     try:
+#         # Fetch latest ID for doctors/nurses
+#         id_response = supabase.table("patient_images").select("id").order("id", desc=True).limit(1).execute()
+#         print(f"Response: {id_response}")
+
+#         if hasattr(id_response, 'error') and id_response.error:
+#             print(f"Error fetching latest ID: {id_response.error}")
+#             return f"Error fetching latest ID: {id_response.error}", 500
+
+#         latest_id = id_response.data[0]["id"][1:] if id_response.data else 10000
+#         next_id = int(latest_id) + 1
+#         record_id = f"PI{next_id}"
+#         print(f"Generated new ID: {record_id}")
+
+#     except Exception as e:
+#         print(f"Error retrieving or generating ID: {e}")
+#         return f"Error retrieving or generating ID: {e}", 500
+    
+#     # Check if the staff ID belongs to a doctor and fetch the department
+#     if staff_id.startswith('d'):
+#         staff_response = supabase.table("doctor").select("id, name, department_id").eq("id", staff_id).single().execute()
+#         staff = staff_response.data if staff_response.data else None
+        
+#         if not staff:
+#             return "Doctor not found", 404
+        
+        
+#         if request.method == "POST":
+#             image_url = request.form["image_url"]
+#             model_prediction = request.form["model_prediction"]
+#             comment = request.form["comment"]
+            
+#             # Get doctor ID from doctor name
+#             appointment_response = supabase.table("appointment").select("id").single().execute()
+#             appointment = appointment_response.data if appointment_response.data else None
+#             if not appointment:
+#                 return "Appointment not found", 404
+            
+#             appointment_id = appointment["id"]
+            
+#             # Insert into the appointment table
+#             image_data = {
+#                 "id": record_id,
+#                 "appointment_id": appointment_id,
+#                 "image_url": image_url,
+#                 "model_prediction": model_prediction,
+#                 "comment": comment
+#             }
+            
+#             supabase.table("patient_images").insert(image_data).execute()
+            
+#             return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
+        
+#         return render_template('image/radio_upload.html', patient=patient, staff_id=staff_id)
+    
+#     return "Invalid Staff ID", 400
 
 
+# @app.route('/radio_upload/<string:patient_id>/<string:staff_id>', methods=["GET", "POST"])
+# def radio_upload(patient_id, staff_id):
+#     # Fetch patient details
+#     patient_response = supabase.table("patient").select("id, name, department(name)").eq("id", patient_id).single().execute()
+#     patient = patient_response.data if patient_response.data else None
+    
+#     if not patient:
+#         return "Patient not found", 404
+
+#     # Fetch latest ID for patient images
+#     try:
+#         id_response = supabase.table("patient_images").select("id").order("id", desc=True).limit(1).execute()
+#         latest_id = id_response.data[0]["id"][2:] if id_response.data else "10000"
+#         next_id = int(latest_id) + 1
+#         record_id = f"PI{next_id}"
+#     except Exception as e:
+#         return f"Error generating new ID: {e}", 500
 
 
+#     # Fetch appointment details
+#     appointment_response = supabase.table("appointment").select("id, purpose").eq("patient_id", patient_id).limit(1).execute()
+#     appointment = appointment_response.data if appointment_response.data else None
+#     if not appointment:
+#         return "Appointment not found", 404
 
+#     appointment_id = appointment[0]["id"]
+#     appointment_purpose = appointment[0]["purpose"]
+
+#     if request.method == "POST":
+#         if "image" not in request.files:
+#             return "No image uploaded", 400
+        
+#         image = request.files["image"]
+#         if image.filename == "" or not allowed_file(image.filename):
+#             return "Invalid image format", 400
+        
+#         # Save image locally
+#         filename = secure_filename(f"{uuid.uuid4()}_{image.filename}")
+#         image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+#         image.save(image_path)
+
+#         # Upload to Supabase Storage
+#         with open(image_path, "rb") as file_data:
+#             supabase.storage.from_("patient_images").upload(f"uploads/{filename}", file_data)
+
+#         # Get public URL of uploaded image
+#         image_url = f"{SUPABASE_URL}/storage/v1/object/public/patient_images/uploads/{filename}"
+
+#         # Select model based on appointment purpose
+#         selected_model = ct_model if appointment_purpose.startswith("CT") else mri_model if appointment_purpose.startswith("MRI") else None
+#         if not selected_model:
+#             return "Invalid appointment purpose", 400
+
+#         # Run model prediction
+#         image = Image.open(image_path).resize((224, 224)).convert("RGB")
+#         image_array = np.array(image) / 255.0
+#         image_array = np.expand_dims(image_array, axis=0)
+#         prediction = selected_model.predict(image_array)
+#         model_prediction = "Positive" if prediction[0][0] > 0.5 else "Negative"
+
+#         # Save data to Supabase
+#         comment = request.form["comment"]
+#         image_data = {
+#             "id": record_id,
+#             "appointment_id": appointment_id,
+#             "image_url": image_url,
+#             "model_prediction": model_prediction,
+#             "comment": comment
+#         }
+#         supabase.table("patient_images").insert(image_data).execute()
+
+#         return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
+
+#     return render_template("image/radio_upload.html", patient=patient, staff_id=staff_id)
+
+@app.route('/radio_upload/<string:patient_id>/<string:staff_id>', methods=["GET", "POST"])
+def radio_upload(patient_id, staff_id):
+    patient_response = supabase.table("patient").select("id, name, department(name)").eq("id", patient_id).single().execute()
+    patient = patient_response.data if patient_response.data else None
+    if not patient:
+        return "Patient not found", 404
+
+    # Fetch latest ID for patient images
+    try:
+        id_response = supabase.table("patient_images").select("id").order("id", desc=True).limit(1).execute()
+        latest_id = id_response.data[0]["id"][2:] if id_response.data else "10000"
+        next_id = int(latest_id) + 1
+        record_id = f"PI{next_id}"
+    except Exception as e:
+        return f"Error generating new ID: {e}", 500
+
+    # Fetch appointment details
+    appointment_response = supabase.table("appointment").select("id, purpose").eq("patient_id", patient_id).limit(1).execute()
+    appointment = appointment_response.data if appointment_response.data else None
+    if not appointment:
+        return "Appointment not found", 404
+
+    appointment_id = appointment[0]["id"]
+    appointment_purpose = appointment[0]["purpose"]
+
+    if request.method == "POST":
+        image = request.files.get("image")  
+
+        if not image:
+            print("Request files:", request.files)  # Debugging
+            return "No image uploaded", 400
+
+        if image.filename == "" or not allowed_file(image.filename):
+            return "Invalid image format", 400
+
+        # Save image
+        filename = secure_filename(f"{uuid.uuid4()}_{image.filename}")
+        image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        image.save(image_path)
+
+        # Upload to Supabase Storage
+        with open(image_path, "rb") as file_data:
+            supabase.storage.from_("patient_images").upload(f"upload/{filename}", file_data)
+
+        image_url = f"{SUPABASE_URL}/storage/v1/object/public/patient_images/upload/{filename}"
+
+        # Select model based on appointment purpose
+        selected_model = ct_model if appointment_purpose.startswith("CT") else mri_model if appointment_purpose.startswith("MRI") else None
+        if not selected_model:
+            return "Invalid appointment purpose", 400
+
+        # Run model prediction
+        image = Image.open(image_path).resize((224, 224)).convert("RGB")
+        image_array = np.array(image) / 255.0
+        image_array = np.expand_dims(image_array, axis=0)
+        prediction = selected_model.predict(image_array)
+        model_prediction = "Positive" if prediction[0][0] > 0.5 else "Negative"
+
+        # Save to Supabase
+        comment = request.form["comment"]
+        image_data = {
+            "id": record_id,
+            "appointment_id": appointment_id,
+            "image_url": image_url,
+            "model_prediction": model_prediction,
+            "comment": comment
+        }
+        supabase.table("patient_images").insert(image_data).execute()
+
+        return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
+
+    return render_template("image/radio_upload.html", patient=patient, staff_id=staff_id)
 
 
 

@@ -96,11 +96,10 @@
         <input type="email" id="email" name="email" placeholder="example@gmail.com" required>
         <br>
 
-        <label>Department:</label>
+        <label>Department:</label>[]
         <select name="department_id" required>
-            {% for dept in departments %}
-                <option value="{{ dept.id }}">{{ dept.name }}</option>
-            {% endfor %}
+                <option value="dep1000">Cardiology</option>
+                <option value="dep1001">Neurology</option>
         </select>
         <br>
 

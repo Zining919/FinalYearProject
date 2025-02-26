@@ -1,99 +1,70 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radiology Upload</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f4;
-            padding: 20px;
-        }
-        .container {
-            max-width: 600px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            margin: auto;
-        }
-        .upload-section, .comment-section {
-            margin-top: 20px;
-        }
-        .comment-box {
-            width: 100%;
-            height: 100px;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Patient Details</h2>
-        <p><strong>ID:</strong> <span id="patient-id"></span></p>
-        <p><strong>Name:</strong> <span id="patient-name"></span></p>
-        
-        <div class="upload-section" id="upload-section" style="display: none;">
-            <h3>Upload Image</h3>
-            <input type="file" id="image-upload">
-            <button onclick="uploadImage()">Upload</button>
-        </div>
-
-        <div class="result-section" id="result-section" style="display: none;">
-            <h3>Model Prediction</h3>
-            <p id="model-result"></p>
-        </div>
-
-        <div class="comment-section" id="comment-section" style="display: none;">
-            <h3>Comments</h3>
-            <textarea class="comment-box" id="comment-box"></textarea>
-            <button onclick="submitComment()">Submit Comment</button>
-        </div>
-    </div>
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+    <title>Upload Image and Diagnosis</title>
     <script>
-        const userId = "<DOCTOR_ID>";
-        const departmentId = "<DEPARTMENT_ID>";
-        const appointmentPurpose = "<APPOINTMENT_PURPOSE>";
-        document.getElementById("patient-id").innerText = "<PATIENT_ID>";
-        document.getElementById("patient-name").innerText = "<PATIENT_NAME>";
-
-        if (departmentId === "dep1002") {
-            document.getElementById("upload-section").style.display = "block";
-        } else {
-            document.getElementById("comment-section").style.display = "block";
-        }
-
-        function uploadImage() {
-            const fileInput = document.getElementById("image-upload");
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const formData = new FormData();
-                formData.append("image", file);
-                fetch("/upload", {
-                    method: "POST",
-                    body: formData
-                }).then(response => response.json()).then(data => {
-                    document.getElementById("model-result").innerText = data.prediction;
-                    document.getElementById("result-section").style.display = "block";
-                });
-            }
-        }
-
-        function submitComment() {
-            const comment = document.getElementById("comment-box").value;
-            fetch("/comment", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ comment: comment })
-            }).then(() => alert("Comment submitted!"));
+        function showConfirmation(event) {
+            alert("Submited successfully!"); 
         }
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let dateInput = document.getElementById("date");
+            let doctorDropdown = document.getElementById("doctor_name");
+    
+            dateInput.addEventListener("change", function() {
+                let selectedDate = dateInput.value;
+                let staffId = "{{ staff_id }}";
+    
+                if (selectedDate) {
+                    fetch(`/get_available_doctors/${staffId}/${selectedDate}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            doctorDropdown.innerHTML = ""; // Clear previous options
+                            if (data.error) {
+                                doctorDropdown.innerHTML = `<option value="">${data.error}</option>`;
+                            } else {
+                                data.forEach(doctor => {
+                                    let option = document.createElement("option");
+                                    option.value = doctor.name;
+                                    option.textContent = doctor.name;
+                                    doctorDropdown.appendChild(option);
+                                });
+                            }
+                        })
+                        .catch(error => console.error("Error fetching doctors:", error));
+                }
+            });
+        });
+    </script>
+    
+</head>
+<body>
+    <h1>Upload Image and Diagnosis</h1>
+    <form action="/radio_upload/{{patient.id}}/{{staff_id}}" method="post" enctype="multipart/form-data" onsubmit="showConfirmation(event)">
+        <label for="patient_id">Patient ID: {{ patient.id }}</label>
+        <input type="hidden" id="patient_id" name="patient_id" value="{{ patient_id }}">
+
+        <label for="patient_name">Patient Name: {{ patient.name }}</label>
+        <input type="hidden" id="patient_name" name="patient_name" value="{{ patient_name }}">
+        <br>
+
+        <label for="upload">Upload:</label>
+        <input type="file" id="image-upload" name="image">
+        <button onclick="uploadImage()">Upload</button>
+        
+
+        <label for="comment">Comment/Diagnosis:</label>
+        <textarea id="comment" name="comment" rows="4" cols="40" placeholder="Enter diagnosis here..."></textarea>
+        <br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <a href="/doctor/{{ staff_id }}">Back</a>
 </body>
 </html>
-
-
 

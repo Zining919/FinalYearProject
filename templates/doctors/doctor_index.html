@@ -42,7 +42,7 @@
                                 <td>{{ appointment['date'] }} at {{ appointment['time'] }}</td>
                                 <td>{{ appointment['status'] }}</td>
                                 <td>
-                                    <a href="/radio_upload" class="update-link">
+                                    <a href="/radio_upload/{{ appointment['patient_id'] }}/{{ doctor.id }}" class="update-link">
                                         Upload
                                     </a>
                                 </td>
