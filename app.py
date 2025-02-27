@@ -837,12 +837,7 @@ def get_image(num,patient_id, staff_id):
             except Exception as e:
                 print(f"File saving error: {e}")
                 
-    return render_template('image/doctors_view.html', patient=patient, doctor=doctor, staff_id=staff_id)
-
-
-
-
-from datetime import datetime, timedelta
+    return render_template('image/doctors_view.html', patient=patient, doctor=doctor, staff_id=staff_id)   
 
 def is_radiologist_available(radiologist, new_start_time, duration, patients,slot_durations):
     """Check if the radiologist is available by ensuring no overlapping appointments."""

@@ -20,7 +20,7 @@ h2 {
 }
 
 form {
-    max-width: 500px;
+    max-width: 600px;
     margin: 20px auto;
     padding: 20px;
     background: #fff;
@@ -41,9 +41,18 @@ input[type="date"],
 input[type="tel"],
 input[type="email"],
 input[type="time"],
-select
+input[type="password"]
  {
     width: 90%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+select{
+    width: 95%;
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #ccc;

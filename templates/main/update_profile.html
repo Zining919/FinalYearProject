@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='add.css') }}">
     <title>Update Profile</title>
 </head>
 <body>
@@ -28,6 +28,10 @@
             <div class="profile-row">
                 <div class="profile-label">Name</div>
                 <div class="profile-value"><b>: </b>{{ staff.name }}</div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">NIC</div>
+                <div class="profile-value"><b>: </b>{{ staff.nic }}</div>
             </div>
             <div class="profile-row">
                 <div class="profile-label">Date Of Birth</div>

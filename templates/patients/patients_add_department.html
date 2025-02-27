@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='p_add.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='add.css') }}">
     <title>Add Patient</title>
     <style>
         .result-item {
@@ -59,7 +59,7 @@
                     ID: {{ patient.id }} | Name: {{ patient.name }} | NIC: {{ patient.nic }}
                 </div>
             {% else %}
-                <p>No patients found matching "{{ query }}"</p>
+                <p style="text-align: center; color: red;">No patients found matching {{ query }}</p>
             {% endif %}
         </div>
     

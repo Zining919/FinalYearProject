@@ -1,80 +1,8 @@
-<!--<!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
-        <title>Management</title>
-    </head>
-    <body>
-        <h1>Management Page</h1>
-        <h2>Hi, {{ppl.name}}</h2>
-        <table>
-            <tr>
-                <th>Doctor</th>
-                <th>Nurse</th>
-                <th>Patient</th>
-            </tr>
-            <tr>
-                <th>
-                    {{count.d_count}}<br><br>
-                    <button><a href="/doctors_db/{{ppl.id}}">View Doctor List</a></button> <br>
-                    <button><a href="/doctors_add/{{ppl.id}}">Add New Doctor</a></button>
-                </th>
-                <th>
-                    {{count.n_count}}<br><br>
-                    <button><a href="/nurses_db/{{ppl.id}}">View Nurse List</a></button> <br>
-                    <button><a href="/nurses_add/{{ppl.id}}">Add New Nurse</a></button>
-                </th>
-                <th>
-                    {{count.p_count}}<br><br>
-                    <button><a href="/patients_db/{{ppl.id}}">View Patient List</a></button>
-                </th>
-            </tr>
-        </table>
-
-        <table>
-            <caption>Contract</caption>
-            <tr>
-                <th>Status</th>
-                <th>Total Staff</th>
-                <th>Action</th>
-            </tr>
-            <tr>
-                <td>Active</td>
-                <td>{{ count.active }}</td>
-                <td><a href="#">View</a></td>
-            </tr>
-            <tr>
-                <td>Expired</td>
-                <td>{{ count.expired }}</td>
-                <td><a href="#">View</a></td>
-            </tr>
-            <tr>
-                <td>Terminated</td>
-                <td>{{ count.terminated }}</td>
-                <td><a href="#">View</a></td>
-            </tr>
-        </table>
-        <table>
-            <caption>Leave to be approved</caption>
-            <tr>
-                <th>Staff Name</th>
-                <th>Position</th>
-                <th>Department</th>
-                <th>Date</th>
-                <th>Reason</th>
-                <th>Action</th>
-            </tr>
-          </table>
-        <button><a href="/">Log Out</a></button>
-    </body>
-</html>-->
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='manage.css') }}">
         <title>Management</title>
         <script>
             async function updateLeaveStatus(leave_id, action) {
@@ -83,7 +11,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action })
                 });
-            
+
                 const result = await response.json();
                 if (result.success) {
                     alert(result.message);
@@ -92,97 +20,102 @@
                     alert(result.message);
                 }
             }
-            
         </script>
-        
     </head>
     <body>
-        <h1>Management Page</h1>
-        <h2>Hi, {{ppl.name}}</h2>
-        
-        <table>
-            <tr>
-                <th>Doctor</th>
-                <th>Nurse</th>
-                <th>Patient</th>
-            </tr>
-            <tr>
-                <th>
-                    {{count.d_count}}<br><br>
-                    <button><a href="/doctors_db/{{ppl.id}}">View Doctor List</a></button> <br>
-                    <button><a href="/doctors_add/{{ppl.id}}">Add New Doctor</a></button>
-                </th>
-                <th>
-                    {{count.n_count}}<br><br>
-                    <button><a href="/nurses_db/{{ppl.id}}">View Nurse List</a></button> <br>
-                    <button><a href="/nurses_add/{{ppl.id}}">Add New Nurse</a></button>
-                </th>
-                <th>
-                    {{count.p_count}}<br><br>
-                    <button><a href="/patients_db/{{ppl.id}}">View Patient List</a></button>
-                </th>
-            </tr>
-        </table>
+        <div class="container">
+            <h1 class="page-title">Management Page</h1>
+            <h2 class="greeting">Hi, {{ppl.name}}</h2>
+            
+            <!-- Section for Doctors and Nurses -->
+            <div class="section">
+                <table class="info-table" style="background-color: #f7f7f7;">
+                    <tr>
+                        <th>Doctor</th>
+                        <th>Nurse</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span><b>{{count.d_count}}</b></span> <br><br>
+                            <button class="action-btn"><a href="/doctors_db/{{ppl.id}}">View Doctor List</a></button> <br>
+                            <button class="action-btn"><a href="/doctors_add/{{ppl.id}}">Add New Doctor</a></button>
+                        </td>
+                        <td>
+                            <span><b>{{count.n_count}}</b></span><br><br>
+                            <button class="action-btn"><a href="/nurses_db/{{ppl.id}}">View Nurse List</a></button> <br>
+                            <button class="action-btn"><a href="/nurses_add/{{ppl.id}}">Add New Nurse</a></button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
 
-        <table>
-            <caption>Contract</caption>
-            <tr>
-                <th>Status</th>
-                <th>Total Staff</th>
-                <th>Action</th>
-            </tr>
-            <tr>
-                <td>Active</td>
-                <td>{{ count.active }}</td>
-                <td><a href="#">View</a></td>
-            </tr>
-            <tr>
-                <td>Expired</td>
-                <td>{{ count.expired }}</td>
-                <td><a href="#">View</a></td>
-            </tr>
-            <tr>
-                <td>Terminated</td>
-                <td>{{ count.terminated }}</td>
-                <td><a href="#">View</a></td>
-            </tr>
-        </table>
+            <!-- Section for Contract Information -->
+            <div class="section">
+                <table class="info-table">
+                    <caption>Contract</caption>
+                    <tr>
+                        <th>Status</th>
+                        <th>Total Staff</th>
+                        <th>Action</th>
+                    </tr>
+                    <tr class="status-active">
+                        <td>Active</td>
+                        <td>{{ count.active }}</td>
+                        <td><a href="#">View</a></td>
+                    </tr>
+                    <tr class="status-expired">
+                        <td>Expired</td>
+                        <td>{{ count.expired }}</td>
+                        <td><a href="#">View</a></td>
+                    </tr>
+                    <tr class="status-terminated">
+                        <td>Terminated</td>
+                        <td>{{ count.terminated }}</td>
+                        <td><a href="#">View</a></td>
+                    </tr>
+                </table>
+            </div>
 
-        <table>
-            <caption>Doctor Leave Requests</caption>
-            {% if leave_requests %}
-            <tr>
-                <th>Doctor Name</th>
-                <th>Department</th>
-                <th>Date</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-            {% for leave in leave_requests %}
-            <tr>
-                <td>{{ leave.doctor.name }}</td>
-                <td>{{ leave.department_name }}</td>
-                <td>{{ leave.leave_date }}</td>
-                <td>{{ leave.reason }}</td>
-                <td>{{ leave.status }}</td>
-                <td>
-                    {% if leave.status == "Pending" %}
-                        <button onclick="updateLeaveStatus('{{ leave.id }}', 'Approved')">Approve</button>
-                        <button onclick="updateLeaveStatus('{{ leave.id }}', 'Rejected')">Reject</button>
+            <!-- Section for Leave Requests -->
+            <div class="section">
+                <table class="info-table">
+                    <caption>Doctor Leave Requests</caption>
+                    {% if leave_requests %}
+                    <tr>
+                        <th>Doctor Name</th>
+                        <th>Department</th>
+                        <th>Date</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                    {% for leave in leave_requests %}
+                    <tr>
+                        <td>{{ leave.doctor.name }}</td>
+                        <td>{{ leave.department_name }}</td>
+                        <td>{{ leave.leave_date }}</td>
+                        <td>{{ leave.reason }}</td>
+                        <td>{{ leave.status }}</td>
+                        <td>
+                            {% if leave.status == "Pending" %}
+                                <button class="action-btn" onclick="updateLeaveStatus('{{ leave.id }}', 'Approved')">Approve</button>
+                                <button class="action-btn" onclick="updateLeaveStatus('{{ leave.id }}', 'Rejected')">Reject</button>
+                            {% else %}
+                                <em>{{ leave.status }}</em>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
                     {% else %}
-                        <em>{{ leave.status }}</em>
+                    <tr>
+                        <td colspan="6" class="no-leave">No Leave Needed for Approval</td>
+                    </tr>
                     {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-            {% else %}
-            <tr>
-                <td colspan="6" style="text-align: center; font-weight: bold;">No Leave Needed for Approval</td>
-            </tr>
-            {% endif %}
-        </table>
+                </table>
+            </div>
 
-        <button><a href="/">Log Out</a></button>
+            <!-- Log Out Button -->
+            <button class="log-out-btn"><a href="/">Log Out</a></button>
+        </div>
     </body>
 </html>

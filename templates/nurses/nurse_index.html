@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
-        <title>Nurse</title>
-    </head>
-    <body>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='manage.css') }}">
+    <title>Nurse</title>
+</head>
+<body>
+    <div class="container">
         <h1>Nurse Page</h1>
         <h2>Hi, {{nurse.name}}</h2>
-        <button><a href="/staff_profile/{{nurse.id}}">Profile</a></button>
+        <!-- Profile link now placed at the top right of the page -->
+        <a href="/staff_profile/{{nurse.id}}" class="profile-link">Profile</a>
 
         <div class="search-container">
             <input type="text" id="searchInput" class="search-input" placeholder="Search by ID, Name, or NIC">
@@ -18,82 +20,86 @@
         <div class="subnav">
             <button class="subnavbtn">Add New Patient</button>
             <div class="subnav-content">
-              <a href="/add/{{nurse.department_id}}/{{nurse.id}}">First Time Patient</a> <br><br>
-              <a href="/add_existing/{{nurse.department_id}}/{{nurse.id}}">Existing Patient</a>
+                <a href="/add/{{nurse.department_id}}/{{nurse.id}}" class="subnav-link">First Time Patient</a><br><br>
+                <a href="/add_existing/{{nurse.department_id}}/{{nurse.id}}" class="subnav-link">Existing Patient</a>
             </div>
         </div>
 
         <table id="patientTable">
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>NIC</th>
-                <th>DOB</th>
-                <th>Gender</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Address</th>
-                <th>Appointment</th>
-                <th>Actions</th>
-            </tr>
-            {% for patient in patient_db %}
-            <tr class="patient-row">
-                <td class="searchable">{{ patient['id'] }}</td>
-                <td class="searchable">{{ patient['name'] }}</td>
-                <td class="searchable">{{ patient['nic'] }}</td>
-                <td>{{ patient['dob'] }}</td>
-                <td>{{ patient['gender'] }}</td>
-                <td>{{ patient['phone'] }}</td>
-                <td>{{ patient['email'] }}</td>
-                <td>{{ patient['address'] }}</td>
-                <td><a href="/appointment/{{ patient.id }}/{{nurse.id}}" class="appointment">View</a></td>
-                <td>
-                    <a href="/update/{{ patient.id }}/{{nurse.id}}" class="update-link">Update</a>
-                </td>
-            </tr>
-            {% endfor %}
-            <!-- Row for 'No Such Patient Found' message -->
-            <tr id="noPatientRow" style="display: none;">
-                <td colspan="10" style="text-align: center; color: red; font-weight: bold;">No Such Patient Found in the System</td>
-            </tr>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>NIC</th>
+                    <th>DOB</th>
+                    <th>Gender</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Appointment</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for patient in patient_db %}
+                <tr class="patient-row">
+                    <td class="searchable">{{ patient['id'] }}</td>
+                    <td class="searchable">{{ patient['name'] }}</td>
+                    <td class="searchable">{{ patient['nic'] }}</td>
+                    <td>{{ patient['dob'] }}</td>
+                    <td>{{ patient['gender'] }}</td>
+                    <td>{{ patient['phone'] }}</td>
+                    <td>{{ patient['email'] }}</td>
+                    <td>{{ patient['address'] }}</td>
+                    <td><a href="/appointment/{{ patient.id }}/{{nurse.id}}" class="button">View Appointment</a></td>
+                    <td>
+                        <a href="/update/{{ patient.id }}/{{nurse.id}}" class="update-link">Update</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                <!-- Row for 'No Such Patient Found' message -->
+                <tr id="noPatientRow" style="display: none;">
+                    <td colspan="10" style="text-align: center; color: red; font-weight: bold;">No Such Patient Found in the System</td>
+                </tr>
+            </tbody>
         </table>
 
-        <button><a href="/">Log Out</a></button>
+        <button class="log-out-btn"><a href="/">Log Out</a></button>
+    </div>
 
-        <script>
-            function searchPatient() {
-                const input = document.getElementById('searchInput').value.trim().toLowerCase();
-                const rows = document.getElementsByClassName('patient-row');
-                const noPatientRow = document.getElementById('noPatientRow');
-                let found = false;
-            
-                for (let i = 0; i < rows.length; i++) {
-                    const cells = rows[i].querySelectorAll('.searchable'); // Select all searchable cells
-                    let match = false;
-            
-                    for (let j = 0; j < cells.length; j++) {
-                        if (cells[j]) {
-                            const text = cells[j].textContent.trim().toLowerCase(); // Normalize text
-                            
-                            if (text === input) {  // **Exact match only**
-                                match = true;
-                                break; // Stop checking if a match is found
-                            }
+    <script>
+        function searchPatient() {
+            const input = document.getElementById('searchInput').value.trim().toLowerCase();
+            const rows = document.getElementsByClassName('patient-row');
+            const noPatientRow = document.getElementById('noPatientRow');
+            let found = false;
+        
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].querySelectorAll('.searchable'); // Select all searchable cells
+                let match = false;
+        
+                for (let j = 0; j < cells.length; j++) {
+                    if (cells[j]) {
+                        const text = cells[j].textContent.trim().toLowerCase(); // Normalize text
+                        
+                        if (text === input) {  // **Exact match only**
+                            match = true;
+                            break; // Stop checking if a match is found
                         }
                     }
-            
-                    if (match) {
-                        rows[i].style.display = ''; // Show row if exact match is found
-                        found = true;
-                    } else {
-                        rows[i].style.display = 'none'; // Hide row if no match
-                    }
                 }
-            
-                // Show 'No Such Patient Found' message if no matches are found
-                noPatientRow.style.display = found ? 'none' : '';
-            }            
-        </script>
-    </body>
+        
+                if (match) {
+                    rows[i].style.display = ''; // Show row if exact match is found
+                    found = true;
+                } else {
+                    rows[i].style.display = 'none'; // Hide row if no match
+                }
+            }
+        
+            // Show 'No Such Patient Found' message if no matches are found
+            noPatientRow.style.display = found ? 'none' : '';
+        }
+    </script>
+</body>
 </html>
-

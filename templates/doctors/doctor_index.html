@@ -1,97 +1,95 @@
-
-
-
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
-        <title>Doctor</title>
-    </head>
-    <body>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='manage.css') }}">
+    <title>Doctor Page</title>
+</head>
+<body>
+    <div class="container">
         <h1>Doctor Page</h1>
         <h2>Hi, {{ doctor.name }}</h2>
-        <div>
+        
+        <!-- Profile link at top-right -->
+        <a href="/staff_profile/{{ doctor.id }}" class="profile-link">Profile</a>
+        
+        <div class="buttons-container">
             <button><a href="/patient/{{ doctor.id }}">Patient List</a></button>
             <button><a href="/doctor_schedule/{{ doctor.id }}">Schedule</a></button>
             <button><a href="/not_available/{{ doctor.id }}">Not Available Date</a></button>
         </div>
-        <br><br>
 
+        <br><br>
         <h2>Today's Appointment</h2>
 
         {% if doctor.department_id == 'dep1002' %}
-
-        <section>      
-            {% if appointments %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Patient Name</th>
-                            <th>Appointment Time</th>
-                            <th>Status</th>
-                            <th>Appointment For Scan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for appointment in appointments %}
+            <!-- For Department dep1002 -->
+            <section>      
+                {% if appointments %}
+                    <table>
+                        <thead>
                             <tr>
-                                <td>{{ appointment['id'] }}</td>
-                                <td>{{ appointment['patient_name'] }}</td>
-                                <td>{{ appointment['date'] }} at {{ appointment['time'] }}</td>
-                                <td>{{ appointment['status'] }}</td>
-                                <td>
-                                    <a href="/radio_upload/{{ appointment['patient_id'] }}/{{ doctor.id }}" class="update-link">
-                                        Upload
-                                    </a>
-                                </td>
+                                <th>ID</th>
+                                <th>Patient Name</th>
+                                <th>Appointment Time</th>
+                                <th>Status</th>
+                                <th>Appointment For Scan</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No appointments for today.</p>
-            {% endif %}
-        </section>
-
+                        </thead>
+                        <tbody>
+                            {% for appointment in appointments %}
+                                <tr>
+                                    <td>{{ appointment['id'] }}</td>
+                                    <td>{{ appointment['patient_name'] }}</td>
+                                    <td>{{ appointment['date'] }} at {{ appointment['time'] }}</td>
+                                    <td>{{ appointment['status'] }}</td>
+                                    <td>
+                                        <a href="/radio_upload" class="update-link">Upload</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p id="noAppointments">No appointments for today.</p>
+                {% endif %}
+            </section>
         {% else %}
-
-        <section>      
-            {% if appointments %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Patient Name</th>
-                            <th>Appointment Time</th>
-                            <th>Status</th>
-                            <th>Appointment For Scan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for appointment in appointments %}
+            <!-- For other departments -->
+            <section>      
+                {% if appointments %}
+                    <table>
+                        <thead>
                             <tr>
-                                <td>{{ appointment['id'] }}</td>
-                                <td>{{ appointment['patient_name'] }}</td>
-                                <td>{{ appointment['date'] }} at {{ appointment['time'] }}</td>
-                                <td>{{ appointment['status'] }}</td>
-                                <td>
-                                    <a href="/scan_appointment/{{ appointment['patient_id'] }}/{{ doctor.id }}" class="update-link">
-                                        Do Now
-                                    </a>
-                                </td>
+                                <th>ID</th>
+                                <th>Patient Name</th>
+                                <th>Appointment Time</th>
+                                <th>Status</th>
+                                <th>Appointment For Scan</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No appointments for today.</p>
-            {% endif %}
-        </section>
+                        </thead>
+                        <tbody>
+                            {% for appointment in appointments %}
+                                <tr>
+                                    <td>{{ appointment['id'] }}</td>
+                                    <td>{{ appointment['patient_name'] }}</td>
+                                    <td>{{ appointment['date'] }} at {{ appointment['time'] }}</td>
+                                    <td>{{ appointment['status'] }}</td>
+                                    <td>
+                                        <a href="/scan_appointment/{{ appointment['patient_id'] }}/{{ doctor.id }}" class="update-link">Do Now</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p id="noAppointments">No appointments for today.</p>
+                {% endif %}
+            </section>
         {% endif %}
-        <button><a href="/staff_profile/{{ doctor.id }}">Profile</a></button>
-        <button><a href="/">Log Out</a></button>
-    </body>
-</html>
 
+        <!-- Logout Button -->
+        <button class="log-out-btn"><a href="/">Log Out</a></button>
+    </div>
+</body>
+</html>

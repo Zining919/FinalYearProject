@@ -603,7 +603,7 @@ def staff_profile(staff_id):
         # Fetch staff details along with department name
         response = (
             supabase.table(table_name)
-            .select("id, name, dob, gender, phone, email, department_id, department(name)")
+            .select("id, name, nic, dob, gender, phone, email, department_id, department(name)")
             .eq("id", staff_id)
             .execute()
         )
@@ -699,7 +699,7 @@ def edit_profile(id):
         # Fetch staff details along with department name by joining tables
         response = (
             supabase.table(table_name)
-            .select("id, name, dob, gender, phone, email, department_id, department(name)")
+            .select("id, name, nic, dob, gender, phone, email, department_id, department(name)")
             .eq("id", id)
             .execute()
         )
@@ -1108,6 +1108,7 @@ def generate_appointment_id(purpose):
         .execute()
     )
     
+    
     if result.data:
         # Extract last numeric part and increment
         last_id = result.data[0]["id"]
@@ -1211,6 +1212,7 @@ def new_appointment(patient_id, staff_id):
             if not doctor:
                 return "Doctor not found", 404
             
+            print("OK")
             doctor_id = doctor["id"]
             appointment_id = generate_appointment_id(purpose)
             

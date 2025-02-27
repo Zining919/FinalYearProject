@@ -116,6 +116,32 @@
         ],
         "departments": [
             "Neurology"
+        ],
+        "appointment": [
+            {
+                "num": "MRI Scan/10003",
+                "patient_id": "10003",
+                "patient_name": "aa",
+                "purpose": "MRI Scan",
+                "doctor_id": "d1003",
+                "doctor_name": "bb",
+                "date": "2025-02-19",
+                "time": "00:55",
+                "status": "active"
+            }
+        ],
+        "history": [
+            {
+                "num": "10003/1",
+                "patient_id": "10003",
+                "patient_name": "aa",
+                "department": "Neurology",
+                "doctor_name": "Tan",
+                "date": "2025-02-19",
+                "time": "15:00",
+                "scan": "True",
+                "report": null
+            }
         ]
     },
     {

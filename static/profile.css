@@ -1,0 +1,100 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f1f1f1;
+    margin: 0;
+    padding: 0;
+}
+
+/* Main container */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+}
+
+/* Title */
+h1 {
+    text-align: center;
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Profile Card */
+.profile-card {
+    padding: 30px;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Profile Info */
+.profile-info {
+    margin-bottom: 20px;
+    display: flex; /* Change from grid to flex */
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.profile-info div {
+    flex: 1; /* Ensures each div takes equal space */
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    min-width: 200px; /* Prevents the divs from becoming too small on narrow screens */
+}
+
+/* Optionally, you can add some styling for the labels and spans */
+.profile-info label {
+    font-weight: bold;
+    color: #333;
+    margin-right: 10px;
+}
+
+.profile-info span {
+    color: #555;
+}
+
+
+/* Action Links */
+.action-links {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.action-links a {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin: 5px;
+    text-decoration: none;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.action-links a:hover {
+    background-color: #0056b3;
+}
+
+/* Back Button */
+.back-link {
+    background-color: #28a745;
+}
+
+.back-link:hover {
+    background-color: #218838;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-info {
+        grid-template-columns: 1fr;
+    }
+}

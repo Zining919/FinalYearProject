@@ -1,139 +1,66 @@
-<!-- <!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
-        <title>Doctor Database</title>
-        <script>
-            function confirmDelete(id) {
-                const confirmed = confirm("Are you sure you want to delete this doctor?");
-                if (confirmed) {
-                    window.location.href = `/delete/${id}`;
-                }
-            }
-        </script>
-    </head>
-    <body>
-        <h1>Doctor Database</h1>
-        <a href="/doctors_add/{{staff_id}}">Add Doctor</a>
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>NIC</th>
-                <th>DOB</th>
-                <th>Gender</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Contract Start Date</th>
-                <th>Contract End Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-            {% for doctor in data %}
-            <tr>
-                <td>{{ doctor['id'] }}</td>
-                <td>{{ doctor['name'] }}</td>
-                <td>{{ doctor['nic'] }}</td>
-                <td>{{ doctor['dob'] }}</td>
-                <td>{{ doctor['gender'] }}</td>
-                <td>{{ doctor['phone'] }}</td>
-                <td>{{ doctor['email'] }}</td>
-                <td>{{ doctor['department'] }}</td>
-                <td>{{ doctor['startdate'] }}</td>
-                <td>{{ doctor['enddate'] }}</td>
-                <td>
-                    <span 
-                        class="{% if doctor.status == 'active' %}status-active{% else %}status-expired{% endif %}">
-                        {{ doctor['status'] }}
-                    </span>
-                </td>
-                <td>
-                    <table class="action-table">
-                        <tr>
-                            <td>
-                                <a href="/update_contract/doctors/{{staff_id}}/{{ doctor.id }}" class="update-link">Update Contract</a>
-                            </td>
-                            <td>
-                                <a href="#" class="delete-link" onclick="confirmDelete('{{ doctor.id }}')">Delete</a>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-        <a href="/manage/{{staff_id}}">Back</a>
-    </body>
-</html> -->
-
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
-        <title>Doctor Database</title>
-        <script>
-            function confirmDelete(id) {
-                const confirmed = confirm("Are you sure you want to delete this doctor?");
-                if (confirmed) {
-                    window.location.href = `/delete/${id}`;
-                }
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='db.css') }}">
+    <title>Doctor Database</title>
+    <script>
+        function confirmDelete(id) {
+            const confirmed = confirm("Are you sure you want to delete this doctor?");
+            if (confirmed) {
+                window.location.href = `/delete/${id}`;
             }
-        </script>
-    </head>
-    <body>
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
         <h1>Doctor Database</h1>
-        <a href="/doctors_add/{{staff_id}}">Add Doctor</a>
+        <a href="/doctors_add/{{staff_id}}" class="button">Add Doctor</a>
         <table>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>NIC</th>
-                <th>DOB</th>
-                <th>Gender</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Contract Start Date</th>
-                <th>Contract End Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-            {% for doctor in data %}
-            <tr>
-                <td>{{ doctor['id'] }}</td>
-                <td>{{ doctor['name'] }}</td>
-                <td>{{ doctor['nic'] }}</td>
-                <td>{{ doctor['dob'] }}</td>
-                <td>{{ doctor['gender'] }}</td>
-                <td>{{ doctor['phone'] }}</td>
-                <td>{{ doctor['email'] }}</td>
-                <td>{{ doctor['department']['name'] }}</td>
-                <td>{{ doctor['startdate'] }}</td>
-                <td>{{ doctor['enddate'] }}</td>
-                <td>
-                    <span 
-                        class="{% if doctor['status'] == 'active' %}status-active{% elif doctor['status'] == 'terminated' %}status-terminated{% else %}status-expired{% endif %}">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>NIC</th>
+                    <th>DOB</th>
+                    <th>Gender</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Contract Start Date</th>
+                    <th>Contract End Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doctor in data %}
+                <tr>
+                    <td>{{ doctor['id'] }}</td>
+                    <td>{{ doctor['name'] }}</td>
+                    <td>{{ doctor['nic'] }}</td>
+                    <td>{{ doctor['dob'] }}</td>
+                    <td>{{ doctor['gender'] }}</td>
+                    <td>{{ doctor['phone'] }}</td>
+                    <td>{{ doctor['email'] }}</td>
+                    <td>{{ doctor['department']['name'] }}</td>
+                    <td>{{ doctor['startdate'] }}</td>
+                    <td>{{ doctor['enddate'] }}</td>
+                    <td class="status {{ doctor['status'] }}">
                         {{ doctor['status'] }}
-                    </span>
-                </td>
-                <td>
-                    <table class="action-table">
-                        <tr>
-                            <td>
-                                <a href="/update_contract/doctors/{{staff_id}}/{{ doctor['id'] }}" class="update-link">Update Contract</a>
-                            </td>
-                            <td>
-                                <a href="#" class="delete-link" onclick="confirmDelete('{{ doctor['id'] }}')">Delete</a>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-            {% endfor %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="/update_contract/doctors/{{staff_id}}/{{ doctor['id'] }}" class="update-link">Update Contract</a>
+                            <a href="#" class="delete-link" onclick="confirmDelete('{{ doctor['id'] }}')">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
-        <a href="/manage/{{staff_id}}">Back</a>
-    </body>
+        <a href="/manage/{{staff_id}}" class="back-link">Back</a>
+    </div>
+</body>
 </html>
