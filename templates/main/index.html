@@ -1,35 +1,45 @@
-<!--<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='add.css') }}">
-    <title>Hospital ABC</title>
+    <title>Hospital ABC - Login</title>
 </head>
 <body>
 
     <div class="container">
         <h1>Hospital ABC</h1>
         <h2>{{ msg }}</h2>
-        
-        <form action="/" method="POST">
-            <label for="user">Username:</label>
-            <input type="text" id="user" name="user" required>
+
+        <form action="/" method="POST" onreset="resetFields()">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="" required>
             <br>
             <label for="psw">Password:</label>
-            <input type="Password" id="psw" name="psw" required>
+            <input type="password" id="psw" name="psw" value="" required>
             <br>
             <button type="submit" id="index-submit">Login</button>
         </form>
-        
+
         {% if error %}
             <p class="error-message">{{ error }}</p>
         {% endif %}
     </div>
 
-</body>
-</html>-->
+    <script>
+        // Ensure input fields are cleared on page load
+        window.onload = function() {
+            document.getElementById("email").value = "";
+            document.getElementById("psw").value = "";
+        };
+    </script>
 
-<!DOCTYPE html>
+</body>
+</html>
+
+
+
+<!--<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -58,4 +68,4 @@
     </div>
 
 </body>
-</html>
+</html>-->

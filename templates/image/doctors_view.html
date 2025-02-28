@@ -22,14 +22,14 @@
             <th>Result</th>
             <th>Generate Report</th>
         </tr>
-        {% if appointments %}
+        {% if appointments |length > 0 %}
             {% for appointment in appointments %}
                 <tr>
                     <td>{{ appointment.appointment_id }}</td>
                     <td>{{ appointment.date }}</td>
                     <td>{{ appointment.time }}</td>
                     <td>
-                        <a href="/doctor_review/{{ appointment.image_id }}/{{ staff_id }}/{{ appointment.appointment_id }}">Result</a>
+                        <a href="/doctor_review/{{ appointment.image_id }}/{{ appointment.appointment_id }}">Result</a>
                     </td>
                     <td>
                         <a href="/generate_report/{{ patient.id }}/{{ staff_id }}/{{ appointment.appointment_id }}">Generate</a>
