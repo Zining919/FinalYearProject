@@ -7,11 +7,8 @@
     <title>Add Doctor</title>
     <script>
         function isValidDate(dateString) {
-            // Split the input date into components
             const [year, month, day] = dateString.split("-").map(Number);
             const date = new Date(year, month - 1, day);
-
-            // Check if the constructed date matches the input date
             return (
                 date.getFullYear() === year &&
                 date.getMonth() === month - 1 &&
@@ -21,56 +18,73 @@
 
         function validateDates(event) {
             const currentDate = new Date();
-        
-            // Validate Date of Birth (dob)
-            const dob = document.getElementById("dob").value;
-            if (!isValidDate(dob)) {
-                alert("Invalid Date of Birth. Please select a valid date.");
-                return false;
-            }
-            const birthDate = new Date(dob);
-            if (birthDate > currentDate) {
-                alert("Date of Birth cannot be in the future.");
-                return false;
-            }
-        
-            // Validate Contract Start Date
+            
             const startDate = document.getElementById("startDate").value;
             if (!isValidDate(startDate)) {
                 alert("Invalid Contract Start Date. Please select a valid date.");
+                event.preventDefault();
                 return false;
             }
             const start = new Date(startDate);
             if (start < currentDate.setHours(0, 0, 0, 0)) {
                 alert("Contract Start Date must be today or a future date.");
+                event.preventDefault();
                 return false;
             }
-        
-            // Validate Contract End Date
+            
             const endDate = document.getElementById("endDate").value;
             if (!isValidDate(endDate)) {
                 alert("Invalid Contract End Date. Please select a valid date.");
+                event.preventDefault();
                 return false;
             }
             const end = new Date(endDate);
-        
-            // Ensure End Date is at least 2 years after Start Date
             const twoYearsLater = new Date(start);
             twoYearsLater.setFullYear(twoYearsLater.getFullYear() + 2);
             if (end < twoYearsLater) {
                 alert("Contract End Date must be at least 2 years after the Start Date.");
+                event.preventDefault();
                 return false;
             }
-        
-            // If all validations pass, submit the form
-            return true;  // This will allow the form to submit and proceed to Flask
+            return true;
+        }
+
+        function extractDOBAndGender() {
+            const nicInput = document.getElementById("nic").value;
+            if (nicInput.length === 12) {
+                const yearPrefix = parseInt(nicInput.substring(0, 2)) <= 30 ? "20" : "19";
+                const year = yearPrefix + nicInput.substring(0, 2);
+                const month = nicInput.substring(2, 4);
+                const day = nicInput.substring(4, 6);
+                const formattedDOB = `${year}-${month}-${day}`;
+                
+                if (isValidDate(formattedDOB)) {
+                    document.getElementById("dob_display").value = formattedDOB;
+                    document.getElementById("dob_hidden").value = formattedDOB;
+                } else {
+                    alert("Invalid NIC format. Please check again.");
+                    return;
+                }
+
+                // Set gender based on last digit
+                const lastDigit = parseInt(nicInput[nicInput.length - 1]);
+                if (lastDigit % 2 === 0) {
+                    document.getElementById("gender2").checked = true; // Female
+                } else {
+                    document.getElementById("gender1").checked = true; // Male
+                }
+
+                // Generate email using doctorId + last 4 digits of NIC
+                const lastFourDigits = nicInput.slice(-4);
+                document.getElementById("email_display").value = "{{id}}" + lastFourDigits + "@gmail.com";
+                document.getElementById("email_hidden").value = "{{id}}" + lastFourDigits + "@gmail.com";
+            }
         }
     </script>
-
 </head>
 <body>
     <h1>Add New Doctor</h1>
-    <form action="/doctors_add/{{staff_id}}" method="POST" onsubmit="validateDates(event)">
+    <form action="/doctors_add/{{staff_id}}" method="POST" onsubmit="return validateDates(event)">
         <label for="id">Doctor ID: {{id}}</label>
         <br>
         <label for="name">Name:</label>
@@ -78,11 +92,12 @@
         <br>
 
         <label for="nic">NIC:</label>
-        <input type="number" id="nic" name="nic" placeholder="000101021234" min="0" maxlength="12" required>
+        <input type="number" id="nic" name="nic" placeholder="000101021234" min="0" maxlength="12" required oninput="extractDOBAndGender()">
         <br>
 
         <label for="dob">Date of Birth:</label>
-        <input type="date" id="dob" name="dob" value="{{ dob|default('') }}" required>
+        <input type="date" id="dob_display" name="dob_display" disabled>
+        <input type="hidden" id="dob_hidden" name="dob">
         <br>
 
         <label for="gender">Gender:</label>
@@ -97,7 +112,8 @@
         <br>
 
         <label for="email">Email:</label>
-        <input type="email" id="email" name="email" placeholder="example@gmail.com" required>
+        <input type="email" id="email_display" name="email_display" disabled>
+        <input type="hidden" id="email_hidden" name="email">
         <br>
 
         <label>Department:</label>
@@ -116,8 +132,10 @@
         <input type="date" id="endDate" name="endDate" value="{{ endDate|default('') }}" required>
         <br>
 
-        <button type="submit" id = "submit" >Add Doctor</button>
+        <button type="submit" id="submit">Add Doctor</button>
     </form>
     <a href="/doctors_db/{{staff_id}}">Back to Doctors List</a>
 </body>
 </html>
+
+

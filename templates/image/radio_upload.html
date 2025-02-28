@@ -10,41 +10,10 @@
             alert("Submited successfully!"); 
         }
     </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            let dateInput = document.getElementById("date");
-            let doctorDropdown = document.getElementById("doctor_name");
-    
-            dateInput.addEventListener("change", function() {
-                let selectedDate = dateInput.value;
-                let staffId = "{{ staff_id }}";
-    
-                if (selectedDate) {
-                    fetch(`/get_available_doctors/${staffId}/${selectedDate}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            doctorDropdown.innerHTML = ""; // Clear previous options
-                            if (data.error) {
-                                doctorDropdown.innerHTML = `<option value="">${data.error}</option>`;
-                            } else {
-                                data.forEach(doctor => {
-                                    let option = document.createElement("option");
-                                    option.value = doctor.name;
-                                    option.textContent = doctor.name;
-                                    doctorDropdown.appendChild(option);
-                                });
-                            }
-                        })
-                        .catch(error => console.error("Error fetching doctors:", error));
-                }
-            });
-        });
-    </script>
-    
 </head>
 <body>
-    <h1>Upload Image and Diagnosis</h1>
-    <form action="/radio_upload/{{patient.id}}/{{staff_id}}" method="post" enctype="multipart/form-data" onsubmit="showConfirmation(event)">
+    <h1>Upload Image</h1>
+    <form action="{{ url_for('radio_upload', appointment_id=appointment_id, staff_id=staff_id) }}" method="POST" enctype="multipart/form-data" onsubmit="showConfirmation(event)">
         <label for="patient_id">Patient ID: {{ patient.id }}</label>
         <input type="hidden" id="patient_id" name="patient_id" value="{{ patient_id }}">
 
@@ -54,15 +23,9 @@
 
         <label for="upload">Upload:</label>
         <input type="file" id="image-upload" name="image">
-        <button onclick="uploadImage()">Upload</button>
-        
-
-        <label for="comment">Comment/Diagnosis:</label>
-        <textarea id="comment" name="comment" rows="4" cols="40" placeholder="Enter diagnosis here..."></textarea>
-        <br>
-
-        <button type="submit">Submit</button>
+        <button type="submit">Upload</button>
     </form>
+
 
     <a href="/doctor/{{ staff_id }}">Back</a>
 </body>

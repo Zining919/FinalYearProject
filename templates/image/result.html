@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='add.css') }}">
+    <title>Medical Image</title>
+</head>
+<body>
+    <h1>Diagnosis</h1>
+    <form action="{{ url_for('doctor_review', image_id=image_data.id, staff_id=staff_id, appointment_id=appointment_id) }}" method="POST" enctype="multipart/form-data" onsubmit="showConfirmation(event)">
+        <label for="patient_id">Patient ID: {{ patient.id }}</label>
+        <input type="hidden" id="patient_id" name="patient_id" value="{{ patient_id }}">
+
+        <label for="patient_name">Patient Name: {{ patient.name }}</label>
+        <input type="hidden" id="patient_name" name="patient_name" value="{{ patient_name }}">
+        <br>
+
+        <img src="{{ image_data.image_url }}" alt="Uploaded Image">
+        <p>Model Prediction: {{ image_data.model_prediction }}</p>
+        <br>
+
+        <label for="comment">Comment/Diagnosis:</label>
+        <textarea id="comment" name="comment" rows="4" cols="40" placeholder="Enter diagnosis here..."></textarea>
+        <br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    </table>
+    <a href="/patient/{{staff_id}}">Back to Patient Database</a>
+</body>
+</html>

@@ -130,3 +130,23 @@ form input[type="radio"] + label {
     }
 }
 
+#result {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#result p {
+    color: #333;
+    font-size: 18px;
+}
+
+#uploaded-image-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#uploaded-image {
+    max-width: 90px;
+    display: none;
+}
+

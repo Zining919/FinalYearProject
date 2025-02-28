@@ -64,7 +64,9 @@
             </tbody>
         </table>
 
-        <button class="log-out-btn"><a href="/">Log Out</a></button>
+        <button class="log-out-btn">
+            <a href="{{ url_for('logout') }}">Log Out</a>
+        </button>
     </div>
 
     <script>

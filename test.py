@@ -14,8 +14,9 @@ import supabase
 from PIL import Image
 #from werkzeug.utils import secure_filename
 from keras.models import load_model
-#from keras.preprocessing.image import img_to_array
+from keras.preprocessing.image import img_to_array
 import numpy as np
+import requests
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -33,6 +34,7 @@ ID_TRACKER_FILE = "id_tracker.txt"
 # Your Supabase project URL and API key
 SUPABASE_URL = "https://tmegfunkplvtdlmzgcvc.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtZWdmdW5rcGx2dGRsbXpnY3ZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4NTcwMTUsImV4cCI6MjA1NTQzMzAxNX0.n5bYPpFujiJQoGF5ACI-TwfguLTsFROg8bK2XeqCLFY"
+SUPABASE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtZWdmdW5rcGx2dGRsbXpnY3ZjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczOTg1NzAxNSwiZXhwIjoyMDU1NDMzMDE1fQ.GRq14NfLHUA3nOTwJY6ri5VsynS-HXOvx_zQQfgcEhM"
 
 # Create a Supabase client
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -73,50 +75,114 @@ def load_db(filePath):
         return []  # Return an empty list if the file does not exist
 
 print(supabase.auth.get_session())
-# Only allow Manager, Doctor and Nurse to LogIn DONE
+
+# # Only allow Manager, Doctor and Nurse to LogIn DONE
+# @app.route("/", methods=["GET", "POST"])
+# def index_main():
+#     if request.method == "POST":
+#         username = request.form["user"].strip()
+#         password = request.form["psw"].strip()
+
+#         try:
+#             # Query Supabase to check if the username exists in the login table
+#             response = supabase.table("login").select("id, username, password").eq("username", username).execute()
+
+#             if response.data:
+#                 login_record = response.data[0]  # Get the first matching record
+
+#                 # Ensure the password matches and that username and password come from the same ID
+#                 if login_record["password"] == password and login_record["username"] == username:
+                    
+#                     # Identify staff type based on ID prefix
+#                     role_map = {
+#                         "d": "doctor_index",
+#                         "n": "nurse_index",
+#                         "m": "manager_index",
+#                     }
+                    
+#                     role_prefix = username[0].lower()  # Get the first character and make it lowercase
+                
+#                     if role_prefix in role_map:
+                        
+#                         print(f"Login successful. Redirecting to {role_map[role_prefix]}.")
+#                         return redirect(url_for(role_map[role_prefix], id=username))
+                    
+#                     # If role prefix is invalid
+#                     print("Invalid staff type detected.")
+#                     return render_template("main/index.html", error="Invalid staff type.")
+
+#             # If login validation fails
+#             print("Wrong Username or Password Entered.")
+#             return render_template("main/index.html", error="Wrong Username or Password Entered.")
+
+#         except Exception as e:
+#             print(f"Error during login: {e}")
+#             return render_template("main/index.html", error="An error occurred. Please try again.")
+
+#     return render_template("main/index.html")
+
 @app.route("/", methods=["GET", "POST"])
 def index_main():
     if request.method == "POST":
-        username = request.form["user"].strip()
+        email = request.form["email"].strip().lower()  # Convert to lowercase to avoid case issues
         password = request.form["psw"].strip()
 
         try:
-            # Query Supabase to check if the username exists in the login table
-            response = supabase.table("login").select("id, username, password").eq("username", username).execute()
+            # Authenticate user with Supabase
+            response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+            
+            if response.user:
+                first_letter = email[0]  # Get first character of email
 
-            if response.data:
-                login_record = response.data[0]  # Get the first matching record
+                # if first_letter in ROLE_MAP:
+                #     session["user"] = email  # Store session
+                #     return redirect(url_for(ROLE_MAP[first_letter], id=email))  # Redirect based on role
+                if first_letter == "d":  # If it's a doctor
+                    # Retrieve doctor's ID based on email
+                    doctor_response = supabase.table("doctor").select("id").eq("email", email).execute()
 
-                # Ensure the password matches and that username and password come from the same ID
-                if login_record["password"] == password and login_record["username"] == username:
-                    
-                    # Identify staff type based on ID prefix
-                    role_map = {
-                        "d": "doctor_index",
-                        "n": "nurse_index",
-                        "m": "manager_index",
-                    }
-                    
-                    role_prefix = username[0].lower()  # Get the first character and make it lowercase
-                
-                    if role_prefix in role_map:
-                        
-                        print(f"Login successful. Redirecting to {role_map[role_prefix]}.")
-                        return redirect(url_for(role_map[role_prefix], id=username))
-                    
-                    # If role prefix is invalid
-                    print("Invalid staff type detected.")
-                    return render_template("main/index.html", error="Invalid staff type.")
+                    if doctor_response.data:
+                        doctor_id = doctor_response.data[0]["id"]  # Extract the doctor ID
+                        session["user"] = email  # Store session
+                        return redirect(url_for("doctor_index", id=doctor_id))  # Redirect to doctor page with ID
 
-            # If login validation fails
-            print("Wrong Username or Password Entered.")
-            return render_template("main/index.html", error="Wrong Username or Password Entered.")
+                    return render_template("main/index.html", error="Doctor not found in records.")
+                elif first_letter == "n":  # If it's a nurse
+                    # Retrieve nurse's ID based on email
+                    nurse_response = supabase.table("nurse").select("id").eq("email", email).execute()
+
+                    if nurse_response.data:
+                        nurse_id = nurse_response.data[0]["id"]  # Extract the nurse ID
+                        session["user"] = email  # Store session
+                        return redirect(url_for("nurse_index", id=nurse_id))  # Redirect to nurse page with ID
+
+                    return render_template("main/index.html", error="Nurse not found in records.")
+                else:
+                    # Retrieve manager's ID based on email
+                    manager_response = supabase.table("manager").select("id").eq("email", email).execute()
+
+                    if manager_response.data:
+                        manager_id = manager_response.data[0]["id"]  # Extract the manager ID
+                        session["user"] = email  # Store session
+                        return redirect(url_for("manager_index", id=manager_id))  # Redirect to manager page with ID
+
+                    return render_template("main/index.html", error="Manager not found in records.")
+
+            return render_template("main/index.html", error="Wrong Email or Password Entered.")
 
         except Exception as e:
             print(f"Error during login: {e}")
             return render_template("main/index.html", error="An error occurred. Please try again.")
 
     return render_template("main/index.html")
+
+
+# 🔹 Route: Logout
+@app.route("/logout")
+def logout():
+    session.pop("user", None)  # Remove user from session
+    supabase.auth.sign_out()
+    return redirect(url_for("index_main"))
 
 # Access Management index page DONE
 ## NOTE: add code to check end date for status(expired/active/terminated)
@@ -270,7 +336,8 @@ def manage_db(db_type, staff_id):
 # Add new doctor/nurse (create new user with username and password for login the system) DONE
 @app.route("/<string:staff_type>_add/<string:staff_id>", methods=["GET", "POST"])
 def add_record(staff_type, staff_id):
-    # Mapping for table names and ID keys based on staff type
+    """Adds a new doctor or nurse and registers them in authentication."""
+    
     staff_tables = {
         "doctors": {"table": "doctor", "id_key": "id", "prefix": "d", "position": "doctor"},
         "nurses": {"table": "nurse", "id_key": "id", "prefix": "n", "position": "nurse"},
@@ -287,28 +354,15 @@ def add_record(staff_type, staff_id):
     try:
         # Fetch latest ID for doctors/nurses
         response = supabase.table(table_name).select(id_key).order(id_key, desc=True).limit(1).execute()
-        print(f"Response: {response}")
-
-        if hasattr(response, 'error') and response.error:
-            print(f"Error fetching latest ID: {response.error}")
-            return f"Error fetching latest ID: {response.error}", 500
-
         latest_id = response.data[0][id_key][1:] if response.data else 10000
         next_id = int(latest_id) + 1
         record_id = f"{prefix}{next_id}"
-        print(f"Generated new ID: {record_id}")
 
         # Fetch department list for selection
         department_response = supabase.table("department").select("id, name").execute()
-        if hasattr(department_response, 'error') and department_response.error:
-            print(f"Error fetching departments: {department_response.error}")
-            return f"Error fetching departments: {department_response.error}", 500
-
         departments = department_response.data if department_response.data else []
-        print(f"Departments: {departments}")
 
     except Exception as e:
-        print(f"Error retrieving or generating ID: {e}")
         return f"Error retrieving or generating ID: {e}", 500
 
     if request.method == "POST":
@@ -326,7 +380,7 @@ def add_record(staff_type, staff_id):
         status = "active" if datetime.strptime(endDate, "%Y-%m-%d").date() > today else "expired"
 
         try:
-            # Insert into doctors/nurses table with department_id
+            # Insert into doctors/nurses table
             supabase.table(table_name).insert({
                 "id": record_id,
                 "name": name,
@@ -335,47 +389,52 @@ def add_record(staff_type, staff_id):
                 "gender": gender,
                 "phone": phone,
                 "email": email,
-                "department_id": department_id,  # Store department ID instead of name
+                "department_id": department_id,
                 "startdate": startDate,
                 "enddate": endDate,
                 "status": status
             }).execute()
+
             print(f"{staff_type.capitalize()} {name} added successfully.")
+
         except Exception as e:
-            print(f"Error inserting data: {e}")
+            return f"Error inserting staff data: {e}", 500
 
         try:
-            # Fetch latest ID from the login table
-            login_response = supabase.table("login").select("id").order("id", desc=True).limit(1).execute()
+            # Register the staff in Supabase Authentication
+            auth_response = supabase.auth.sign_up({
+                "email": email,
+                "password": nic  # Default password is their staff ID
+            })
 
-            # Check if response has data
-            if login_response.data:
-                latest_id_str = login_response.data[0]["id"]  # Extract the last ID (e.g., "l109")
-                latest_id_num = int("".join(filter(str.isdigit, latest_id_str)))  # Extract numeric part
-                latest_login_id = latest_id_num + 1  # Increment the highest numeric ID by 1
-            else:
-                latest_login_id = 1000  # Default starting ID if no records exist
+            if "error" in auth_response:
+                return f"Error creating authentication account: {auth_response['error']['message']}", 500
 
-            # Generate new login ID
-            login_record_id = f"l{latest_login_id}"
-
-            # Insert login credentials
-            login_insert_response = supabase.table("login").insert({
-                "id": login_record_id,
-                "username": record_id,
-                "password": record_id,
-                "position": position
-            }).execute()
-
-            print(f"Login details for {staff_type.capitalize()} {name} added successfully.")
-
-            if hasattr(login_insert_response, 'error') and login_insert_response.error:
-                print(f"Error inserting login data: {login_insert_response.error}")
-                return f"Error inserting login data: {login_insert_response.error}", 500
+            print(f"Authentication account created for {name}")
+            
+            confirm_user_email(email)
 
         except Exception as e:
-            print(f"Error adding login data: {e}")
-            return f"Error adding login data: {e}", 500
+            return f"Error registering staff in authentication: {e}", 500
+
+        # try:
+        #     # Fetch latest login ID
+        #     login_response = supabase.table("login").select("id").order("id", desc=True).limit(1).execute()
+        #     latest_login_id = int(login_response.data[0]["id"][1:]) + 1 if login_response.data else 1000
+        #     login_record_id = f"l{latest_login_id}"
+
+        #     # Insert login credentials
+        #     supabase.table("login").insert({
+        #         "id": login_record_id,
+        #         "username": record_id,
+        #         "password": record_id,
+        #         "position": position
+        #     }).execute()
+
+        #     print(f"Login details added for {name}.")
+
+        # except Exception as e:
+        #     return f"Error adding login data: {e}", 500
 
         return redirect(url_for("manage_db", db_type=staff_type, staff_id=staff_id))
 
@@ -383,13 +442,93 @@ def add_record(staff_type, staff_id):
         f"manage/{staff_type}_add.html",
         id=record_id,
         staff_id=staff_id,
-        departments=departments  # Pass department list to template
+        departments=departments
     )
 
+def confirm_user_email(email):
+    """Marks a user's email as confirmed in Supabase."""
+    url = f"{SUPABASE_URL}/rest/v1/rpc/update_user_email_confirmed"
+    headers = {
+        "apikey": SUPABASE_ROLE_KEY,
+        "Authorization": f"Bearer {SUPABASE_ROLE_KEY}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "email_confirmed_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    response = requests.patch(url, json=data, headers=headers, params={"email": f"eq.{email}"})
+    
+    if response.status_code == 200:
+        print(f"✅ Email {email} successfully confirmed!")
+    else:
+        print(f"❌ Failed to confirm email {email}: {response.text}")
 
 
 ###########################################################################################################
 # Display functions that can be done by doctors only (Patient list, Schedule, Appointment for scan, Profile) DONE
+# @app.route("/doctor/<string:id>")
+# def doctor_index(id):
+#     try:
+#         # Fetch doctor details
+#         doctor_response = supabase.table("doctor").select("*").eq("id", id).execute()
+#         if not doctor_response.data:
+#             print(f"Doctor with ID {id} not found.")
+#             return "Doctor not found", 404
+
+#         doctor = doctor_response.data[0]  # Extract doctor details
+#         department_id = doctor.get("department_id", "")
+        
+#         # Get today's date in YYYY-MM-DD format
+#         today_date = datetime.now().strftime('%Y-%m-%d')
+
+#         # Fetch appointments ONLY for today
+#         appointment_response = (
+#             supabase.table("appointment")
+#             .select("id, patient_id, date, time, status")
+#             .eq("doctor_id", id)
+#             .eq("status", "Active")
+#             .eq("date", today_date)  # Only today's appointments
+#             .execute()
+#         )
+#         appointment_id = appointment_response.data[0]["id"]
+#         appointments = appointment_response.data if appointment_response.data else []
+
+#         if appointments:
+#             # Fetch patient names for today's appointments
+#             patient_ids = list(set(app["patient_id"] for app in appointments))
+            
+#             if patient_ids:  # Ensure patient_ids is not empty before querying
+#                 patient_response = (
+#                     supabase.table("patient")
+#                     .select("id, name")
+#                     .in_("id", patient_ids)
+#                     .execute()
+#                 )
+#                 patient_map = {p["id"]: p["name"] for p in patient_response.data} if patient_response.data else {}
+#             else:
+#                 patient_map = {}
+
+#             # Add patient names to appointments
+#             for app in appointments:
+#                 app["patient_name"] = patient_map.get(app["patient_id"], "Unknown")
+
+#             # Sort appointments by time
+#             appointments.sort(key=lambda app: datetime.strptime(app["time"], "%H:%M"))
+
+#         print(appointments)  # Debugging output
+        
+#         #**Determine which template to render**
+#         # if department_id == "dep1002":  # Radiology department
+#         #     print("➡️ Rendering Radiology Template")
+#         #     return render_template("image/radio_index.html", doctor=doctor, appointments=appointments)
+
+#         return render_template("doctors/doctor_index.html", doctor=doctor, appointment_id=appointment_id, patient_ids = patient_ids, appointments=appointments)
+
+#     except Exception as e:
+#         print(f"Error fetching doctor or appointment data: {e}")
+#         return "An error occurred while retrieving data", 500
+
 @app.route("/doctor/<string:id>")
 def doctor_index(id):
     try:
@@ -401,7 +540,7 @@ def doctor_index(id):
 
         doctor = doctor_response.data[0]  # Extract doctor details
         department_id = doctor.get("department_id", "")
-        
+
         # Get today's date in YYYY-MM-DD format
         today_date = datetime.now().strftime('%Y-%m-%d')
 
@@ -414,10 +553,11 @@ def doctor_index(id):
             .eq("date", today_date)  # Only today's appointments
             .execute()
         )
-
         appointments = appointment_response.data if appointment_response.data else []
 
         if appointments:
+            appointment_id = appointments[0]["id"]  # Only access if appointments exist
+
             # Fetch patient names for today's appointments
             patient_ids = list(set(app["patient_id"] for app in appointments))
             
@@ -439,18 +579,22 @@ def doctor_index(id):
             # Sort appointments by time
             appointments.sort(key=lambda app: datetime.strptime(app["time"], "%H:%M"))
 
-        print(appointments)  # Debugging output
-        
-        #**Determine which template to render**
-        # if department_id == "dep1002":  # Radiology department
-        #     print("➡️ Rendering Radiology Template")
-        #     return render_template("image/radio_index.html", doctor=doctor, appointments=appointments)
+        else:
+            appointment_id = None  # No appointments for today
+            patient_ids = []
 
-        return render_template("doctors/doctor_index.html", doctor=doctor, appointments=appointments)
+        print(appointments)  # Debugging output
+
+        return render_template("doctors/doctor_index.html", 
+                               doctor=doctor, 
+                               appointment_id=appointment_id, 
+                               patient_ids=patient_ids, 
+                               appointments=appointments)
 
     except Exception as e:
         print(f"Error fetching doctor or appointment data: {e}")
         return "An error occurred while retrieving data", 500
+
 
 # not neccesary to have a radio_index.html since the doctor also have the same function 
 # just different appointment and the appointment is based on the doctor_id 
@@ -805,9 +949,21 @@ def edit_psw(id):
 @app.route("/patient/<string:staff_id>")
 def index(staff_id):
     try:
-        # Query to get all patients with appointments for the given doctor
-        appointment_response = supabase.table("appointment").select("patient_id").eq("doctor_id", staff_id).execute()
+        # Fetch image details
+        try:
+            image_response = supabase.table("patient_images").select("*").execute()
+            image_data = image_response.data if image_response.data else None
+            if not image_data:
+                return "Image not found", 404
+        except Exception as e:
+            print(f"Error fetching image: {e}")
+            return "Database error", 500
         
+        image_id = image_response.data[0]["id"]
+        
+        # Query to get all patients with appointments for the given doctor
+        appointment_response = supabase.table("appointment").select("id, patient_id").eq("doctor_id", staff_id).execute()
+        appointment_id = appointment_response.data[0]["id"]
         if not appointment_response.data:
             return render_template("patients/patients_index.html", patients=[], staff_id=staff_id)
 
@@ -819,7 +975,8 @@ def index(staff_id):
 
         # Render the patients' details in the template
         patients = patient_response.data  # List of patients who have appointments with the doctor
-        return render_template("patients/patients_index.html", patients=patients, staff_id=staff_id)
+        patient_id = patient_response.data[0]["id"]
+        return render_template("patients/patients_index.html", patients=patients, staff_id=staff_id, appointment_id = appointment_id, image_id=image_id, patient_id=patient_id)
 
     except Exception as e:
         print(f"Error fetching patient list: {e}")
@@ -1841,12 +1998,138 @@ def add_doctor_leave(doctor_id):
 
 #     return render_template("image/radio_upload.html", patient=patient, staff_id=staff_id)
 
-@app.route('/radio_upload/<string:patient_id>/<string:staff_id>', methods=["GET", "POST"])
-def radio_upload(patient_id, staff_id):
+# @app.route('/radio_upload/<string:patient_id>/<string:staff_id>', methods=["GET", "POST"])
+# def radio_upload(patient_id, staff_id):
+#     patient_response = supabase.table("patient").select("id, name, department(name)").eq("id", patient_id).single().execute()
+#     patient = patient_response.data if patient_response.data else None
+#     if not patient:
+#         return "Patient not found", 404
+
+#     # Fetch latest ID for patient images
+#     try:
+#         id_response = supabase.table("patient_images").select("id").order("id", desc=True).limit(1).execute()
+#         latest_id = id_response.data[0]["id"][2:] if id_response.data else "10000"
+#         next_id = int(latest_id) + 1
+#         record_id = f"PI{next_id}"
+#     except Exception as e:
+#         return f"Error generating new ID: {e}", 500
+
+#     # Fetch appointment details
+#     appointment_response = supabase.table("appointment").select("id, purpose").eq("patient_id", patient_id).limit(1).execute()
+#     appointment = appointment_response.data if appointment_response.data else None
+#     if not appointment:
+#         return "Appointment not found", 404
+
+#     appointment_id = appointment[0]["id"]
+#     appointment_purpose = appointment[0]["purpose"]
+
+#     if request.method == "POST":
+#         image = request.files.get("image")  
+
+#         if not image:
+#             print("Request files:", request.files)  # Debugging
+#             return "No image uploaded", 400
+
+#         if image.filename == "" or not allowed_file(image.filename):
+#             return "Invalid image format", 400
+
+#         # Save image
+#         filename = secure_filename(f"{uuid.uuid4()}_{image.filename}")
+#         image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+#         image.save(image_path)
+
+#         # Upload to Supabase Storage
+#         with open(image_path, "rb") as file_data:
+#             supabase.storage.from_("patient_images").upload(f"upload/{filename}", file_data)
+
+#         image_url = f"{SUPABASE_URL}/storage/v1/object/public/patient_images/upload/{filename}"
+
+#         # # Select model based on appointment purpose
+#         # selected_model = ct_model if appointment_purpose.startswith("CT") else mri_model if appointment_purpose.startswith("MRI") else None
+#         # if not selected_model:
+#         #     return "Invalid appointment purpose", 400
+
+#         # # Run model prediction
+#         # image = Image.open(image_path).resize((224, 224)).convert("RGB")
+#         # image_array = np.array(image) / 255.0
+#         # image_array = np.expand_dims(image_array, axis=0)
+#         # prediction = selected_model.predict(image_array)
+#         # model_prediction = "Positive" if prediction[0][0] > 0.5 else "Negative"
+        
+#         # Select model based on appointment purpose
+#         if "CT" in appointment_purpose:
+#             selected_model = ct_model
+#             label_dict = lung_labels
+#         elif "MRI" in appointment_purpose:
+#             selected_model = mri_model
+#             label_dict = brain_labels
+#         else:
+#             selected_model = None  # No model needed for other purposes
+
+#         if selected_model:  
+#             # Run model prediction
+#             image = Image.open(image_path).resize((224, 224)).convert("RGB")
+#             image_array = np.array(image) / 255.0
+#             image_array = np.expand_dims(image_array, axis=0)
+#             prediction = selected_model.predict(image_array)
+#             # Get the predicted class index
+#             predicted_class = np.argmax(prediction)
+
+#             # Map prediction to corresponding label
+#             model_prediction = label_dict[predicted_class]
+
+#             print("Predicted Diagnosis:", model_prediction)
+#         else:
+#             model_prediction = "N/A"  # No prediction needed for non-imaging purposes
+
+#         # Save to Supabase
+#         comment = request.form["comment"]
+#         image_data = {
+#             "id": record_id,
+#             "appointment_id": appointment_id,
+#             "image_url": image_url,
+#             "model_prediction": model_prediction,
+#             "comment": comment
+#         }
+#         supabase.table("patient_images").insert(image_data).execute()
+
+#         return redirect(url_for("doctor", patient_id=patient_id, staff_id=staff_id))
+
+#     return render_template("image/radio_upload.html", patient=patient, staff_id=staff_id)
+
+@app.route('/radio_upload/<string:appointment_id>/<string:staff_id>', methods=["GET", "POST"])
+def radio_upload(appointment_id, staff_id):
+    # Fetch appointment details (includes patient_id)
+    print(f"Received POST Appointment ID: {appointment_id}")
+    try:
+        appointment_response = supabase.table("appointment").select("id, purpose, patient_id").eq("id", appointment_id).execute()
+        appointment = appointment_response.data if appointment_response.data else None
+        print(appointment)
+        if not appointment:
+            return "Appointment not found", 404
+    except Exception as e:
+        print(f"Error fetching appointment: {e}")
+        return "Database error", 500
+
+
+    patient_id = appointment_response.data[0]["patient_id"]
+    appointment_purpose = appointment_response.data[0]["purpose"]
+
+    # Fetch patient details using patient_id
     patient_response = supabase.table("patient").select("id, name, department(name)").eq("id", patient_id).single().execute()
     patient = patient_response.data if patient_response.data else None
     if not patient:
         return "Patient not found", 404
+    
+    # Fetch doctor details
+    try:
+        doctor_response = supabase.table("doctor").select("id, department_id").eq("id", staff_id).single().execute()
+        doctor = doctor_response.data if doctor_response.data else None
+        if not doctor:
+            return "Doctor not found", 404
+    except Exception as e:
+        print(f"Error fetching doctor: {e}")
+        return "Database error", 500
 
     # Fetch latest ID for patient images
     try:
@@ -1856,15 +2139,6 @@ def radio_upload(patient_id, staff_id):
         record_id = f"PI{next_id}"
     except Exception as e:
         return f"Error generating new ID: {e}", 500
-
-    # Fetch appointment details
-    appointment_response = supabase.table("appointment").select("id, purpose").eq("patient_id", patient_id).limit(1).execute()
-    appointment = appointment_response.data if appointment_response.data else None
-    if not appointment:
-        return "Appointment not found", 404
-
-    appointment_id = appointment[0]["id"]
-    appointment_purpose = appointment[0]["purpose"]
 
     if request.method == "POST":
         image = request.files.get("image")  
@@ -1888,34 +2162,171 @@ def radio_upload(patient_id, staff_id):
         image_url = f"{SUPABASE_URL}/storage/v1/object/public/patient_images/upload/{filename}"
 
         # Select model based on appointment purpose
-        selected_model = ct_model if appointment_purpose.startswith("CT") else mri_model if appointment_purpose.startswith("MRI") else None
-        if not selected_model:
-            return "Invalid appointment purpose", 400
+        if "CT" in appointment_purpose:
+            selected_model = ct_model
+            label_dict = lung_labels
+        elif "MRI" in appointment_purpose:
+            selected_model = mri_model
+            label_dict = brain_labels
+        else:
+            selected_model = None  # No model needed for other purposes
 
-        # Run model prediction
-        image = Image.open(image_path).resize((224, 224)).convert("RGB")
-        image_array = np.array(image) / 255.0
-        image_array = np.expand_dims(image_array, axis=0)
-        prediction = selected_model.predict(image_array)
-        model_prediction = "Positive" if prediction[0][0] > 0.5 else "Negative"
+        if selected_model:  
+            # Run model prediction
+            image = Image.open(image_path).resize((350, 350)).convert("RGB")
+            image_array = img_to_array(image)
+            image_array = np.expand_dims(image_array, axis=0)
+            image_array /= 255.0  # Normalization (if your model was trained with normalized images)
+            prediction = selected_model.predict(image_array)
+            class_idx = np.argmax(prediction, axis=1)[0]
+            model_prediction = label_dict.get(class_idx, "Unknown")
+            # Get the predicted class index
+            # predicted_class = np.argmax(prediction)
+
+            # # Map prediction to corresponding label
+            # model_prediction = label_dict[predicted_class]
+
+            print("Predicted Diagnosis:", model_prediction)
+        else:
+            model_prediction = "N/A"  # No prediction needed for non-imaging purposes
 
         # Save to Supabase
-        comment = request.form["comment"]
         image_data = {
             "id": record_id,
-            "appointment_id": appointment_id,
+            "appointment_id": appointment_id,  # Now using appointment_id instead of patient_id
             "image_url": image_url,
             "model_prediction": model_prediction,
-            "comment": comment
+            "comment": None
         }
         supabase.table("patient_images").insert(image_data).execute()
 
-        return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
+        return redirect(url_for("doctor_index", id=staff_id))
 
-    return render_template("image/radio_upload.html", patient=patient, staff_id=staff_id)
+    return render_template("image/radio_upload.html", patient=patient, staff_id=staff_id, appointment_id= appointment_id, doctor=doctor)
+
+
+@app.route('/doctor_review/<string:image_id>/<string:staff_id>/<string:appointment_id>', methods=["GET", "POST"])
+def doctor_review(image_id, staff_id, appointment_id):
+    # Fetch image details
+    try:
+        image_response = supabase.table("patient_images").select("*").eq("id", image_id).single().execute()
+        image_data = image_response.data if image_response.data else None
+        if not image_data:
+            return "Image not found", 404
+    except Exception as e:
+        print(f"Error fetching image: {e}")
+        return "Database error", 500
+        
+    # Fetch appointment details
+    try:
+        appointment_response = supabase.table("appointment").select("id, purpose, patient_id").eq("id", appointment_id).execute()
+        appointment = appointment_response.data if appointment_response.data else None
+        if not appointment:
+            return "Appointment not found", 404
+    except Exception as e:
+        print(f"Error fetching appointment: {e}")
+        return "Database error", 500
+    
+    patient_id = appointment_response.data[0]["patient_id"]
+    
+    # Fetch patient details using patient_id
+    patient_response = supabase.table("patient").select("id, name, department(name)").eq("id", patient_id).single().execute()
+    patient = patient_response.data if patient_response.data else None
+    if not patient:
+        return "Patient not found", 404
+
+    if request.method == "POST":
+        comment = request.form.get("comment")
+
+        if not comment:
+            return "Comment cannot be empty", 400
+
+        # Update the comment in the database
+        try:
+            supabase.table("patient_images").update({"comment": comment}).eq("id", image_id).execute()
+        except Exception as e:
+            print(f"Error updating comment: {e}")
+            return "Database error", 500
+
+        return redirect(url_for("doctor_index", id=staff_id))
+
+    return render_template("image/result.html", image_data=image_data, staff_id=staff_id, appointment_id=appointment_id, patient=patient)
+
+
+def get_patient_appointments(patient_id):
+    try:
+        response = supabase.table("patient_images") \
+            .select("appointment_id, created_at") \
+            .eq("patient_id", patient_id) \
+            .execute()
+        
+        if response.data:
+            return response.data
+        else:
+            return []
+    
+    except Exception as e:
+        print(f"Error fetching appointments: {e}")
+        return []
 
 
 
+@app.route('/medical_image/<string:patient_id>/<string:staff_id>')
+def medical_image(patient_id, staff_id):
+    # Fetch patient details
+    patient_response = (
+        supabase.table("patient")
+        .select("id, name, dob, gender")
+        .eq("id", patient_id)
+        .single()
+        .execute()
+    )
+    patient = patient_response.data if patient_response.data else None
+
+    if not patient:
+        return "Patient not found", 404
+
+    # Fetch appointments linked to the patient by joining patient_images with appointment
+    try:
+        response = (
+            supabase.table("patient_images")
+            .select("id, appointment_id, model_prediction, appointment(id, patient_id, date, time)")
+            .execute()
+        )
+
+        appointments = [
+            {
+                "appointment_id": item["appointment_id"],
+                "date": item["appointment"]["date"],
+                "time": item["appointment"]["time"],
+                "model_prediction": item["model_prediction"],
+                "image_id": item["id"]
+            }
+            for item in response.data if item["appointment"]["patient_id"] == patient_id
+        ]
+        
+    except Exception as e:
+        print(f"Error fetching appointments: {e}")
+        return "Database error", 500
+    
+    #Fetch image details
+    try:
+        image_response = supabase.table("patient_images").select("*").execute()
+        image_data = image_response.data if image_response.data else None
+        if not image_data:
+            return "Image not found", 404
+    except Exception as e:
+        print(f"Error fetching image: {e}")
+        return "Database error", 500
+
+    
+
+    return render_template(
+        "/image/doctors_view.html",
+        patient=patient,
+        staff_id=staff_id,
+        appointments=appointments
+    )
 
 
 

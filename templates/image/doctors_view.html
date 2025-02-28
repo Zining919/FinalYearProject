@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,40 +8,44 @@
 </head>
 <body>
     <h1>Medical Image</h1>
-    <p><b>ID: </b> {{patient.id}}</p>
-    <p><b>Name: </b>{{patient.name}}</p>
-    <p><b>DOB: </b> {{patient.dob}}</p>
-    <p><b>Gender: </b>{{patient.gender}}</p>
+    <p><b>ID: </b> {{ patient.id }}</p>
+    <p><b>Name: </b> {{ patient.name }}</p>
+    <p><b>DOB: </b> {{ patient.dob }}</p>
+    <p><b>Gender: </b> {{ patient.gender }}</p>
     <br>
 
     <table>
         <tr>
-            <th>Number</th>
-            <th>Appoinment ID</th>
-            <th>Date Time</th>
+            <th>Appointment ID</th>
+            <th>Date</th>
+            <th>Time</th>
             <th>Result</th>
             <th>Generate Report</th>
         </tr>
-        {% if patient.history %}
-            {% for h in patient.history %}
-                <tr id="history-{{ h.num }}">
-                    <td>{{ loop.index }}</td>
-                    <td>{{ h.num }}</td>
-                    <td>{{ h.date }} {{ h.time }}</td>
+        {% if appointments %}
+            {% for appointment in appointments %}
+                <tr>
+                    <td>{{ appointment.appointment_id }}</td>
+                    <td>{{ appointment.date }}</td>
+                    <td>{{ appointment.time }}</td>
                     <td>
-                        <a href="/scan_appointment/{{ h.num }}/{{ staff_id }}" class="update-link" id="update-link-{{ h.num }}">View</a>
+                        <a href="/doctor_review/{{ appointment.image_id }}/{{ staff_id }}/{{ appointment.appointment_id }}">Result</a>
                     </td>
                     <td>
-                        <a href="/update_appointment/{{ patient.id }}/{{ staff_id }}/{{ h.num }}" class="update-link" id="update-link-{{ h.num }}">Generate</a>
+                        <a href="/generate_report/{{ patient.id }}/{{ staff_id }}/{{ appointment.appointment_id }}">Generate</a>
                     </td>
                 </tr>
             {% endfor %}
         {% else %}
             <tr>
-                <td colspan="6">No appointments available</td>
+                <td colspan="5">No appointments available</td>
             </tr>
         {% endif %}
     </table>
     <a href="/patient/{{staff_id}}">Back to Patient Database</a>
 </body>
 </html>
+
+
+
+
