@@ -2199,6 +2199,13 @@ def radio_upload(appointment_id, staff_id):
             "comment": None
         }
         supabase.table("patient_images").insert(image_data).execute()
+        
+        try:
+            supabase.table("appointment").update({"status": "Done"}).eq("id", appointment_id).execute()
+            print(f"Updated appointment {appointment_id} status to Done.")
+        except Exception as e:
+            print(f"Error updating appointment status: {e}")
+            return "Failed to update appointment status", 500
 
         return redirect(url_for("doctor_index", id=staff_id))
 
