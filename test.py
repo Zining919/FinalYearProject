@@ -77,50 +77,6 @@ def load_db(filePath):
 print(supabase.auth.get_session())
 
 # # Only allow Manager, Doctor and Nurse to LogIn DONE
-# @app.route("/", methods=["GET", "POST"])
-# def index_main():
-#     if request.method == "POST":
-#         username = request.form["user"].strip()
-#         password = request.form["psw"].strip()
-
-#         try:
-#             # Query Supabase to check if the username exists in the login table
-#             response = supabase.table("login").select("id, username, password").eq("username", username).execute()
-
-#             if response.data:
-#                 login_record = response.data[0]  # Get the first matching record
-
-#                 # Ensure the password matches and that username and password come from the same ID
-#                 if login_record["password"] == password and login_record["username"] == username:
-                    
-#                     # Identify staff type based on ID prefix
-#                     role_map = {
-#                         "d": "doctor_index",
-#                         "n": "nurse_index",
-#                         "m": "manager_index",
-#                     }
-                    
-#                     role_prefix = username[0].lower()  # Get the first character and make it lowercase
-                
-#                     if role_prefix in role_map:
-                        
-#                         print(f"Login successful. Redirecting to {role_map[role_prefix]}.")
-#                         return redirect(url_for(role_map[role_prefix], id=username))
-                    
-#                     # If role prefix is invalid
-#                     print("Invalid staff type detected.")
-#                     return render_template("main/index.html", error="Invalid staff type.")
-
-#             # If login validation fails
-#             print("Wrong Username or Password Entered.")
-#             return render_template("main/index.html", error="Wrong Username or Password Entered.")
-
-#         except Exception as e:
-#             print(f"Error during login: {e}")
-#             return render_template("main/index.html", error="An error occurred. Please try again.")
-
-#     return render_template("main/index.html")
-
 @app.route("/", methods=["GET", "POST"])
 def index_main():
     if request.method == "POST":
@@ -133,40 +89,48 @@ def index_main():
             
             if response.user:
                 first_letter = email[0]  # Get first character of email
+                
+                # Determine the user role and fetch ID + status
+                if first_letter == "d":  # Doctor
+                    user_response = supabase.table("doctor").select("id", "startdate", "enddate", "status").eq("email", email).execute()
+                elif first_letter == "n":  # Nurse
+                    user_response = supabase.table("nurse").select("id", "startdate", "enddate", "status").eq("email", email).execute()
+                else:  # Manager
+                    user_response = supabase.table("manager").select("id").eq("email", email).execute()
 
-                # if first_letter in ROLE_MAP:
-                #     session["user"] = email  # Store session
-                #     return redirect(url_for(ROLE_MAP[first_letter], id=email))  # Redirect based on role
-                if first_letter == "d":  # If it's a doctor
-                    # Retrieve doctor's ID based on email
-                    doctor_response = supabase.table("doctor").select("id").eq("email", email).execute()
+                if not user_response.data:
+                    return render_template("main/index.html", error="User not found in records.")
 
-                    if doctor_response.data:
-                        doctor_id = doctor_response.data[0]["id"]  # Extract the doctor ID
-                        session["user"] = email  # Store session
-                        return redirect(url_for("doctor_index", id=doctor_id))  # Redirect to doctor page with ID
+                user_data = user_response.data[0]
+                user_id = user_data["id"]
 
-                    return render_template("main/index.html", error="Doctor not found in records.")
-                elif first_letter == "n":  # If it's a nurse
-                    # Retrieve nurse's ID based on email
-                    nurse_response = supabase.table("nurse").select("id").eq("email", email).execute()
+                # Skip status checks for managers (assuming they don't have contracts)
+                if first_letter in ["d", "n"]:
+                    today = datetime.today().date()
+                    start_date = datetime.strptime(user_data["startdate"], "%Y-%m-%d").date()
+                    end_date = datetime.strptime(user_data["enddate"], "%Y-%m-%d").date()
+                    status = user_data["status"]
 
-                    if nurse_response.data:
-                        nurse_id = nurse_response.data[0]["id"]  # Extract the nurse ID
-                        session["user"] = email  # Store session
-                        return redirect(url_for("nurse_index", id=nurse_id))  # Redirect to nurse page with ID
+                    # Automatically update status if needed
+                    if status == "pending" and start_date <= today:
+                        status = "active"
+                        supabase.table("doctor" if first_letter == "d" else "nurse").update({"status": "active"}).eq("id", user_id).execute()
+                    elif status == "active" and today > end_date:
+                        status = "expired"
+                        supabase.table("doctor" if first_letter == "d" else "nurse").update({"status": "expired"}).eq("id", user_id).execute()
 
-                    return render_template("main/index.html", error="Nurse not found in records.")
+                    # Restrict login for non-active users
+                    if status != "active":
+                        return render_template("main/index.html", error=f"Access denied. Your account status is {status}.")
+
+                # Redirect based on role
+                session["user"] = email  # Store session
+                if first_letter == "d":
+                    return redirect(url_for("doctor_index", id=user_id))
+                elif first_letter == "n":
+                    return redirect(url_for("nurse_index", id=user_id))
                 else:
-                    # Retrieve manager's ID based on email
-                    manager_response = supabase.table("manager").select("id").eq("email", email).execute()
-
-                    if manager_response.data:
-                        manager_id = manager_response.data[0]["id"]  # Extract the manager ID
-                        session["user"] = email  # Store session
-                        return redirect(url_for("manager_index", id=manager_id))  # Redirect to manager page with ID
-
-                    return render_template("main/index.html", error="Manager not found in records.")
+                    return redirect(url_for("manager_index", id=user_id))
 
             return render_template("main/index.html", error="Wrong Email or Password Entered.")
 
@@ -175,6 +139,7 @@ def index_main():
             return render_template("main/index.html", error="An error occurred. Please try again.")
 
     return render_template("main/index.html")
+
 
 
 # 🔹 Route: Logout
@@ -222,14 +187,16 @@ def manager_index(id):
             pending_leaves.append(leave)
 
     # ✅ Count active, expired, and terminated doctors and nurses
-    active = expired = terminated = 0  
+    pending = active = expired = terminated = 0  
 
     if d_response.data:
+        pending += sum(1 for doctor in d_response.data if doctor.get("status") == "pending")
         active += sum(1 for doctor in d_response.data if doctor.get("status") == "active")
         expired += sum(1 for doctor in d_response.data if doctor.get("status") == "expired")
         terminated += sum(1 for doctor in d_response.data if doctor.get("status") == "terminated")
 
     if n_response.data:
+        pending += sum(1 for nurse in n_response.data if nurse.get("status") == "pending")
         active += sum(1 for nurse in n_response.data if nurse.get("status") == "active")
         expired += sum(1 for nurse in n_response.data if nurse.get("status") == "expired")
         terminated += sum(1 for nurse in n_response.data if nurse.get("status") == "terminated")
@@ -238,6 +205,7 @@ def manager_index(id):
         "d_count": len(d_response.data) if d_response.data else 0,
         "n_count": len(n_response.data) if n_response.data else 0,
         "p_count": len(m_response.data) if m_response.data else 0,
+        "pending": pending,
         "active": active,
         "expired": expired,
         "terminated": terminated
@@ -247,7 +215,7 @@ def manager_index(id):
     if m_response.data:
         for ppl in m_response.data:
             if id == ppl["id"]:
-                return render_template("manage/manager_index.html", ppl=ppl, count=count, leave_requests=pending_leaves)
+                return render_template("manage/manager_index.html", ppl=ppl, count=count, leave_requests=pending_leaves, staff_id = id)
 
     return "Person not found.", 404
 
@@ -327,10 +295,36 @@ def manage_db(db_type, staff_id):
 
     return render_template(
         f"manage/{db_type}_db.html",
+        db_type = db_type,
         data=data,
         staff_id=staff_id,
         count=status_counts if status_counts else {}
     ) 
+    
+@app.route("/terminate/<string:staff_type>/<string:staff_id>", methods=["POST"])
+def terminate_staff(staff_type, staff_id):
+    """Updates the status of a doctor or nurse to 'terminated'."""
+    
+    staff_tables = {
+        "doctors": "doctor",
+        "nurses": "nurse",
+    }
+
+    if staff_type not in staff_tables:
+        return "Invalid staff type.", 404
+
+    table_name = staff_tables[staff_type]
+
+    try:
+        # Update the status in the database
+        supabase.table(table_name).update({"status": "terminated"}).eq("id", staff_id).execute()
+        print(f"{staff_type.capitalize()} {staff_id} has been terminated.")
+        
+        return redirect(url_for("manage_db", db_type=staff_type, staff_id=staff_id))
+
+    except Exception as e:
+        return f"Error updating status: {e}", 500
+
 
 
 # Add new doctor/nurse (create new user with username and password for login the system) DONE
@@ -349,7 +343,7 @@ def add_record(staff_type, staff_id):
     table_name = staff_tables[staff_type]["table"]
     id_key = staff_tables[staff_type]["id_key"]
     prefix = staff_tables[staff_type]["prefix"]
-    position = staff_tables[staff_type]["position"]
+    #position = staff_tables[staff_type]["position"]
 
     try:
         # Fetch latest ID for doctors/nurses
@@ -377,7 +371,16 @@ def add_record(staff_type, staff_id):
         endDate = request.form["endDate"]
 
         today = datetime.today().date()
-        status = "active" if datetime.strptime(endDate, "%Y-%m-%d").date() > today else "expired"
+        start_date_obj = datetime.strptime(startDate, "%Y-%m-%d").date()
+        end_date_obj = datetime.strptime(endDate, "%Y-%m-%d").date()
+
+        # Assign status based on contract dates
+        if start_date_obj > today:
+            status = "pending"
+        elif start_date_obj <= today <= end_date_obj:
+            status = "active"
+        else:
+            status = "expired"
 
         try:
             # Insert into doctors/nurses table
@@ -400,22 +403,22 @@ def add_record(staff_type, staff_id):
         except Exception as e:
             return f"Error inserting staff data: {e}", 500
 
-        try:
-            # Register the staff in Supabase Authentication
-            auth_response = supabase.auth.sign_up({
-                "email": email,
-                "password": nic  # Default password is their staff ID
-            })
+        if status == "active":
+            try:
+                # Register the staff in Supabase Authentication only if status is active
+                auth_response = supabase.auth.sign_up({
+                    "email": email,
+                    "password": nic  # Default password is their staff ID
+                })
 
-            if "error" in auth_response:
-                return f"Error creating authentication account: {auth_response['error']['message']}", 500
+                if "error" in auth_response:
+                    return f"Error creating authentication account: {auth_response['error']['message']}", 500
 
-            print(f"Authentication account created for {name}")
+                print(f"Authentication account created for {name}")
+                confirm_user_email(email)
             
-            confirm_user_email(email)
-
-        except Exception as e:
-            return f"Error registering staff in authentication: {e}", 500
+            except Exception as e:
+                return f"Error registering staff in authentication: {e}", 500
 
         # try:
         #     # Fetch latest login ID
@@ -464,6 +467,29 @@ def confirm_user_email(email):
     else:
         print(f"❌ Failed to confirm email {email}: {response.text}")
 
+
+@app.route("/staff_contract/<string:staff_id>/<status>")
+def staff_contract(staff_id, status):
+    try:
+        # Ensure status is valid
+        valid_statuses = ["pending", "active", "expired", "terminated"]
+        if status not in valid_statuses:
+            return "Invalid status", 400  # Return error for invalid status
+        
+        # Fetch doctors and nurses with the given status
+        doctors_response = supabase.table("doctor").select("id, name, nic, startdate, enddate, department_id, department(name)").eq("status", status).order("startdate", desc=False).execute()
+        nurses_response = supabase.table("nurse").select("id, name, nic, startdate, enddate, department_id, department(name)").eq("status", status).order("startdate", desc=False).execute()
+        department_response = supabase.table("department").select("id, name").execute()
+        
+        doctors = doctors_response.data if doctors_response.data else []
+        nurses = nurses_response.data if nurses_response.data else []
+        department = department_response.data if department_response.data else []
+
+        return render_template(f"/main/staff_contract.html", doctors=doctors, nurses=nurses, status=status, department = department, staff_id = staff_id)
+    
+    except Exception as e:
+        print(f"Error fetching staff data: {e}")
+        return "Database error", 500
 
 ###########################################################################################################
 # Display functions that can be done by doctors only (Patient list, Schedule, Appointment for scan, Profile) DONE
@@ -859,12 +885,10 @@ def edit_profile(id):
         if request.method == 'POST':
             # Get updated phone and email values from the form
             phone = request.form.get('phone')
-            email = request.form.get('email')
 
             # Update the staff details in Supabase
             update_response = supabase.table(table_name).update({
-                "phone": phone,
-                "email": email
+                "phone": phone
             }).eq("id", id).execute()
 
             if "error" in update_response:
@@ -889,58 +913,118 @@ def edit_profile(id):
 
 #####################################################################################################################
 # edit password for doctor and nurse DONE
+# @app.route("/edit_psw/<string:id>", methods=['GET', 'POST'])
+# def edit_psw(id):
+#     try:
+#         print(id)
+        
+#         # Initialize staff_type to avoid undefined variable error
+#         staff_type = None  
+
+#         # Fetch user details from Supabase
+#         response = supabase.table("login").select("username", "password").eq("username", id).execute()
+        
+#         if not response.data:
+#             return render_template('main/edit_psw.html', id=id, error="User not found.")
+        
+#         user_data = response.data[0]
+#         username = user_data["username"]
+#         current_password_db = user_data["password"]
+        
+#         # Determine if the user is a doctor or nurse based on username prefix
+#         if username.startswith("d"):
+#             staff_type = "doctor"
+#         elif username.startswith("n"):
+#             staff_type = "nurse"
+#         else:
+#             return render_template('main/edit_psw.html', id=id, error="Invalid user role.")
+        
+#         if request.method == 'POST':
+#             current_password = request.form["current_psw"].strip()
+#             new_password = request.form["new_psw"].strip()
+#             confirm_password = request.form["confirm_psw"].strip()
+            
+#             # Step 1: Verify if the current password matches database
+#             if current_password != current_password_db:
+#                 return render_template('main/edit_psw.html', id=id, error="Incorrect current password.")
+            
+#             # Step 2: Ensure new password and confirmation password match
+#             if new_password != confirm_password:
+#                 return render_template('main/edit_psw.html', id=id, error="Passwords do not match.")
+            
+#             # Step 3: Update the new password in Supabase
+#             update_response = supabase.table("login").update({"password": new_password}).eq("username", id).execute()
+            
+#             if "error" in update_response:
+#                 return render_template('main/edit_psw.html', id=id, error="Error updating password.")
+            
+#             return render_template('main/edit_psw.html', id=id, staff_type=staff_type, success="Password changed successfully.")
+    
+#     except Exception as e:
+#         print(f"Error updating password: {e}")
+#         return render_template('main/edit_psw.html', id=id, staff_type=staff_type, error="An unexpected error occurred.")
+    
+#     return render_template('main/edit_psw.html', id=id, staff_type=staff_type)
+
 @app.route("/edit_psw/<string:id>", methods=['GET', 'POST'])
 def edit_psw(id):
     try:
-        print(id)
-        
-        # Initialize staff_type to avoid undefined variable error
-        staff_type = None  
+        # Fetch staff email
+        try:
+            # Determine the user type based on id prefix
+            if id.startswith("n"):
+                table_name = "nurse"
+            elif id.startswith("d"):
+                table_name = "doctor"
+            else:
+                return "Invalid Staff ID", 400  # Return error if the ID does not match expected format
 
-        # Fetch user details from Supabase
-        response = supabase.table("login").select("username", "password").eq("username", id).execute()
+            # Fetch staff details from the corresponding table
+            staff_response = supabase.table(table_name).select("email").eq("id", id).execute()
+            
+            staff = staff_response.data if staff_response.data else None
+            print(staff)
+
+            if not appointment:
+                return "Staff not found", 404
+
+        except Exception as e:
+            print(f"Error fetching staff: {e}")
+            return "Database error", 500
         
-        if not response.data:
-            return render_template('main/edit_psw.html', id=id, error="User not found.")
-        
-        user_data = response.data[0]
-        username = user_data["username"]
-        current_password_db = user_data["password"]
-        
-        # Determine if the user is a doctor or nurse based on username prefix
-        if username.startswith("d"):
-            staff_type = "doctor"
-        elif username.startswith("n"):
-            staff_type = "nurse"
-        else:
-            return render_template('main/edit_psw.html', id=id, error="Invalid user role.")
-        
+        user_email = staff_response.data[0]["email"]  # Get logged-in user's email
+
         if request.method == 'POST':
             current_password = request.form["current_psw"].strip()
             new_password = request.form["new_psw"].strip()
             confirm_password = request.form["confirm_psw"].strip()
-            
-            # Step 1: Verify if the current password matches database
-            if current_password != current_password_db:
-                return render_template('main/edit_psw.html', id=id, error="Incorrect current password.")
-            
-            # Step 2: Ensure new password and confirmation password match
+
+            # Step 2: Reauthenticate User
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": user_email,
+                "password": current_password
+            })
+
+            if "error" in auth_response:
+                return render_template('/main/edit_psw.html', id=id, error="Incorrect current password.")
+
+            # Step 3: Ensure new password and confirmation password match
             if new_password != confirm_password:
-                return render_template('main/edit_psw.html', id=id, error="Passwords do not match.")
-            
-            # Step 3: Update the new password in Supabase
-            update_response = supabase.table("login").update({"password": new_password}).eq("username", id).execute()
-            
+                return render_template('/main/edit_psw.html', id=id, error="Passwords do not match.")
+
+            # Step 4: Update password in Supabase Authentication
+            update_response = supabase.auth.update_user({"password": new_password})
+
             if "error" in update_response:
-                return render_template('main/edit_psw.html', id=id, error="Error updating password.")
-            
-            return render_template('main/edit_psw.html', id=id, staff_type=staff_type, success="Password changed successfully.")
+                return render_template('/main/edit_psw.html', id=id, error="Error updating password.")
+
+            return render_template('/main/edit_psw.html', id=id, success="Password changed successfully.")
     
     except Exception as e:
         print(f"Error updating password: {e}")
-        return render_template('main/edit_psw.html', id=id, staff_type=staff_type, error="An unexpected error occurred.")
-    
-    return render_template('main/edit_psw.html', id=id, staff_type=staff_type)
+        return render_template('/main/edit_psw.html', id=id, error="An unexpected error occurred.")
+
+    return render_template('/main/edit_psw.html', id=id,)
 
 
 

@@ -1,4 +1,117 @@
 flask == 3.0.2
-pip install supabase
+pip install --user supabase
 
-sign upp supabase.com
+sign up supabase.com
+
+pip install schedule
+pip install torchvision
+
+pip install streamlit
+pip3 install streamlit
+pip install streamlit
+pip install streamlit
+pip install tensorflow
+pip install streamlit
+pip install streamlit
+pip install streamlit
+pip install tensorflowjs
+pip install --upgrade pip
+pip install tensorflowjs
+pip install tensorflow
+pip install tensorflow --no-deps
+pip install tensorflowjs --no-deps
+pip show tensorflow`
+pip show tensorflow
+pip list
+pip show tensorflow_decision_forests
+pip install --upgrade --force-reinstall tensorflow_decision_forests`
+pip install --upgrade packaging numpy tornado clyent nbformat python-dateutil requests`
+pip install numpy==1.18 tornado==6.0.3 clyent==1.2.1 nbformat==5.4.0 python-dateutil==2.8.2 requests==2.28.1`
+pip uninstall tensorflow_decision_forests`
+pip install tensorflow_decision_forests
+pip uninstall tensorflow_decision_forests
+pip install tensorflow_decision_forests
+pip install packaging==23.1
+pip install tornado==6.1.0
+pip install --user tornado==6.1.0
+pip install tornado==6.1.0
+pip install packaging==23.1
+pip install tensorflowjs==4.2.0
+pip install tensorflow_decision_forests
+pip install tensorflowjs
+pip install tensorflow==2.15.0
+pip show tensorflow_decision_forests
+pip install --upgrade tensorflow
+pip show tensorflow_decision_forests
+pip install --force-reinstall tensorflow_decision_forests
+pip install tensorflow==2.15.0
+pip install tensorflowjs
+pip install opencv-python imutils tensorflow`
+pip list
+pip install Werkzeug
+pip install urllib3`
+pip list
+pip install watchdog==2.1.5
+pip uninstall watchdog
+pip install watchdog==0.10.7
+pip install --upgrade watcdog
+pip install watchdog
+pip list
+pip install flask
+pip list
+pip list
+pip install opencv-python
+pip list
+pip install imutils
+pip list
+pip list
+pip install tensorflow
+pip list
+pip install tensorflow==1.15`
+pip list
+pip install tensorflow==2.11.0
+pip uninstall tensorflow
+pip install tensorflow==2.11.0
+pip install tensorflow
+pip list
+pip install tensorflow
+pip list
+pip install tensorflow
+pip install --upgrade pip`
+pip install tensorflow
+pip list
+pip install pillow
+pip install matplotlib
+pip install pandas`
+pip install opencv-python`
+pip install scikit-learn`
+pip install tensorflow`
+pip install flask
+pip install imutils
+pip install selenium
+pip3 install selenium
+pip install undetected-chromedriver
+pip install firebase-admin
+pip install --upgrade pip setuptools wheel
+pip install firebase.admin
+pip install firebase-admin
+pip version
+pip --version
+pip install firebase-admin --no-cache-dir
+pip install pyrebase
+pip install supabase
+pip install @supabase/supabase-py
+python.exe -m pip install --upgrade pip
+pip install --user supabase
+pip install tensorflow
+pip install fastapi uvicorn supabase pyjwt pydantic python-multipart pillow torch torchvision`
+pip install --user fastapi uvicorn supabase pyjwt pydantic python-multipart pillow torch torchvision`
+pip install --user torchvision
+pip show torchvision
+pip install schedule
+pip list
+pip freeze
+history | grep pip
+pip list --format=freeze`
+Get-History | Select-String pip`
+Get-Content (Get-PSReadLineOption).HistorySavePath | Select-String pip ## use this to check history

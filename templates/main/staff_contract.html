@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+    <title>{{ status.capitalize() }} Staff</title>
+
+</head>
+<body>
+
+    <h1>{{ status.capitalize() }} Staff</h1>
+
+    <!-- Doctor Table -->
+    <h2>Doctors</h2>
+    {% if doctors %}
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>NIC</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Department</th>
+            </tr>
+            {% for doctor in doctors %}
+                <tr>
+                    <td>{{ doctor.id }}</td>
+                    <td>{{ doctor.name }}</td>
+                    <td>{{ doctor.nic }}</td>
+                    <td>{{ doctor.startdate }}</td>
+                    <td>{{ doctor.enddate }}</td>
+                    <td>{{ doctor.department.name }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No doctors found for this status.</p>
+    {% endif %}
+
+    <!-- Nurse Table -->
+    <h2>Nurses</h2>
+    {% if nurses %}
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>NIC</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Department</th>
+            </tr>
+            {% for nurse in nurses %}
+                <tr>
+                    <td>{{ nurse.id }}</td>
+                    <td>{{ nurse.name }}</td>
+                    <td>{{ nurse.nic }}</td>
+                    <td>{{ nurse.startdate }}</td>
+                    <td>{{ nurse.enddate }}</td>
+                    <td>{{ nurse.department.name }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No nurses found for this status.</p>
+    {% endif %}
+
+    <a href="/manage/{{staff_id}}" class="back-link">Back</a>
+
+</body>
+</html>

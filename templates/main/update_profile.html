@@ -43,15 +43,17 @@
             </div>
             <div class="profile-row">
                 <div class="profile-label">Department</div>
-                <div class="profile-value"><b>: </b>{{ department_name }}</div>  <!-- Fixed Department Display -->
+                <div class="profile-value"><b>: </b>{{ department_name }}</div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">Email</div>
+                <div class="profile-value"><b>: </b>{{ staff.email }}</div>  
             </div>
         </div>
 
         <label>Phone:</label>
         <input type="text" name="phone" value="{{ staff['phone'] }}" required><br>
 
-        <label>Email:</label>
-        <input type="email" name="email" value="{{ staff['email'] }}" required><br>
 
         <button type="submit">Update Profile</button>
     </form>

@@ -59,19 +59,24 @@
                         <th>Action</th>
                     </tr>
                     <tr class="status-active">
+                        <td>Pending</td>
+                        <td>{{ count.pending }}</td>
+                        <td><a href="/staff_contract/{{staff_id}}/pending">View</a></td>
+                    </tr>
+                    <tr class="status-active">
                         <td>Active</td>
                         <td>{{ count.active }}</td>
-                        <td><a href="#">View</a></td>
+                        <td><a href="/staff_contract/{{staff_id}}/active">View</a></td>
                     </tr>
                     <tr class="status-expired">
                         <td>Expired</td>
                         <td>{{ count.expired }}</td>
-                        <td><a href="#">View</a></td>
+                        <td><a href="/staff_contract/{{staff_id}}/expired">View</a></td>
                     </tr>
                     <tr class="status-terminated">
                         <td>Terminated</td>
                         <td>{{ count.terminated }}</td>
-                        <td><a href="#">View</a></td>
+                        <td><a href="/staff_contract/{{staff_id}}/terminated">View</a></td>
                     </tr>
                 </table>
             </div>

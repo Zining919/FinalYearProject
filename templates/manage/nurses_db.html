@@ -8,7 +8,21 @@
         function confirmDelete(id) {
             const confirmed = confirm("Are you sure you want to delete this nurse?");
             if (confirmed) {
-                window.location.href = `/delete/${id}`;
+                fetch(`/terminate/nurses/${id}`, {
+                    method: "POST",
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Nurse deleted successfully.");
+                        window.location.reload(); // Refresh page after deletion
+                    } else {
+                        alert("Error deleting nurse.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An unexpected error occurred.");
+                });
             }
         }
     </script>
@@ -52,9 +66,12 @@
                     </td>
                     <td>
                         <div class="actions">
-                            <a href="/update_contract/nurses/{{staff_id}}/{{ nurse.id }}" class="update-link">Update Contract</a>
-                            <a href="#" class="delete-link" onclick="confirmDelete('{{ nurse.id }}')">Delete</a>
-                        </div>
+                            <a href="/update_contract/nurses/{{ staff_id }}/{{ nurse['id'] }}" class="update-link">Update Contract</a>
+                            
+                            <form action="/terminate/nurses/{{ staff_id }}" method="POST" onsubmit="return confirmDelete('{{ nurse['id'] }}')">
+                                <button type="submit" class="delete-link">Delete</button>
+                            </form>
+                        </div> 
                     </td>
                 </tr>
                 {% endfor %}
