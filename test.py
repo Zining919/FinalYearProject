@@ -20,16 +20,6 @@ import requests
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-# Path to the JSON file where the patient data will be stored
-PATIENTS_FILE = "patients.json"
-DOCTORS_FILE = "doctors.json"
-NURSE_FILE = "nurse.json"
-MANAGE_FILE = "manage.json"
-LOGIN_FILE = "login.json"
-APPOINTMENT_FILE = "appointment.json"
-ID_TRACKER_FILE = "id_tracker.txt"
-
-
 
 # Your Supabase project URL and API key
 SUPABASE_URL = "https://tmegfunkplvtdlmzgcvc.supabase.co"
@@ -66,13 +56,6 @@ def save_ppl(filePath,data):
     with open(filePath, "w") as file:
         json.dump(data, file, indent=4)
 
-# Function to load database from the JSON file
-def load_db(filePath):
-    try:
-        with open(filePath, "r") as file:
-            return json.load(file)  # Return a list of dictionaries
-    except FileNotFoundError:
-        return []  # Return an empty list if the file does not exist
 
 print(supabase.auth.get_session())
 
@@ -805,9 +788,7 @@ def staff_profile(staff_id):
 
 
 
-def get_details_by_id(id,filePath):
-    details = load_db(filePath)
-    return next((p for p in details if p["id"] == id), None)
+
 
 
 # update the contract start date and end date DONE
@@ -837,11 +818,23 @@ def update_contract(staff_type, staff_id, id):
         start_date = request.form['startDate']
         end_date = request.form['endDate']
         
+        today = datetime.today().date()
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+        # Assign status based on contract dates
+        if start_date_obj > today:
+            status = "pending"
+        elif start_date_obj <= today <= end_date_obj:
+            status = "active"
+        else:
+            status = "expired"
+        
         # Update contract details in Supabase
         update_response = supabase.table(table_name).update({
             "startdate": start_date,
             "enddate": end_date,
-            "status": "active"
+            "status": status
         }).eq("id", id).execute()
         
         if "error" in update_response:
@@ -913,59 +906,6 @@ def edit_profile(id):
 
 #####################################################################################################################
 # edit password for doctor and nurse DONE
-# @app.route("/edit_psw/<string:id>", methods=['GET', 'POST'])
-# def edit_psw(id):
-#     try:
-#         print(id)
-        
-#         # Initialize staff_type to avoid undefined variable error
-#         staff_type = None  
-
-#         # Fetch user details from Supabase
-#         response = supabase.table("login").select("username", "password").eq("username", id).execute()
-        
-#         if not response.data:
-#             return render_template('main/edit_psw.html', id=id, error="User not found.")
-        
-#         user_data = response.data[0]
-#         username = user_data["username"]
-#         current_password_db = user_data["password"]
-        
-#         # Determine if the user is a doctor or nurse based on username prefix
-#         if username.startswith("d"):
-#             staff_type = "doctor"
-#         elif username.startswith("n"):
-#             staff_type = "nurse"
-#         else:
-#             return render_template('main/edit_psw.html', id=id, error="Invalid user role.")
-        
-#         if request.method == 'POST':
-#             current_password = request.form["current_psw"].strip()
-#             new_password = request.form["new_psw"].strip()
-#             confirm_password = request.form["confirm_psw"].strip()
-            
-#             # Step 1: Verify if the current password matches database
-#             if current_password != current_password_db:
-#                 return render_template('main/edit_psw.html', id=id, error="Incorrect current password.")
-            
-#             # Step 2: Ensure new password and confirmation password match
-#             if new_password != confirm_password:
-#                 return render_template('main/edit_psw.html', id=id, error="Passwords do not match.")
-            
-#             # Step 3: Update the new password in Supabase
-#             update_response = supabase.table("login").update({"password": new_password}).eq("username", id).execute()
-            
-#             if "error" in update_response:
-#                 return render_template('main/edit_psw.html', id=id, error="Error updating password.")
-            
-#             return render_template('main/edit_psw.html', id=id, staff_type=staff_type, success="Password changed successfully.")
-    
-#     except Exception as e:
-#         print(f"Error updating password: {e}")
-#         return render_template('main/edit_psw.html', id=id, staff_type=staff_type, error="An unexpected error occurred.")
-    
-#     return render_template('main/edit_psw.html', id=id, staff_type=staff_type)
-
 @app.route("/edit_psw/<string:id>", methods=['GET', 'POST'])
 def edit_psw(id):
     try:
@@ -1035,24 +975,33 @@ def index(staff_id):
     try:
         # Query to get all patients with appointments for the given doctor
         appointment_response = supabase.table("appointment").select("id, patient_id").eq("doctor_id", staff_id).execute()
-        appointment_id = appointment_response.data[0]["id"]
-        if not appointment_response.data:
+        
+        if not appointment_response.data:  # If no appointments found
             return render_template("patients/patients_index.html", patients=[], staff_id=staff_id)
 
-        # Extract patient IDs from appointments
+        # Extract appointment ID and patient IDs
+        appointment_id = appointment_response.data[0]["id"] if appointment_response.data else None
         patient_ids = [appointment["patient_id"] for appointment in appointment_response.data]
+
+        if not patient_ids:  # If there are no patient IDs, render empty response
+            return render_template("patients/patients_index.html", patients=[], staff_id=staff_id)
 
         # Fetch patient details for these patient IDs
         patient_response = supabase.table("patient").select("id, name, nic, dob, gender").in_("id", patient_ids).execute()
 
+        if not patient_response.data:  # If no patient details found
+            return render_template("patients/patients_index.html", patients=[], staff_id=staff_id, appointment_id=appointment_id)
+
+        # Extract first patient ID safely
+        patient_id = patient_response.data[0]["id"] if patient_response.data else None
+
         # Render the patients' details in the template
-        patients = patient_response.data  # List of patients who have appointments with the doctor
-        patient_id = patient_response.data[0]["id"]
-        return render_template("patients/patients_index.html", patients=patients, staff_id=staff_id, appointment_id = appointment_id, patient_id=patient_id)
+        return render_template("patients/patients_index.html", patients=patient_response.data, staff_id=staff_id, appointment_id=appointment_id, patient_id=patient_id)
 
     except Exception as e:
         print(f"Error fetching patient list: {e}")
         return f"An error occurred while retrieving data: {e}", 500
+
 
 # Search patient in the patient table DONE
 @app.route("/doctors/search_patient/<string:staff_id>", methods=["GET"])
@@ -1397,12 +1346,6 @@ def appointment(patient_id, staff_id):
 
     return render_template('patients/patients_appointment.html', patient=patient, staff_id=staff_id)
 
-@app.route('/app_history/<int:patient_id>/<int:num>/<string:staff_id>')
-def get_history(num,patient_id, staff_id):
-    patient = get_details_by_id(patient_id, PATIENTS_FILE)
-    doctor = get_details_by_id(staff_id, DOCTORS_FILE)
-
-    return render_template('patients/patients_history.html', patient=patient, doctor=doctor, staff_id=staff_id)
 
 # Add new appointment for the patient DONE
 @app.route('/add_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
@@ -1574,47 +1517,6 @@ def update_appointment(patient_id, staff_id, appointment_index):
 
 
 ##############################################################################################################################
-
-@app.route('/image_history/<int:patient_id>/<int:num>/<string:staff_id>')
-def get_image(num,patient_id, staff_id):
-    patient = get_details_by_id(patient_id, PATIENTS_FILE)
-    doctor = get_details_by_id(staff_id, DOCTORS_FILE)
-    patients = load_db(PATIENTS_FILE)
-    
-    app_id = str(patient_id) + "/" + str(num)
-    for p in patients:
-        print(doctor["name"])
-        if 'appointment' in p:  
-            for app in p['appointment']:
-                if app.get('doctor_name') == doctor['name'] and app.get('num') == app_id:
-                    print(app) 
-                    if "history" not in p:
-                        p["history"] = []
-                    print("OK")
-                    p["history"].append({
-                        "num": app["num"],
-                        "patient_id": app["patient_id"],
-                        "patient_name": app["patient_name"],
-                        "department": app["department"],
-                        "doctor_name": app["doctor_name"],
-                        "date": app["date"],
-                        "time": app["time"],
-                        "report": "pdf"
-                        })
-                    p["appointment"].remove(app)
-                    
-                    break  # Stop loop once the patient is found
-            
-            print("OK2")
-            # Save the updated records list
-            try:
-                save_ppl(PATIENTS_FILE, patients)  # This will save the modified patients list
-                return render_template('image/doctors_view.html', patient=patient, doctor=doctor, staff_id=staff_id)
-            except Exception as e:
-                print(f"File saving error: {e}")
-                
-    return render_template('image/doctors_view.html', patient=patient, doctor=doctor, staff_id=staff_id)
-
 # def is_radiologist_available(radiologist, new_start_time, duration, patients,slot_durations):
 #     """Check if the radiologist is available by ensuring no overlapping appointments."""
 #     new_end_time = new_start_time + timedelta(minutes=duration)

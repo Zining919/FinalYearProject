@@ -36,7 +36,7 @@
                     <td>{{ patient['nic'] }}</td>
                     <td>{{ patient['dob'] }}</td>
                     <td>{{ patient['gender'] }}</td>
-                    <td><a href="/medical_image/{{patient_id}}/{{staff_id}}" class="update-link">View</a></td>
+                    <td><a href="/medical_image/{{patient['id']}}/{{staff_id}}" class="update-link">View</a></td>
                     <td><a href="/app_history/{{ patient['id'] }}/{{staff_id}}" class="appointment">View</a></td>
                 </tr>
                 {% endfor %}

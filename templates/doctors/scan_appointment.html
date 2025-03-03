@@ -58,12 +58,13 @@
 
             const timeParts = timeInput.split(":");
             const hours = parseInt(timeParts[0]);
-
+            
             if (hours < 9 || hours > 17) {
                 alert("Please select a time between 9 AM and 5 PM.");
                 event.preventDefault();
                 return false;
             }
+            
 
             alert("New Appointment added successfully!");
         }
@@ -96,7 +97,7 @@
 
         <button type="submit">Add Appointment</button>
     </form>
-    <a href="/appointment/{{ patient.id }}/{{ staff_id }}">Back to Appointment List</a>
+    <a href="/doctor/{{ staff_id }}">Back</a>
 </body>
 </html>
 
