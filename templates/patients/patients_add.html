@@ -32,6 +32,34 @@
             alert("Patient added successfully!");
             event.target.submit();
         }
+
+        function extractDOBAndGender() {
+            const nicInput = document.getElementById("nic").value;
+            if (nicInput.length === 12) {
+                const yearPrefix = parseInt(nicInput.substring(0, 2)) <= 30 ? "20" : "19";
+                const year = yearPrefix + nicInput.substring(0, 2);
+                const month = nicInput.substring(2, 4);
+                const day = nicInput.substring(4, 6);
+                const formattedDOB = `${year}-${month}-${day}`;
+                
+                if (isValidDate(formattedDOB)) {
+                    document.getElementById("dob_display").value = formattedDOB;
+                    document.getElementById("dob_hidden").value = formattedDOB;
+                } else {
+                    alert("Invalid NIC format. Please check again.");
+                    return;
+                }
+
+                // Set gender based on last digit
+                const lastDigit = parseInt(nicInput[nicInput.length - 1]);
+                if (lastDigit % 2 === 0) {
+                    document.getElementById("gender2").checked = true; // Female
+                } else {
+                    document.getElementById("gender1").checked = true; // Male
+                }
+
+            }
+        }
     </script>
 </head>
 <body>
@@ -43,16 +71,18 @@
     </div>
     {% endif %}
 
-    <form action="/add/{{ department_id }}/{{ staff_id }}" method="POST" onsubmit="validateDates(event)">
+    <form action="/add/{{ department_id }}/{{ staff_id }}" method="POST" onsubmit="return validateDates(event)">
         <label for="patient_id">Patient ID: {{ id }}</label><br>
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required><br>
 
         <label for="nic">NIC:</label>
-        <input type="text" id="nic" name="nic" pattern="\d{12}" title="NIC must be exactly 12 digits" required><br>
+        <input type="text" id="nic" name="nic" pattern="\d{12}" title="NIC must be exactly 12 digits" required oninput="extractDOBAndGender()"><br>
 
         <label for="dob">Date of Birth:</label>
-        <input type="date" id="dob" name="dob" required><br>
+        <input type="date" id="dob_display" name="dob_display" disabled>
+        <input type="hidden" id="dob_hidden" name="dob">
+        <br>
 
         <label for="gender">Gender:</label>
         <input type="radio" id="gender1" name="gender" value="Male" checked> Male

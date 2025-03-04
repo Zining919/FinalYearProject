@@ -17,21 +17,25 @@
     <br>
 
     {% if image_data.comment %}
-        <!-- Display existing diagnosis if already submitted -->
-        <p><b>Diagnosis:</b></p>
-        <p>{{ image_data.comment }}</p>
-    {% else %}
-        <!-- Allow commenting only if no diagnosis exists -->
-        <form action="{{ url_for('doctor_review', image_id=image_data.id, staff_id=staff_id, appointment_id=appointment_id) }}" method="POST" enctype="multipart/form-data">
-            <label for="comment">Comment/Diagnosis:</label>
-            <textarea id="comment" name="comment" rows="4" cols="40" placeholder="Enter diagnosis here..."></textarea>
-            <br>
-            <button type="submit">Submit</button>
-        </form>
-    {% endif %}
+    <!-- Display existing diagnosis if already submitted -->
+    <p><b>Diagnosis:</b></p>
+    <p>{{ image_data.comment }}</p>
+        {% else %}
+            {% if department_id != 'dep1002' %}
+                <!-- Allow commenting only if the doctor is not in department_id 'dep1002' -->
+                <form action="{{ url_for('doctor_review', image_id=image_data.id, staff_id=staff_id, appointment_id=appointment_id) }}" method="POST" enctype="multipart/form-data">
+                    <label for="comment">Comment/Diagnosis:</label>
+                    <textarea id="comment" name="comment" rows="4" cols="40" placeholder="Enter diagnosis here..."></textarea>
+                    <br>
+                    <button type="submit">Submit</button>
+                </form>
+            {% else %}
+                <p><b>Access Restricted:</b> You are not authorized to diagnose this image.</p>
+            {% endif %}
+        {% endif %}
 
     <br>
-    <a href="/patient/{{doctor_id}}">Back to Patient Database</a>
+    <a href="/medical_image/{{patient.id}}/{{staff_id}}">Back to Patient Database</a>
 </body>
 </html>
 

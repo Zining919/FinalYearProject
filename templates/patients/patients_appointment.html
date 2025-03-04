@@ -37,10 +37,14 @@
                         <td>{{ app.purpose }}</td>
                         <td>{{ app.date }} at {{ app.time }}</td>
                         <td>{{ app.status }}</td>
+                        {% if app.status == active %}
                         <td>
                             <a href="{{ url_for('update_appointment', patient_id=patient.id, staff_id=staff_id, appointment_index=app.num) }}" class="update-link">Update</a>
 
                         </td>
+                        {% else %}
+                        <td> - </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             {% else %}

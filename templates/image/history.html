@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='patient.css') }}">
+    <title>History Appointments</title>
+</head>
+<body>
+    <h1>Appointments for Patient ID: {{ patient_id }}</h1>
+
+    {% if appointments %}
+        <table border="1">
+            <tr>
+                <th>Appointment ID</th>
+                <th>Purpose</th>
+                <th>Doctor ID</th>
+                <th>Appointment Date</th>
+                <th>View PDF</th>
+            </tr>
+            {% for appointment in appointments %}
+            <tr>
+                <td>{{ appointment.id }}</td>
+                <td>{{ appointment.purpose }}</td>
+                <td>{{ appointment.doctor_id }}</td>
+                <td>{{ appointment.date }}</td>
+                <td>
+                    <a href="#" target="_blank">View PDF</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No appointments with available PDFs.</p>
+    {% endif %}
+
+    <a href="/patient/{{staff_id}}">Back to Patient Database</a>
+</body>
+</html>

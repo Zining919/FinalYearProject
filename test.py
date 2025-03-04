@@ -401,7 +401,8 @@ def add_record(staff_type, staff_id):
                 confirm_user_email(email)
             
             except Exception as e:
-                return f"Error registering staff in authentication: {e}", 500
+                #return f"Error registering staff in authentication: {e}", 500
+                return redirect(url_for("manage_db", db_type=staff_type, staff_id=staff_id))
 
         # try:
         #     # Fetch latest login ID
@@ -1348,28 +1349,109 @@ def appointment(patient_id, staff_id):
 
 
 # Add new appointment for the patient DONE
+# @app.route('/add_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
+# def new_appointment(patient_id, staff_id):
+#     # Fetch patient details from Supabase
+#     patient_response = supabase.table("patient").select("id, name, " "department(name)").eq("id", patient_id).single().execute()
+#     patient = patient_response.data if patient_response.data else None
+    
+#     if not patient:
+#         return "Patient not found", 404
+    
+#     # Check if the staff ID belongs to a nurse and fetch the department
+#     if staff_id.startswith('n'):
+#         staff_response = supabase.table("nurse").select("id, name, department_id, " "department(name)").eq("id", staff_id).single().execute()
+#         staff = staff_response.data if staff_response.data else None
+        
+#         if not staff:
+#             return "Nurse not found", 404
+        
+#         # Fetch doctors in the same department
+#         doctors_response = supabase.table("doctor").select("id, name").eq("department_id", staff["department_id"]).execute()
+#         doctors = doctors_response.data if doctors_response.data else []
+#         print("Doctors found:", doctors_response.data)  # Debugging statement
+        
+#         if request.method == "POST":
+#             purpose = request.form["purpose"]
+#             doctor_name = request.form["doctor_name"]
+#             date = request.form["date"]
+#             time = request.form["time"]
+#             notes = request.form["notes"]
+#             status = "Active"
+            
+#             # Get doctor ID from doctor name
+#             doctor_response = supabase.table("doctor").select("id").eq("name", doctor_name).single().execute()
+#             doctor = doctor_response.data if doctor_response.data else None
+#             if not doctor:
+#                 return "Doctor not found", 404
+            
+#             print("OK")
+#             doctor_id = doctor["id"]
+#             appointment_id = generate_appointment_id(purpose)
+            
+#             # Insert into the appointment table
+#             appointment_data = {
+#                 "id": appointment_id,
+#                 "patient_id": patient_id,
+#                 "doctor_id": doctor_id,
+#                 "purpose": purpose,
+#                 "date": date,
+#                 "time": time,
+#                 "notes": notes,
+#                 "status": status,
+#                 "ref_doctor_id": None
+#             }
+            
+#             supabase.table("appointment").insert(appointment_data).execute()
+            
+#             return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
+        
+#         return render_template('patients/patients_add_appointment.html', patient=patient, staff=staff, doctors=doctors)
+    
+#     return "Invalid Staff ID", 400
+
+
 @app.route('/add_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
 def new_appointment(patient_id, staff_id):
     # Fetch patient details from Supabase
-    patient_response = supabase.table("patient").select("id, name, " "department(name)").eq("id", patient_id).single().execute()
+    patient_response = (
+        supabase.table("patient")
+        .select("id, name, department(name)")
+        .eq("id", patient_id)
+        .single()
+        .execute()
+    )
     patient = patient_response.data if patient_response.data else None
-    
+
     if not patient:
         return "Patient not found", 404
-    
+
     # Check if the staff ID belongs to a nurse and fetch the department
     if staff_id.startswith('n'):
-        staff_response = supabase.table("nurse").select("id, name, department_id, " "department(name)").eq("id", staff_id).single().execute()
+        staff_response = (
+            supabase.table("nurse")
+            .select("id, name, department_id, department(name)")
+            .eq("id", staff_id)
+            .single()
+            .execute()
+        )
         staff = staff_response.data if staff_response.data else None
-        
+
         if not staff:
             return "Nurse not found", 404
-        
-        # Fetch doctors in the same department
-        doctors_response = supabase.table("doctor").select("id, name").eq("department_id", staff["department_id"]).execute()
+
+        # Fetch doctors in the same department who have active status
+        doctors_response = (
+            supabase.table("doctor")
+            .select("id, name")
+            .eq("department_id", staff["department_id"])
+            .eq("status", "Active")  # Only active doctors
+            .execute()
+        )
         doctors = doctors_response.data if doctors_response.data else []
-        print("Doctors found:", doctors_response.data)  # Debugging statement
         
+        print("Doctors found:", doctors)  # Debugging statement
+
         if request.method == "POST":
             purpose = request.form["purpose"]
             doctor_name = request.form["doctor_name"]
@@ -1377,17 +1459,52 @@ def new_appointment(patient_id, staff_id):
             time = request.form["time"]
             notes = request.form["notes"]
             status = "Active"
-            
+
             # Get doctor ID from doctor name
-            doctor_response = supabase.table("doctor").select("id").eq("name", doctor_name).single().execute()
+            doctor_response = (
+                supabase.table("doctor")
+                .select("id")
+                .eq("name", doctor_name)
+                .single()
+                .execute()
+            )
             doctor = doctor_response.data if doctor_response.data else None
             if not doctor:
                 return "Doctor not found", 404
-            
-            print("OK")
+
             doctor_id = doctor["id"]
+
+            # Check if the selected doctor is on leave on the selected date
+            leave_response = (
+                supabase.table("doctor_leave")
+                .select("doctor_id")
+                .eq("doctor_id", doctor_id)
+                .eq("leave_date", date)
+                .execute()
+            )
+            if leave_response.data:
+                return "Doctor is on leave on the selected date", 400
+
+            # Check if there is any appointment within 20 minutes of the selected time
+            selected_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+            lower_bound = (selected_datetime - timedelta(minutes=20)).strftime("%H:%M")
+            upper_bound = (selected_datetime + timedelta(minutes=20)).strftime("%H:%M")
+
+            time_conflict_response = (
+                supabase.table("appointment")
+                .select("id")
+                .eq("doctor_id", doctor_id)
+                .eq("date", date)
+                .gte("time", lower_bound)
+                .lte("time", upper_bound)
+                .execute()
+            )
+
+            if time_conflict_response.data:
+                return "The selected time is too close to another appointment. Please choose a different time.", 400
+
             appointment_id = generate_appointment_id(purpose)
-            
+
             # Insert into the appointment table
             appointment_data = {
                 "id": appointment_id,
@@ -1397,16 +1514,18 @@ def new_appointment(patient_id, staff_id):
                 "date": date,
                 "time": time,
                 "notes": notes,
-                "status": status
+                "status": status,
+                "ref_doctor_id": None
             }
-            
+
             supabase.table("appointment").insert(appointment_data).execute()
-            
+
             return redirect(url_for("appointment", patient_id=patient_id, staff_id=staff_id))
-        
-        return render_template('patients/patients_add_appointment.html', patient=patient, staff=staff, doctors=doctors)
-    
+
+        return render_template("patients/patients_add_appointment.html", patient=patient, staff=staff, doctors=doctors)
+
     return "Invalid Staff ID", 400
+
 
 # filter only available doctor for consultation DONE
 @app.route('/get_available_doctors/<string:staff_id>/<string:date>', methods=["GET"])
@@ -1607,7 +1726,8 @@ def scan_appointment(patient_id, staff_id):
             "date": date,
             "time": time,
             "status": "Active",
-            "notes": notes
+            "notes": notes,
+            "ref_doctor_id": staff_id
         }
 
         supabase.table("appointment").insert(new_appointment).execute()
@@ -1946,8 +2066,8 @@ def radio_upload(appointment_id, staff_id):
 
 
 
-@app.route('/doctor_review/<string:image_id>/<string:appointment_id>', methods=["GET", "POST"])
-def doctor_review(image_id, appointment_id):
+@app.route('/doctor_review/<string:image_id>/<string:appointment_id>/<string:staff_id>', methods=["GET", "POST"])
+def doctor_review(image_id, appointment_id, staff_id):
     # Fetch image details
     try:
         image_response = supabase.table("patient_images").select("*").eq("id", image_id).single().execute()
@@ -1967,9 +2087,19 @@ def doctor_review(image_id, appointment_id):
     except Exception as e:
         print(f"Error fetching appointment: {e}")
         return "Database error", 500
+    
+    # Fetch doctor details
+    try:
+        doctor_response = supabase.table("doctor").select("id, department_id").eq("id", staff_id).execute()
+        doctor = doctor_response.data if doctor_response.data else None
+        if not doctor:
+            return "Doctor not found", 404
+    except Exception as e:
+        print(f"Error fetching Doctor: {e}")
+        return "Database error", 500
 
     patient_id = appointment_response.data[0]["patient_id"]
-    doctor_id = appointment_response.data[0]["doctor_id"]
+    department_id = doctor_response.data[0]["department_id"]
 
     # Fetch patient details
     patient_response = supabase.table("patient").select("id, name, department(name)").eq("id", patient_id).single().execute()
@@ -1995,9 +2125,9 @@ def doctor_review(image_id, appointment_id):
             print(f"Error updating comment: {e}")
             return "Database error", 500
 
-        return redirect(url_for("doctor_index", id=doctor_id))
+        return redirect(url_for("doctor_index", id=staff_id))
 
-    return render_template("image/result.html", image_data=image_data, appointment_id=appointment_id, patient=patient, doctor_id=doctor_id)
+    return render_template("image/result.html", image_data=image_data, appointment_id=appointment_id, patient=patient, department_id=department_id, staff_id=staff_id)
 
 
 def get_patient_appointments(patient_id):
@@ -2018,7 +2148,7 @@ def get_patient_appointments(patient_id):
 
 
 
-@app.route('/medical_image/<string:patient_id>/<string:staff_id>')
+@app.route('/medical_image/<string:patient_id>/<string:staff_id>', methods=["GET", "POST"])
 def medical_image(patient_id, staff_id):
     # Fetch patient details
     patient_response = (
@@ -2067,6 +2197,29 @@ def medical_image(patient_id, staff_id):
 
 
 
+@app.route("/history/<string:patient_id>/<string:staff_id>/appointments")
+def history(patient_id, staff_id):
+    try:
+        # Fetch appointments where PDF is NOT NULL
+        appointment_response = (
+            supabase.table("appointment")
+            .select("id, purpose, doctor_id, date, pdf")
+            .eq("patient_id", patient_id)
+            .eq("doctor_id", staff_id)
+            .neq("pdf", None)
+            .execute()
+        )
+
+        appointments = appointment_response.data
+
+        if not appointments:
+            return render_template("/image/history.html", appointments=[], patient_id=patient_id, staff_id=staff_id)
+
+        return render_template("/image/history.html", appointments=appointments, patient_id=patient_id, staff_id=staff_id)
+
+    except Exception as e:
+        print(f"Error fetching appointments: {e}")
+        return "Database error", 500
 
 
 
