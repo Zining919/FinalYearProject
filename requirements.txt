@@ -99,6 +99,7 @@ pip version
 pip --version
 pip install firebase-admin --no-cache-dir
 pip install pyrebase
+###########################################################################################################
 pip install supabase
 pip install @supabase/supabase-py
 python.exe -m pip install --upgrade pip

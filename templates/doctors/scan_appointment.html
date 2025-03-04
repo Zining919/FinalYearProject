@@ -72,29 +72,37 @@
 </head>
 <body>
     <h1>Add New Appointment</h1>
-    <form action="/scan_appointment/{{ patient.id }}/{{ staff_id }}" method="POST" onsubmit="validateForm(event)">
-        <label>Patient ID: {{ patient.id }}</label>
-        <input type="hidden" name="patient_id" value="{{ patient.id }}">
+    <form action="/scan_appointment/{{ patient.id }}/{{ staff_id }}/{{appointment_id}}" method="POST" onsubmit="validateForm(event)">
+        <label for="patient_id">Patient ID: {{patient.id}}</label>
+        <input type="hidden" id="patient_id" name="patient_id" value= "{{patient.id}}">
 
-        <label>Patient Name: {{ patient.name }}</label>
-        <input type="hidden" name="patient_name" value="{{ patient.name }}">
-
+        <label for="patient_name">Patient Name: {{patient.name}}</label>
+        <input type="hidden" id="patient_name" name="patient_name" value= "{{patient.name}}" >
+        
         <label for="purpose">Purpose:</label>
-        <select id="purpose" name="purpose" required>
+        <select name="purpose" required>
             <option value="">-- Select Scan Type --</option>
             <option value="CT Scan">CT Scan</option>
             <option value="MRI Scan">MRI Scan</option>
         </select>
-
+        
         <label for="date">Date:</label>
-        <input type="date" id="date" name="date" required>
-
+        <input type="date" name="date" required>
+        
         <label for="time">Time:</label>
-        <input type="time" id="time" name="time" required>
-
+        <input type="time" name="time" required>
+        
+        <label for="doctor_name">Doctor Name:</label>
+        <select id="doctor_name" name="doctor_name" required>
+            {% for doctor in doctor %}
+                <option value="{{ doctor.name }}">{{ doctor.name }}</option>
+            {% endfor %}
+        </select>
+        <br>
+    
         <label for="notes">Notes (Optional):</label>
-        <textarea id="notes" name="notes" rows="3"></textarea>
-
+        <textarea name="notes" rows="3"></textarea>
+    
         <button type="submit">Add Appointment</button>
     </form>
     <a href="/doctor/{{ staff_id }}">Back</a>

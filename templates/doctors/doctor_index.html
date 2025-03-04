@@ -76,7 +76,7 @@
                                     <td>{{ appointment['date'] }} at {{ appointment['time'] }}</td>
                                     <td>{{ appointment['status'] }}</td>
                                     <td>
-                                        <a href="/scan_appointment/{{ appointment['patient_id'] }}/{{ doctor.id }}" class="update-link">Do Now</a>
+                                        <a href="/scan_appointment/{{ appointment['patient_id'] }}/{{ doctor.id }}/{{ appointment['id']}}" class="update-link">Do Now</a>
                                     </td>
                                 </tr>
                             {% endfor %}

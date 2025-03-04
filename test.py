@@ -1653,69 +1653,274 @@ def update_appointment(patient_id, staff_id, appointment_index):
 #     return True  # No conflicts, radiologist is available
 
 # Add new appointment for scan DONE
-@app.route('/scan_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
-def scan_appointment(patient_id, staff_id):
-    # Retrieve patient data from Supabase
+# @app.route('/scan_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
+# def scan_appointment(patient_id, staff_id):
+#     # Retrieve patient data from Supabase
+#     patient_response = supabase.table("patient").select("id, name").eq("id", patient_id).single().execute()
+#     patient = patient_response.data if patient_response.data else None
+
+#     if not patient:
+#         return "Patient not found", 404
+
+#     # Retrieve all radiologists from department "dep1002"
+#     radiologists_response = supabase.table("doctor").select("id, name").eq("department_id", "dep1002").execute()
+#     radiologists = radiologists_response.data if radiologists_response.data else []
+
+#     slot_durations = {"CT Scan": 20, "MRI Scan": 30}  # Slot durations
+
+#     if request.method == "POST":
+#         patient_id = request.form["patient_id"]
+#         purpose = request.form["purpose"]
+#         date = request.form["date"]
+#         time = request.form["time"]
+#         notes = request.form.get("notes", "")
+
+#         # Validate date and time
+#         selected_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+#         if selected_datetime < datetime.now():
+#             flash("Cannot book an appointment in the past", "error")
+#             return redirect(request.url)
+
+#         if selected_datetime.hour < 9 or selected_datetime.hour > 17:
+#             flash("Appointment time must be between 9 AM and 5 PM", "error")
+#             return redirect(request.url)
+
+#         duration = slot_durations.get(purpose, 20)
+
+#         # Retrieve the latest active appointment for the patient
+#         current_appointment_response = supabase.table("appointment") \
+#             .select("id, status") \
+#             .eq("patient_id", patient_id) \
+#             .eq("status", "Active") \
+#             .order("date", desc=True) \
+#             .limit(1) \
+#             .single() \
+#             .execute()
+
+#         current_appointment = current_appointment_response.data if current_appointment_response.data else None
+
+#         if current_appointment:
+#             # Update the current appointment's status to "Done"
+#             supabase.table("appointment") \
+#                 .update({"status": "Done"}) \
+#                 .eq("id", current_appointment["id"]) \
+#                 .execute()
+
+#         # Generate new appointment ID based on the purpose
+#         new_appointment_id = generate_appointment_id(purpose)
+
+#         # Select a random doctor from department "dep1002" to receive the notification
+#         if not radiologists:
+#             flash("No doctors available in this department", "error")
+#             return redirect(request.url)
+
+#         selected_doctor = random.choice(radiologists)  # Pick a random radiologist
+#         doctor_id = selected_doctor["id"]
+
+#         # Insert new scan appointment into Supabase
+#         new_appointment = {
+#             "id": new_appointment_id,
+#             "patient_id": patient_id,
+#             "purpose": purpose,
+#             "doctor_id": doctor_id,
+#             "date": date,
+#             "time": time,
+#             "status": "Active",
+#             "notes": notes,
+#             "ref_doctor_id": staff_id
+#         }
+
+#         supabase.table("appointment").insert(new_appointment).execute()
+
+#         # # Send notification to the selected doctor
+#         # notification_message = f"New scan appointment for Patient {patient_id} on {date} at {time}"
+#         # supabase.table("notifications").insert({"doctor_id": doctor_id, "message": notification_message}).execute()
+
+#         # flash(f"Notification sent to {selected_doctor['name']}!", "success")
+#         return redirect(url_for("doctor_index", id=staff_id))
+
+#     return render_template('doctors/scan_appointment.html', patient=patient, staff_id=staff_id)
+
+# @app.route('/scan_appointment/<int:patient_id>/<string:staff_id>', methods=["GET", "POST"])
+# def scan_appointment(patient_id, staff_id):
+#     # Retrieve patient data from Supabase
+#     patient_response = (
+#         supabase.table("patient")
+#         .select("id, name")
+#         .eq("id", patient_id)
+#         .single()
+#         .execute()
+#     )
+#     patient = patient_response.data if patient_response.data else None
+
+#     if not patient:
+#         return "Patient not found", 404
+
+#     # Retrieve all active radiologists from department "dep1002"
+#     radiologists_response = (
+#         supabase.table("doctor")
+#         .select("id, name")
+#         .eq("department_id", "dep1002")
+#         .eq("status", "Active")
+#         .execute()
+#     )
+#     radiologists = radiologists_response.data if radiologists_response.data else []
+
+#     if not radiologists:
+#         flash("No available doctors in department dep1002", "error")
+#         return redirect(request.url)
+
+#     # Filter out doctors who are on leave
+#     available_radiologists = []
+#     selected_date = request.form.get("date")  # Get the selected date from form input
+
+#     for doctor in radiologists:
+#         doctor_id = doctor["id"]
+
+#         leave_check = (
+#             supabase.table("doctor_leave")
+#             .select("leave_date")
+#             .eq("doctor_id", doctor_id)
+#             .eq("leave_date", selected_date)  # Match doctor leave with selected appointment date
+#             .execute()
+#         )
+
+#         if not leave_check.data:  # Doctor is available if not on leave
+#             available_radiologists.append(doctor)
+
+#     if request.method == "POST":
+#         patient_id = request.form["patient_id"]
+#         purpose = request.form["purpose"]
+#         date = request.form["date"]
+#         time = request.form["time"]
+#         notes = request.form.get("notes", "")
+#         doctor_id = request.form["doctor_id"]  # Get selected doctor
+
+#         # Validate appointment date
+#         selected_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+#         if selected_datetime < datetime.now():
+#             flash("Cannot book an appointment in the past", "error")
+#             return redirect(request.url)
+
+#         if selected_datetime.hour < 9 or selected_datetime.hour > 17:
+#             flash("Appointment time must be between 9 AM and 5 PM", "error")
+#             return redirect(request.url)
+
+#         # Check if selected doctor is available at the requested time
+#         lower_bound = (selected_datetime - timedelta(minutes=20)).strftime("%H:%M")
+#         upper_bound = (selected_datetime + timedelta(minutes=20)).strftime("%H:%M")
+
+#         time_conflict_response = (
+#             supabase.table("appointment")
+#             .select("time")
+#             .eq("doctor_id", doctor_id)
+#             .eq("date", date)
+#             .gte("time", lower_bound)
+#             .lte("time", upper_bound)
+#             .execute()
+#         )
+
+#         if time_conflict_response.data:
+#             flash("The selected time is too close to another appointment. Please choose a different time.", "error")
+#             return redirect(request.url)
+
+#         # Generate new appointment ID
+#         new_appointment_id = generate_appointment_id(purpose)
+
+#         # Insert new scan appointment into Supabase
+#         new_appointment = {
+#             "id": new_appointment_id,
+#             "patient_id": patient_id,
+#             "purpose": purpose,
+#             "doctor_id": doctor_id,
+#             "date": date,
+#             "time": time,
+#             "status": "Active",
+#             "notes": notes,
+#             "ref_doctor_id": staff_id
+#         }
+
+#         supabase.table("appointment").insert(new_appointment).execute()
+
+#         flash("Appointment successfully booked!", "success")
+#         return redirect(url_for("doctor_index", id=staff_id))
+
+#     return render_template(
+#         "doctors/scan_appointment.html",
+#         patient=patient,
+#         staff_id=staff_id,
+#         available_radiologists=available_radiologists,
+#         radiologists=radiologists
+#     )
+
+@app.route('/scan_appointment/<int:patient_id>/<string:staff_id>/<string:appointment_id>', methods=["GET", "POST"])
+def scan_appointment(patient_id, staff_id, appointment_id):
+    # Retrieve patient data
     patient_response = supabase.table("patient").select("id, name").eq("id", patient_id).single().execute()
     patient = patient_response.data if patient_response.data else None
-
     if not patient:
         return "Patient not found", 404
 
-    # Retrieve all radiologists from department "dep1002"
-    radiologists_response = supabase.table("doctor").select("id, name").eq("department_id", "dep1002").execute()
-    radiologists = radiologists_response.data if radiologists_response.data else []
+    # Retrieve active radiologists from department "dep1002"
+    doctor_response = supabase.table("doctor").select("id, name").eq("department_id", "dep1002").eq("status", "active").execute()
+    doctor = doctor_response.data if doctor_response.data else []
+    
+    if not doctor:
+        return "No active doctor available", 400
 
-    slot_durations = {"CT Scan": 20, "MRI Scan": 30}  # Slot durations
-
+    # If a form is submitted
     if request.method == "POST":
         patient_id = request.form["patient_id"]
         purpose = request.form["purpose"]
+        doctor_name = request.form["doctor_name"]
         date = request.form["date"]
         time = request.form["time"]
         notes = request.form.get("notes", "")
-
-        # Validate date and time
-        selected_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
-        if selected_datetime < datetime.now():
-            flash("Cannot book an appointment in the past", "error")
-            return redirect(request.url)
-
-        if selected_datetime.hour < 9 or selected_datetime.hour > 17:
-            flash("Appointment time must be between 9 AM and 5 PM", "error")
-            return redirect(request.url)
-
-        duration = slot_durations.get(purpose, 20)
-
-        # Retrieve the latest active appointment for the patient
-        current_appointment_response = supabase.table("appointment") \
-            .select("id, status") \
-            .eq("patient_id", patient_id) \
-            .eq("status", "Active") \
-            .order("date", desc=True) \
-            .limit(1) \
-            .single() \
+        
+        # Get doctor ID from doctor name
+        doctor_response = (
+            supabase.table("doctor")
+            .select("id")
+            .eq("name", doctor_name)
+            .single()
             .execute()
+        )
+        doctor = doctor_response.data if doctor_response.data else None
+        if not doctor:
+            return "Doctor not found", 404
 
-        current_appointment = current_appointment_response.data if current_appointment_response.data else None
+        doctor_id = doctor["id"]    
 
-        if current_appointment:
-            # Update the current appointment's status to "Done"
-            supabase.table("appointment") \
-                .update({"status": "Done"}) \
-                .eq("id", current_appointment["id"]) \
-                .execute()
+        # Check if the selected doctor is on leave on the selected date
+        leave_response = (
+            supabase.table("doctor_leave")
+            .select("doctor_id")
+            .eq("doctor_id", doctor_id)
+            .eq("leave_date", date)
+            .execute()
+        )
+        if leave_response.data:
+            return "Doctor is on leave on the selected date", 400
 
-        # Generate new appointment ID based on the purpose
+        # Check if there is any appointment within 20 minutes of the selected time
+        selected_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+        lower_bound = (selected_datetime - timedelta(minutes=20)).strftime("%H:%M")
+        upper_bound = (selected_datetime + timedelta(minutes=20)).strftime("%H:%M")
+        time_conflict_response = (
+        supabase.table("appointment")
+        .select("id")
+        .eq("doctor_id", doctor_id)
+        .eq("date", date)
+        .gte("time", lower_bound)
+            .lte("time", upper_bound)
+            .execute()
+        )
+
+        if time_conflict_response.data:
+            return "The selected time is too close to another appointment. Please choose a different time.", 400
+
+        # Generate a new appointment ID (Assuming generate_appointment_id function exists)
         new_appointment_id = generate_appointment_id(purpose)
-
-        # Select a random doctor from department "dep1002" to receive the notification
-        if not radiologists:
-            flash("No doctors available in this department", "error")
-            return redirect(request.url)
-
-        selected_doctor = random.choice(radiologists)  # Pick a random radiologist
-        doctor_id = selected_doctor["id"]
 
         # Insert new scan appointment into Supabase
         new_appointment = {
@@ -1729,17 +1934,21 @@ def scan_appointment(patient_id, staff_id):
             "notes": notes,
             "ref_doctor_id": staff_id
         }
-
         supabase.table("appointment").insert(new_appointment).execute()
+        
+        try:
+            supabase.table("appointment").update({"status": "Done"}).eq("id", appointment_id).execute()
+            print(f"Updated appointment {appointment_id} status to Done.")
+        except Exception as e:
+            print(f"Error updating appointment status: {e}")
+            return "Failed to update appointment status", 500
 
-        # # Send notification to the selected doctor
-        # notification_message = f"New scan appointment for Patient {patient_id} on {date} at {time}"
-        # supabase.table("notifications").insert({"doctor_id": doctor_id, "message": notification_message}).execute()
-
-        # flash(f"Notification sent to {selected_doctor['name']}!", "success")
+        flash("Appointment successfully booked!", "success")
         return redirect(url_for("doctor_index", id=staff_id))
 
-    return render_template('doctors/scan_appointment.html', patient=patient, staff_id=staff_id)
+    return render_template('doctors/scan_appointment.html', patient=patient, staff_id=staff_id, doctor=doctor, appointment_id=appointment_id)
+
+
 
 
 # def find_available_doctor(department_id, proposed_time, duration):
