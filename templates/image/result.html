@@ -3,7 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='add.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='result.css') }}">
+    <title>Medical Image Diagnosis</title>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Medical Image Diagnosis</h1>
+
+        <div class="info">
+            <p><b>Patient ID:</b> {{ patient.id }}</p>
+            <p><b>Patient Name:</b> {{ patient.name }}</p>
+        </div>
+
+        <div class="image-container">
+            <img src="{{ image_data.image_url }}" alt="Uploaded Medical Image">
+        </div>
+
+        <p><b>Model Prediction:</b> {{ image_data.model_prediction }}</p>
+
+        {% if image_data.comment %}
+            <div class="form-group">
+                <label>Diagnosis:</label>
+                <p>{{ image_data.comment }}</p>
+            </div>
+        {% else %}
+            {% if department_id != 'dep1002' %}
+                <form action="{{ url_for('doctor_review', image_id=image_data.id, staff_id=staff_id, appointment_id=appointment_id) }}" method="POST">
+                    <div class="form-group">
+                        <label for="comment">Comment/Diagnosis:</label>
+                        <textarea id="comment" name="comment" rows="4" placeholder="Enter diagnosis here..."></textarea>
+                    </div>
+                    <button type="submit">Submit Diagnosis</button>
+                </form>
+            {% else %}
+                <p><b>Access Restricted:</b> You are not authorized to diagnose this image.</p>
+            {% endif %}
+        {% endif %}
+
+        <a class="back-link" href="/medical_image/{{patient.id}}/{{staff_id}}">Back to Patient Database</a>
+    </div>
+
+</body>
+</html>
+
+
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='result.css') }}">
     <title>Medical Image</title>
 </head>
 <body>
@@ -17,12 +67,12 @@
     <br>
 
     {% if image_data.comment %}
-    <!-- Display existing diagnosis if already submitted -->
+    
     <p><b>Diagnosis:</b></p>
     <p>{{ image_data.comment }}</p>
         {% else %}
             {% if department_id != 'dep1002' %}
-                <!-- Allow commenting only if the doctor is not in department_id 'dep1002' -->
+                
                 <form action="{{ url_for('doctor_review', image_id=image_data.id, staff_id=staff_id, appointment_id=appointment_id) }}" method="POST" enctype="multipart/form-data">
                     <label for="comment">Comment/Diagnosis:</label>
                     <textarea id="comment" name="comment" rows="4" cols="40" placeholder="Enter diagnosis here..."></textarea>
@@ -37,6 +87,6 @@
     <br>
     <a href="/medical_image/{{patient.id}}/{{staff_id}}">Back to Patient Database</a>
 </body>
-</html>
+</html>-->
 
 
