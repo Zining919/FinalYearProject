@@ -17,6 +17,10 @@ from keras.models import load_model
 from keras.preprocessing.image import img_to_array
 import numpy as np
 import requests
+import cv2
+import tensorflow as tf
+from keras.models import Model
+import openai
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -2429,8 +2433,6 @@ def history(patient_id, staff_id):
     except Exception as e:
         print(f"Error fetching appointments: {e}")
         return "Database error", 500
-
-
 
 
 
