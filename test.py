@@ -20,7 +20,16 @@ import requests
 import cv2
 import tensorflow as tf
 from keras.models import Model
-import openai
+import base64
+from dotenv import load_dotenv
+from openai import OpenAI
+
+
+# Load API Key from .env file
+load_dotenv()
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+client = OpenAI(api_key=openai_api_key)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -2435,10 +2444,90 @@ def history(patient_id, staff_id):
         return "Database error", 500
 
 
+# Medical Analysis Prompt
+sample_prompt = """You are a medical practictioner and an expert in analzying medical related images working for a very reputed hospital. You will be provided with images and you need to identify the anomalies, any disease or health issues. You need to generate the result in detailed manner. Write all the findings, next steps, recommendation, etc. You only need to respond if the image is related to a human body and health issues. You must have to answer but also write a disclaimer saying that "Consult with a Doctor before making any decisions".
 
+Remember, if certain aspects are not clear from the image, it's okay to state 'Unable to determine based on the provided image.'
 
+Now analyze the image and answer the above questions in the same structured manner defined above."""
 
+def fetch_image_from_supabase(image_url):
+    """Fetch the image from Supabase storage and return its base64 encoding."""
+    try:
+        response = requests.get(image_url)
+        if response.status_code == 200:
+            return base64.b64encode(response.content).decode("utf-8")
+        else:
+            raise Exception(f"Failed to fetch image: {response.status_code}")
+    except Exception as e:
+        return f"Error fetching image: {str(e)}"
 
+def call_gpt4_model_for_analysis(base64_image):
+    """Calls GPT-4 for medical image analysis."""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": sample_prompt},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}", "detail": "high"}}
+            ]
+        }
+    ]
+
+    response = client.chat.completions.create(
+        model="gpt-4-turbo",
+        messages=messages,
+        max_tokens=1500
+    )
+
+    return response.choices[0].message.content
+
+def explain_like_im_5(query):
+    """Simplifies medical analysis for non-experts."""
+    eli5_prompt = f"Explain the following medical analysis to a five-year-old:\n{query}"
+    
+    messages = [{"role": "user", "content": eli5_prompt}]
+    
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=messages,
+            max_tokens=500
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error in simplifying explanation: {str(e)}"
+
+@app.route("/analyze_image/<string:image_id>")
+def analyze_image(image_id):
+    """Fetch image, process it, and return AI-generated analysis."""
+    try:
+        # Fetch image URL from Supabase
+        data = supabase.table("patient_images").select("image_url").eq("id", image_id).single().execute()
+        image_url = data.data["image_url"]
+        
+        # Encode image
+        base64_image = fetch_image_from_supabase(image_url)
+        if "Error" in base64_image:
+            return jsonify({"error": base64_image}), 500
+        
+        # Call OpenAI model
+        analysis = call_gpt4_model_for_analysis(base64_image)
+        return jsonify({"analysis": analysis})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/explain_eli5", methods=["POST"])
+def explain_eli5():
+    """Generate an ELI5 explanation for AI analysis."""
+    data = request.get_json()
+    query = data.get("query", "")
+
+    if not query:
+        return jsonify({"error": "No analysis provided"}), 400
+
+    explanation = explain_like_im_5(query)
+    return jsonify({"eli5": explanation})
 
 
 
