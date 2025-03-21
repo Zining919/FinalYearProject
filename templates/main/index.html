@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -35,6 +35,435 @@
     </script>
 
 </body>
+</html>-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Responsive Hospital Website Design Tutorial</title>
+
+    <!-- font awesome cdn link  -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- custom css file link  -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style2.css') }}">
+</head>
+
+<body>
+
+
+    <!-- header navbar section start  -->
+
+    <header>
+
+        <!-- logo name  -->
+        <a href="#" class="logo"><span>D</span>octors <span>C</span>ares.</a>
+
+        <!-- navbar link  -->
+        <nav class="navbar">
+            <ul>
+                <li><a href="#home">home</a></li>
+                <li><a href="#about">about</a></li>
+                <li><a href="#doctor">doctor</a></li>
+                <li><a href="#review">review</a></li>
+                <li><a href="#contact">contact</a></li>
+                <li><a href="#blog">blog</a></li>
+            </ul>
+        </nav>
+
+        <div class="fas fa-bars"></div>
+    </header>
+    <!-- header navbar section end  -->
+
+    <!-- home section start  -->
+
+    <section id="home" class="home">
+
+        <div class="row">
+
+            <!-- home images  -->
+            <div class="images">
+                <img src="{{ url_for('static', filename='images/home.png') }}" alt="Home Image">
+            </div>
+
+            <!-- home heading  -->
+            <div class="content">
+                <h1><span>Stay</span> Safe, <span>Stay</span> Healthy.</h1>
+                <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Ipsa, officiis.</p>
+                <a href="#"><button class="button">read more</button></a>
+            </div>
+        </div>
+    </section>
+    <!-- home section end  -->
+
+    <!-- about section start  -->
+
+    <section id="about" class="about">
+
+        <h1 class="heading">about our facility</h1>
+        <h3 class="title">learn and explore our facility</h3>
+
+        <div class="box-container">
+
+            <!-- start here  -->
+            <div class="box">
+                <!-- about images  -->
+                <div class="images">
+                    <img src="{{ url_for('static', filename='images/about-1.png') }}" alt="Home Image">
+                </div>
+                
+                <!-- about heading & text  -->
+                <div class="content">
+                    <h3>ambulance services</h3>
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab necessitatibus omnis unde dolore suscipit magnam officia. Maxime explicabo qui distinctio?</p>
+                 <a href="#"><button class="button">learn more</button></a>   
+                </div>
+            </div>
+            <!-- end here  -->
+
+            
+            <!-- start here  -->
+            <div class="box">
+                <!-- about images  -->
+                <div class="images">
+                    <img src="{{ url_for('static', filename='images/about-2.png') }}" alt="Home Image">
+                </div>
+                
+                <!-- about heading & text  -->
+                <div class="content">
+                    <h3>emergency rooms</h3>
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab necessitatibus omnis unde dolore suscipit magnam officia. Maxime explicabo qui distinctio?</p>
+                 <a href="#"><button class="button">learn more</button></a>   
+                </div>
+            </div>
+            <!-- end here  -->
+
+            
+            <!-- start here  -->
+            <div class="box">
+                <!-- about images  -->
+                <div class="images">
+                    <img src="{{ url_for('static', filename='images/about-3.png') }}" alt="Home Image">
+                </div>
+                
+                <!-- about heading & text  -->
+                <div class="content">
+                    <h3>free check-ups</h3>
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab necessitatibus omnis unde dolore suscipit magnam officia. Maxime explicabo qui distinctio?</p>
+                 <a href="#"><button class="button">learn more</button></a>   
+                </div>
+            </div>
+            <!-- end here  -->
+           </div>
+    </section>
+
+    <!-- about section end  -->
+    
+    <!-- card section start  -->
+
+    <section id="doctor" class="card">
+
+        <div class="container">
+
+            <h1 class="heading">doctors</h1>
+            <h3 class="title">our professional doctors</h3>
+
+            <div class="box-container">
+
+                <!-- start here  -->
+                <div class="box">
+                    <img src="{{ url_for('static', filename='images/doctor-1.jpg') }}" alt="Home Image">                
+                    
+                    <div class="content">
+                        <a href="#">
+                            <h2>john doe</h2>
+                        </a>
+                        <p>professional</p>
+
+                        <!-- card icons  -->
+                        <div class="icons">
+                            <a href="#" class="fab fa-facebook-f"></a>
+                            <a href="#" class="fab fa-twitter"></a>
+                            <a href="#" class="fab fa-instagram"></a>
+                        </div>
+                    </div>
+                </div>
+                <!-- end here  -->
+
+                 <!-- start here  -->
+                 <div class="box">
+                    <img src="{{ url_for('static', filename='images/doctor-2.jpg') }}" alt="Home Image">                
+                    
+                    <div class="content">
+                        <a href="#">
+                            <h2>john doe</h2>
+                        </a>
+                        <p>professional</p>
+
+                        <!-- card icons  -->
+                        <div class="icons">
+                            <a href="#" class="fab fa-facebook-f"></a>
+                            <a href="#" class="fab fa-twitter"></a>
+                            <a href="#" class="fab fa-instagram"></a>
+                        </div>
+                    </div>
+                </div>
+                <!-- end here  -->
+
+                 <!-- start here  -->
+                 <div class="box">
+                    <img src="{{ url_for('static', filename='images/doctor-3.jpg') }}" alt="Home Image">                
+                    
+                    <div class="content">
+                        <a href="#">
+                            <h2>john doe</h2>
+                        </a>
+                        <p>professional</p>
+
+                        <!-- card icons  -->
+                        <div class="icons">
+                            <a href="#" class="fab fa-facebook-f"></a>
+                            <a href="#" class="fab fa-twitter"></a>
+                            <a href="#" class="fab fa-instagram"></a>
+                        </div>
+                    </div>
+                </div>
+                <!-- end here  -->
+
+            </div>
+        </div>
+    </section>
+    <!-- card section end  -->
+
+    <!-- review section start  -->
+
+    <section id="review" class="review">
+
+        <h1 class="heading">our patient review</h1>
+        <h3 class="title">what patient says about us</h3>
+
+        <div class="box-container">
+
+            <!-- start here  -->
+            <div class="box">
+                <i class="fas fa-quote-left"></i>
+                <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ducimus, sit quam ab at nulla quae excepturi laboriosam mollitia illo eius?</p>
+
+                <div class="images">
+                    <img src="{{ url_for('static', filename='images/img-1.jpg') }}" alt="Home Image">
+
+                    <div class="info">
+                        <h3>john doe</h3>
+                        <span>date : 11 2024</span>
+                    </div>
+                </div>
+            </div>
+            <!-- end here  -->
+
+            
+            <!-- start here  -->
+            <div class="box">
+                <i class="fas fa-quote-left"></i>
+                <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ducimus, sit quam ab at nulla quae excepturi laboriosam mollitia illo eius?</p>
+
+                <div class="images">
+                    <img src="{{ url_for('static', filename='images/img-2.jpg') }}" alt="Home Image">
+
+                    <div class="info">
+                        <h3>john doe</h3>
+                        <span>date : 11 2024</span>
+                    </div>
+                </div>
+            </div>
+            <!-- end here  -->
+
+            
+            <!-- start here  -->
+            <div class="box">
+                <i class="fas fa-quote-left"></i>
+                <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ducimus, sit quam ab at nulla quae excepturi laboriosam mollitia illo eius?</p>
+
+                <div class="images">
+                    <img src="{{ url_for('static', filename='images/img-3.jpg') }}" alt="Home Image">
+
+                    <div class="info">
+                        <h3>john doe</h3>
+                        <span>date : 11 2024</span>
+                    </div>
+                </div>
+            </div>
+            <!-- end here  -->
+        </div>
+    </section>
+    <!-- review section end  -->
+ 
+    <!-- contact section start  -->
+
+    <section id="contact" class="contact">
+
+        <h1 class="heading">contact us</h1>
+        <h3 class="title">you can talk to us any times,</h3>
+
+        <div class="row">
+
+            <!-- form images  -->
+            <div class="images">
+                <img src="{{ url_for('static', filename='images/form.png') }}" alt="Home Image">
+            </div>
+
+            <div class="form-container">    
+
+            <input type="text" placeholder="full name" name="" id="">
+            <input type="email" placeholder="enter your email" name="" id="">
+
+            <input type="number" placeholder="phone" name="" id="">
+            <textarea name="" cols="30" rows="10" id=""></textarea>
+            <input type="submit" value="send">
+            </div>
+        </div>
+
+
+
+
+    </section>
+
+
+
+    <!-- contact section end  -->
+
+
+    <!-- blog section start  -->
+
+    <section id="blog" class="blog">
+
+        <h1 class="heading">blog</h1>
+        <h3 class="title">Lorem ipsum dolor sit amet.</h3>
+
+        <div class="box-container">
+
+            <!-- start here  -->
+            <div class="box">
+                <!-- images  -->
+                <img src="{{ url_for('static', filename='images/blog 1.png') }}" alt="Home Image">
+
+                <div class="content">
+                    <a href="#">
+                        <h2>diabetes</h2>
+                    </a>
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Non, obcaecati iusto aliquid quam repudiandae voluptas!</p>
+                     <!-- button  -->
+                    <a href="#"> <button class="button">learn more</button></a>
+                </div>
+            </div>
+            <!-- end here  -->
+
+            
+            <!-- start here  -->
+            <div class="box">
+                <!-- images  -->
+                <img src="{{ url_for('static', filename='images/blog 2.png') }}" alt="Home Image">
+
+                <div class="content">
+                    <a href="#">
+                        <h2>covid-19 vaccine</h2>
+                    </a>
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Non, obcaecati iusto aliquid quam repudiandae voluptas!</p>
+                     <!-- button  -->
+                    <a href="#"> <button class="button">learn more</button></a>
+                </div>
+            </div>
+            <!-- end here  -->
+
+            
+            <!-- start here  -->
+            <div class="box">
+                <!-- images  -->
+                <img src="{{ url_for('static', filename='images/blog 3.png') }}" alt="Home Image">
+
+                <div class="content">
+                    <a href="#">
+                        <h2>prevent epidemic</h2>
+                    </a>
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Non, obcaecati iusto aliquid quam repudiandae voluptas!</p>
+                     <!-- button  -->
+                    <a href="#"> <button class="button">learn more</button></a>
+                </div>
+            </div>
+            <!-- end here  -->
+        </div>
+    </section>
+
+
+
+    <!-- blog section end  -->
+
+    <!-- footer section start  -->
+
+    <section class="footer">
+
+        <div class="box">
+            <h2 class="logo"><span>D</span>octors <span>C</span>ares</h2>
+
+            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quam laboriosam quisquam facere pariatur ratione porro et vero dolore accusamus id?</p>
+        </div>
+
+        <div class="box">
+            <h2 class="logo"><span>S</span>hare</h2>
+
+            <a href="#">facebook</a>
+            <a href="#">twitter</a>
+            <a href="#">instagram</a>
+            <a href="#">pinterest</a>
+        </div>
+
+        <div class="box">
+            <h2 class="logo"><span>L</span>inks</h2>
+
+            <a href="#">home</a>
+            <a href="#">about</a>
+            <a href="#">Doctor</a>
+            <a href="#">Review</a>
+            <a href="#">contact</a>
+            <a href="#">blog</a>
+        </div>
+
+
+        <h1 class="credit">created by <span>Website. Masters</span> all right reserved.</h1>
+    </section>
+
+
+
+
+
+
+
+
+    <!-- footer section end  -->
+    
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+    <!-- jquery cdn link  -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <!-- custom js file link  -->
+    <script src="../main.js"></script>
+</body>
+
 </html>
 
 
